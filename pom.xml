@@ -7,7 +7,7 @@
   <packaging>pom</packaging>
   
   	<modules>
-        <module>sparkyservice-sql</module>
+        <module>sparkyservice-jpa</module>
         <module>sparkyservice-api</module>
 	</modules>
     

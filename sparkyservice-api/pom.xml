@@ -30,7 +30,7 @@
 			<version>1.0</version> </dependency> -->
 		<dependency>
 			<groupId>net.ssehub.sparkyservice</groupId>
-			<artifactId>sparkyservice-sql</artifactId>
+			<artifactId>sparkyservice-jpa</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
