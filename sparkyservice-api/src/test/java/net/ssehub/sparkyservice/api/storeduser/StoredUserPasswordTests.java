@@ -48,14 +48,14 @@ public class StoredUserPasswordTests {
     
     @Test
     public void manualPasswordHashMethodTest() {
-        user.hashAndSetPassword(passwordToCheck);
+        user.encodeAndSetPassword(passwordToCheck);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match);
     }
     
     @Test
     public void negativeManualPasswordHashMethodTest() {
-        user.hashAndSetPassword(passwordToCheck + "1");
+        user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 
             assertTrue("BCrypt max length is reached.", match);

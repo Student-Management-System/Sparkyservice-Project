@@ -29,17 +29,18 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
 
     public static StoredUserDetails createStoredLocalUser(String userName, String rawPassword, boolean isActive) {
         var newUser = new StoredUserDetails(userName, null, DEFAULT_REALM, isActive);
-        newUser.hashAndSetPassword(rawPassword);
+        newUser.encodeAndSetPassword(rawPassword);
         return newUser;
     }
 
-       @Nullable
+    @Nullable
     private PasswordEncoder encoder;
 
     public StoredUserDetails(StoredUser userData) {
         super(userData);
     }
 
+    @SuppressWarnings("null")
     private StoredUserDetails(String userName, @Nullable Password passwordEntity, String realm, boolean isActive) {
         super(userName, passwordEntity, realm, isActive, UserRole.DEFAULT.name());
     }
@@ -54,17 +55,27 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * @param rawPassword
      * @return the hashed value - never null but may be empty
      */
-    public String hashAndSetPassword(String rawPassword) {
+    public String encodeAndSetPassword(String rawPassword) {
         var passwordEntityLocal = passwordEntity;
         if (passwordEntityLocal!= null) {
-            passwordEntityLocal.setPassword(getEncoder().encode(rawPassword));
-            passwordEntityLocal.hashAlgorithm = DEFAULT_ALGO;
+            @Nonnull final String encodedPass = encode(rawPassword);
+            passwordEntityLocal.setPasswordString(encodedPass);
+            passwordEntityLocal.setHashAlgorithm(DEFAULT_ALGO);
         } else {
-            var encodedPass = getEncoder().encode(rawPassword);
+            @Nonnull final String encodedPass = encode(rawPassword);
             passwordEntityLocal = new Password(encodedPass, DEFAULT_ALGO);
         }
         setPasswordEntity(passwordEntityLocal);
         return getPassword();
+    }
+    
+    @Nonnull
+    private String encode(String rawPassword) {
+        final String encodedPass = getEncoder().encode(rawPassword);
+        if (encodedPass == null) {
+            throw new RuntimeException("BCryptPasswordEncoder returned null as return value - this should not happen");
+        } 
+        return encodedPass;
     }
     
     public UserRole getUserRole() {
@@ -72,7 +83,10 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     }
     
     public void setUserRole(UserRole role) {
-        this.role = role.name();
+        String name = role.name();
+        if (name != null) { // always true
+            this.role = name;
+        }
     }
     
     @Override
@@ -85,11 +99,10 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * return the stored password - never be null but may be empty if the user isn't in the default realm.
      */
     @Nonnull
-    @Override
     public String getPassword() {
         final var passwordEntityLocal = passwordEntity;
         if (passwordEntityLocal != null) {
-            return passwordEntityLocal.getPassword();
+            return passwordEntityLocal.getPasswordString();
         } else {
             if (realm == DEFAULT_REALM) {
                 throw new RuntimeException("User has no password even though he is in the default realm. This "
@@ -97,6 +110,21 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
             } else {
                 return "";
             }
+        }
+    }
+
+    /**
+     * Returns springs default {@link BCryptPasswordEncoder}. 
+     * @return default instance of {@link BCryptPasswordEncoder}
+     */
+    @Nonnull
+    public PasswordEncoder getEncoder() {
+        PasswordEncoder encoder2 = encoder;
+        if (encoder2 != null) {
+            return encoder2;
+        } else {
+            encoder = new BCryptPasswordEncoder();
+            return getEncoder();
         }
     }
 
@@ -131,20 +159,5 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     @Override
     public String getAuthority() {
         return this.getRole();
-    }
-
-    /**
-     * Returns springs default {@link BCryptPasswordEncoder}. 
-     * @return default instance of {@link BCryptPasswordEncoder}
-     */
-    @Nonnull
-    public PasswordEncoder getEncoder() {
-        PasswordEncoder encoder2 = encoder;
-        if (encoder2 != null) {
-            return encoder2;
-        } else {
-            encoder = new BCryptPasswordEncoder();
-            return getEncoder();
-        }
     }
 }

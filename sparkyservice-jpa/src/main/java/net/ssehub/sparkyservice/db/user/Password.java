@@ -1,11 +1,10 @@
 package net.ssehub.sparkyservice.db.user;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -18,46 +17,48 @@ import net.ssehub.sparkyservice.db.hibernate.AnnotatedClass;
 
 @Entity
 @Table(name = "user_local_password")
+@ParametersAreNonnullByDefault
 public class Password implements AnnotatedClass {
     
     /**
-     * This algorythm is used if no other method is specified
+     * This algorithm value is saved to database if no other was provided. 
      */
-    public static final String DEFAULT_HASH_ALGORITHM = "SHA-256";
+    protected static final String DEFAULT_HASH_ALGORITHM = "PLAIN";
     
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int passwordId;
+    protected int passwordId;
 
-    /**
-     * Used hashed algorythm for the stored password. 
-     * There are no pre-defined valu
-     */
+    @Nonnull
     @Column
-    public String hashAlgorithm;
+    protected String hashAlgorithm;
     
     @OneToOne
-    public StoredUser user;
+    @Nullable
+    protected StoredUser user;
     
     /**
      * 
      */
+    @Nonnull
     @Column(nullable = false)
     private String passwordString;
     
     /**
      * Default constructor needed by hibernate.
      */
-    public Password() {}
+    public Password() {
+        this("");
+    }
     
     /**
      * Takes a plain text password and hash it with the default password algorithm.
      * @param plainTextPassword
      * @throws UnsupportedEncodingException 
      */
-    public Password(String plainTextPassword) {
-        hashAndSetPassword(plainTextPassword);
+    public Password(String passwordString) {
+        this.passwordString = passwordString;
         this.hashAlgorithm = DEFAULT_HASH_ALGORITHM;
     }
     
@@ -67,34 +68,24 @@ public class Password implements AnnotatedClass {
     }
     
     /**
-     * Method hashes the given password with {@link Password.DEFAULT_HASH_ALGORYTHM}
-     * @param plainTextPassword
-     * @throws UnsupportedEncodingException 
+     * Used algorithm for hashing the @link passworString}; 
      */
-    public String hashAndSetPassword(String plainTextPassword) {
-        try {
-            MessageDigest digest;
-            digest = MessageDigest.getInstance(DEFAULT_HASH_ALGORITHM);
-            byte[] hash = digest.digest(plainTextPassword.getBytes(StandardCharsets.UTF_8));
-            this.passwordString = new String(hash, "UTF-8");
-        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
-            e.printStackTrace(); // TODO write log file
-        }
-        return passwordString;
+    @Nonnull
+    public String getHashAlgorithm() {
+        return hashAlgorithm;
     }
-    
-    public void setPassword(String passwordHash) {
+
+    public void setHashAlgorithm(String hashAlgorithm) {
+        this.hashAlgorithm = hashAlgorithm;
+    }
+
+    public void setPasswordString(String passwordHash) {
         this.passwordString = passwordHash;
     }
     
     @Nonnull
-    public String getPassword() {
-        final String pass = passwordString;
-        if (pass == null) {
-            return "";
-        } else {
-            return pass;
-        }
+    public String getPasswordString() {
+        return this.passwordString;
     }
 }
 
