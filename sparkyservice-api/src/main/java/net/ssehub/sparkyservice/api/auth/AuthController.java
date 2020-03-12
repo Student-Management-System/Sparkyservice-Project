@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserRepository;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 /**
  * Controller for authentication reachable under /auth
@@ -32,9 +31,6 @@ public class AuthController {
     @Autowired
     private ConfigurationValues confValues;
     
-    @Autowired
-    private StoredUserRepository repository;
-
     public class AuthenticationFailedException extends Exception {
         private static final long serialVersionUID = 7472411757860220245L;
     }

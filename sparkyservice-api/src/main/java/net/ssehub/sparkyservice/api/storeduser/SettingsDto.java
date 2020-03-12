@@ -5,7 +5,6 @@ import javax.validation.constraints.Email;
 
 public class SettingsDto {
     
-    @AssertTrue
     public boolean userWantAI;
     
     public boolean email_subscription;

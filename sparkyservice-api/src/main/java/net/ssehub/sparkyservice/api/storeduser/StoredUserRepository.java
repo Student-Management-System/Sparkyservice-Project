@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 @Repository
-public interface StoredUserRepository extends CrudRepository<StoredUser, Integer>{
+interface StoredUserRepository extends CrudRepository<StoredUser, Integer>{
     Optional<StoredUser> findByuserNameAndRealm(String username, String realm);
     Optional<List<StoredUser>> findByuserName(String username);
 }
