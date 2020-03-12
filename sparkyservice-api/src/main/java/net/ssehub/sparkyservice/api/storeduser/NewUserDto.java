@@ -14,10 +14,10 @@ public class NewUserDto {
     
     public UserRole role;
     
-    @Valid
     /**
      * Optional settings. If they aren't provided by the request body a new default set of settings will be generated.
      */
+    @Valid
     private SettingsDto personalSettings;
 
     /**

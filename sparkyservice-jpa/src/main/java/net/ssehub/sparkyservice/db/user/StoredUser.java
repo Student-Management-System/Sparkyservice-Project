@@ -1,6 +1,8 @@
 package net.ssehub.sparkyservice.db.user;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,14 +13,13 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import com.sun.istack.Nullable;
-
 import net.ssehub.sparkyservice.db.hibernate.AnnotatedClass;
 
 @Entity
 @Table(
     name = "user_stored", 
     uniqueConstraints = {@UniqueConstraint(columnNames = {"userName", "realm"})})
+@ParametersAreNonnullByDefault
 public class StoredUser implements AnnotatedClass {
 
     /**
@@ -33,6 +34,7 @@ public class StoredUser implements AnnotatedClass {
      * Max length for a username is 50. This could be a username from 
      * external auth methods or a local one. 
      */
+    @Nonnull
     @Column(nullable = false, length = 50)
     protected String userName;
 
@@ -40,27 +42,35 @@ public class StoredUser implements AnnotatedClass {
     protected boolean isActive;
     
     @OneToOne(cascade = {CascadeType.ALL})
+    @Nullable
     protected Password passwordEntity;
 
     /**
      * The authentication realm of the user. 
      */
-    @Column(length = 50)
+    @Column(nullable = false, length = 50)
     protected String realm;
     
-    @Column(length = 50)
+    @Column(nullable = false, length = 50)
     protected String role;
-    
+
     @OneToOne(cascade = {CascadeType.ALL}, targetEntity = net.ssehub.sparkyservice.db.user.PersonalSettings.class)
     protected PersonalSettings profileConfiguration;
 
-    public StoredUser() {}
+    /**
+     * Default constructor used by Hibernate.
+     */
+    protected StoredUser() {
+        this.realm = "";
+        this.role = "";
+        this.userName = "";
+    }
         
-    public StoredUser(@Nonnull String userName, 
-            Password passwordEntity, 
-            @Nonnull String realm, 
+    public StoredUser(String userName, 
+            @Nullable Password passwordEntity, 
+            String realm, 
             boolean isActive, 
-            @Nonnull String role) {
+            String role) {
         this.userName = userName;
         this.passwordEntity = passwordEntity;
         this.realm = realm;
@@ -81,16 +91,16 @@ public class StoredUser implements AnnotatedClass {
     public int getId() {
         return id;
     }
-
+    
     public void setId(int id) {
         this.id = id;
     }
 
     public String getUserName() {
-        return userName;
+        return this.userName;
     }
 
-    public void setUserName(@Nonnull String userName) {
+    public void setUserName(String userName) {
         this.userName = userName;
     }
 
@@ -107,7 +117,7 @@ public class StoredUser implements AnnotatedClass {
         return passwordEntity;
     }
 
-    public void setPasswordEntity(@Nonnull Password password) {
+    public void setPasswordEntity(@Nullable Password password) {
         this.passwordEntity = password;
     }
 
