@@ -29,11 +29,6 @@ public class StoredUser implements AnnotatedClass {
     @GeneratedValue(strategy = GenerationType.AUTO)
     protected int id;
 
-    /**
-     * Unique (per REALM!) username which identifies local users. 
-     * Max length for a username is 50. This could be a username from 
-     * external auth methods or a local one. 
-     */
     @Nonnull
     @Column(nullable = false, length = 50)
     protected String userName;
@@ -45,20 +40,19 @@ public class StoredUser implements AnnotatedClass {
     @Nullable
     protected Password passwordEntity;
 
-    /**
-     * The authentication realm of the user. 
-     */
+    @Nonnull
     @Column(nullable = false, length = 50)
     protected String realm;
     
-    @Column(nullable = false, length = 50)
+    @Nonnull
+    @Column(nullable = false)
     protected String role;
 
     @OneToOne(cascade = {CascadeType.ALL}, targetEntity = net.ssehub.sparkyservice.db.user.PersonalSettings.class)
     protected PersonalSettings profileConfiguration;
 
     /**
-     * Default constructor used by Hibernate.
+     * Default constructor used by hibernate.
      */
     protected StoredUser() {
         this.realm = "";
@@ -79,9 +73,10 @@ public class StoredUser implements AnnotatedClass {
         this.profileConfiguration = new PersonalSettings();
     }
 
-    public StoredUser(StoredUser user) {
+    public StoredUser(final StoredUser user) {
         this.id = user.id;
         this.realm = user.realm;
+        this.role = user.role;
         this.userName = user.userName;
         this.isActive = user.isActive;
         this.passwordEntity = user.passwordEntity;
@@ -96,11 +91,24 @@ public class StoredUser implements AnnotatedClass {
         this.id = id;
     }
 
+    /**
+     * Is unique per realm and is never null or empty. It can be used as identifier in combination with the realm.
+     * 
+     * @return name of the user which is unique per realm
+     */
     public String getUserName() {
         return this.userName;
     }
 
+    /**
+     * Overrides the old username - it have to pe unique per realm and max length 50.
+     * 
+     * @param userName unique string per realm
+     */
     public void setUserName(String userName) {
+        if (userName.length() > 50) {
+            throw new IllegalArgumentException("The max length for a username is 50");
+        }
         this.userName = userName;
     }
 
@@ -120,23 +128,47 @@ public class StoredUser implements AnnotatedClass {
     public void setPasswordEntity(@Nullable Password password) {
         this.passwordEntity = password;
     }
-
+    
+    /**
+     * @param the authentication realm of the user. 
+     */
     public String getRealm() {
         return realm;
     }
 
+    /**
+     * @param realm name with max character size of 50
+     */
     public void setRealm(String realm) {
+        if (realm.length() > 50) {
+            throw new IllegalArgumentException("");
+        }
         this.realm = realm;
     }
     
+    /**
+     * Single authority role of the user.Only one role at a time is supported.
+     * 
+     * @return name of a role
+     */
     public String getRole() {
         return role;
     }
     
+    /**
+     * Sets a single authority role to the user. Old role will be overridden.
+     * 
+     * @param role name of a role
+     */
     public void setRole(String role) {
         this.role = role;
     }
     
+    /**
+     * {@link PersonalSettings} of the user where extra settings are stored like email addressees.
+     * 
+     * @return associated profile of this StoredUser - if no exists, a new will be generated
+     */
     @Nonnull
     public PersonalSettings getProfileConfiguration() {
         final var profileConfiguration2 = profileConfiguration;
@@ -149,7 +181,7 @@ public class StoredUser implements AnnotatedClass {
         }
     }
 
-    public void setProfileConfiguration(PersonalSettings profileConfiguration) {
+    public void setProfileConfiguration(@Nullable PersonalSettings profileConfiguration) {
         this.profileConfiguration = profileConfiguration;
     }
 }
