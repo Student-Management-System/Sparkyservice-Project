@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.validation;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,16 +10,13 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import javax.validation.constraints.Email;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.test.context.ContextConfiguration;
 
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
 
-@RunWith(Parameterized.class)
 @ContextConfiguration(classes=SpringConfig.class)
 public class EmailValidationTests {
     
@@ -32,7 +29,6 @@ public class EmailValidationTests {
         }
     }
 
-    @Parameters(name = "{index}: Email({0}) valid: {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] 
@@ -51,11 +47,7 @@ public class EmailValidationTests {
     
     private Validator validator;
     
-    private boolean expectedValidity;
-    
-    private String emailInput; 
-    
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         if (validator == null) {
             final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -63,15 +55,11 @@ public class EmailValidationTests {
         }
     }
     
-    public EmailValidationTests(String passInput, boolean outputValid) {
-        this.expectedValidity = outputValid;
-        this.emailInput = passInput;
-    }
-    
-    @Test
-    public void passwordValidTest() {
+    @ParameterizedTest
+    @MethodSource("data")
+    public void passwordValidTest(String emailInput, boolean expectedValidity) {
         var testObj = new TestDto(emailInput);
         var violations = validator.validate(testObj);
-        assertEquals("The given value didn't pass the validity test", violations.isEmpty(), expectedValidity);
+        assertEquals(violations.isEmpty(), expectedValidity, "The given value didn't pass the validity test");
     }
 }

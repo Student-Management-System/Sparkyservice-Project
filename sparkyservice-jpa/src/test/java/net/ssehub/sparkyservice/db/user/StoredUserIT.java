@@ -1,20 +1,22 @@
 package net.ssehub.sparkyservice.db.user;
-import static org.junit.Assert.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.hibernate.Session;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import net.ssehub.sparkyservice.db.hibernate.SessionFactoryHelper;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
-public class StoredUserIntegrationTests {
+public class StoredUserIT {
     private Session singleSession;
     private StoredUser testUser;
 
-    @Before
+    @BeforeEach
     public void _setUpSession() {
         singleSession = SessionFactoryHelper.SESSION_FACTORY.getCurrentSession();
         singleSession.beginTransaction();
@@ -25,13 +27,13 @@ public class StoredUserIntegrationTests {
         singleSession = SessionFactoryHelper.SESSION_FACTORY.getCurrentSession();
     }
 
-    @AfterClass
+    @AfterAll
     public static void _tearDown() {
         SessionFactoryHelper.shutdown();
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void isUserStoredTest() {
         singleSession.beginTransaction();
         StoredUser loadedUser = singleSession.load(StoredUser.class, 1);
@@ -40,20 +42,20 @@ public class StoredUserIntegrationTests {
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void userNameStoredTest() {        
         singleSession.beginTransaction();
         StoredUser loadedUser = singleSession.load(StoredUser.class, 1);
         singleSession.getTransaction().commit();
-        assertEquals("User was not correctly stored into database.",  loadedUser.userName, testUser.userName);
+        assertEquals("User was not correctly stored into database.", loadedUser.userName, testUser.userName);
     }
 
     @Test
-    @Ignore
+    @Disabled
     public void isPasswordAssosiatedTest() {
         singleSession.beginTransaction();
         StoredUser loadedUser = singleSession.load(StoredUser.class, 1);
         singleSession.getTransaction().commit();
-        assertNotNull("Password was not found in database but should be saved.", loadedUser.passwordEntity);
+        assertNotNull(loadedUser.passwordEntity, "Password was not found in database but should be saved.");
     }
 }

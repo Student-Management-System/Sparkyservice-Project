@@ -9,16 +9,13 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.test.context.ContextConfiguration;
 
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
 
-@RunWith(Parameterized.class)
 @ContextConfiguration(classes=SpringConfig.class)
 public class PasswordValidationTests {
     
@@ -31,7 +28,6 @@ public class PasswordValidationTests {
         }
     }
 
-    @Parameters(name = "{index}: pass({0}) must be valid: {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[][] 
@@ -47,25 +43,17 @@ public class PasswordValidationTests {
     
     private Validator validator;
     
-    private boolean expectedValidity;
-    
-    private String passInput; 
-    
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         if (validator == null) {
             final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
             validator = factory.getValidator();
         }
     }
-    
-    public PasswordValidationTests(String passInput, boolean outputValid) {
-        this.expectedValidity = outputValid;
-        this.passInput = passInput;
-    }
-    
-    @Test
-    public void passwordValidTest() {
+   
+    @ParameterizedTest
+    @MethodSource("data")
+    public void passwordValidTest(String passInput, boolean expectedValidity) {
         var testObj = new TestDto(passInput);
         var violations = validator.validate(testObj);
         assertEquals(violations.isEmpty(), expectedValidity);

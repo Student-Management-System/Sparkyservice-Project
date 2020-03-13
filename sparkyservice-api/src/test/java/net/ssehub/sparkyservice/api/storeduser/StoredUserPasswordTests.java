@@ -5,23 +5,15 @@ import static org.junit.Assert.assertTrue;
 
 import javax.annotation.Nonnull;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@RunWith(Parameterized.class)
 public class StoredUserPasswordTests {
-   
+      
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
-    private final StoredUserDetails user;
-    
-    @Nonnull
-    private String passwordToCheck;
-    
-    @Parameters(name = "{index}: {0}")
+
     public  static String[] data() {
         return new String [] {
                 "342kjudsmnfbsjakhfjkhdfkfhejkrfhewakjhsdfkjfhewjkfhaskdjhjkdshklaewakfjiou324ioklujfdsklajfekljsfdkljf"
@@ -35,26 +27,28 @@ public class StoredUserPasswordTests {
                 "a"};
     }
     
-    public StoredUserPasswordTests(@Nonnull String passwordInput) {
-        this.passwordToCheck = passwordInput;
-        user = StoredUserDetails.createStoredLocalUser("testname", passwordInput, true);
-    }
-    
-    @Test
-    public void constructorPasswordHashTest() {
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void constructorPasswordHashTest(@Nonnull String passwordToCheck) {
+        var user = StoredUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue("Encoded password does not match with bcrypted password", match);
     }
-    
-    @Test
-    public void manualPasswordHashMethodTest() {
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void manualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
+        var user = StoredUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
         user.encodeAndSetPassword(passwordToCheck);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match);
     }
-    
-    @Test
-    public void negativeManualPasswordHashMethodTest() {
+
+    @ParameterizedTest
+    @MethodSource("data")
+    public void negativeManualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
+        var user = StoredUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
         user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 

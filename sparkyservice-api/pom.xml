@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>net.ssehub.sparkyservice</groupId>
 		<artifactId>sparkyservice-project</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2</version>
 	</parent>
 	<artifactId>sparkyservice-api</artifactId>
 	<name>SparkyService Api</name>
 
 	<properties>
 		<swagger.version>2.9.1</swagger.version>
-		<spring-starter.version>2.2.4.RELEASE</spring-starter.version>
+		<spring-starter.version>2.2.5.RELEASE</spring-starter.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-parent</artifactId>
-			<version>2.2.4.RELEASE</version>
+			<version>${spring-starter.version}</version>
 			<type>pom</type>
 		</dependency>
 		<dependency>
@@ -90,6 +90,8 @@
 			<version>0.10.5</version>
 			<scope>runtime</scope>
 		</dependency>
+		
+		<!-- TEST DEPENDENCIES -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -98,6 +100,21 @@
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
