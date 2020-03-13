@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import net.ssehub.sparkyservice.api.management.MissingDataException;
 import net.ssehub.sparkyservice.api.storeduser.EditUserDto;
 import net.ssehub.sparkyservice.api.storeduser.NewUserDto;
 import net.ssehub.sparkyservice.api.storeduser.SettingsDto;
@@ -37,17 +38,6 @@ public class StoredUserController {
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) {
         final var newUser = StoredUserDetails.createStoredLocalUser(newUserDto.username, newUserDto.password, true);
         userService.storeUser(newUser);
-//        if (isNewUserDtoValid(newUserDto)) {
-//            var passValidator = ValidationFactory.getPasswordValidator();
-//            if (passValidator.checkIfValid(newUserDto.password)) {
-//                var newUser = StoredUserDetails.createStoredLocalUser(newUserDto.username, newUserDto.password, true);
-//                repository.save(newUser.getTransactionObject());
-//            } else {
-//                throw new PasswordInvalidException(passValidator.getMessage());
-//            }
-//        } else {
-//            throw new MissingUserDataException();
-//        }
     }
     
     @PutMapping("/user/edit") 
@@ -61,32 +51,39 @@ public class StoredUserController {
     
     public StoredUser writePersonalSettings(StoredUser user, SettingsDto settings) {
         PersonalSettings dbSettings = user.getProfileConfiguration();
-        // TODO Marcel: Set settings
+        dbSettings.setEmail_address(settings.email_address);
+        dbSettings.setWantsAi(settings.wantsAi);
+        dbSettings.setEmail_receive(settings.email_receive);
         return user;
     }
     
-    public void changePassword(StoredUser databaseUser, @Nullable EditUserDto.ChangePasswordDto passwordDto) 
+    public void changePassword(@Nonnull StoredUserDetails databaseUserDetails, 
+            @Nullable EditUserDto.ChangePasswordDto passwordDto) 
             throws MissingDataException {
         
-        if (passwordDto != null) {
-            if (!passwordDto.oldPassword.equals(passwordDto.newPassword)) {
-                throw new MissingDataException("Passwords does not match");
-            }
-            var userDetails = new StoredUserDetails(databaseUser);
-            userDetails.encodeAndSetPassword(passwordDto.newPassword); // wont be null through dto validation
+        String newPassword = Optional.ofNullable(passwordDto).orElseThrow(
+                () -> new MissingDataException("Passwords does not match")).newPassword;
+        String oldPassword = Optional.ofNullable(passwordDto).orElseThrow(
+                () -> new MissingDataException("Passwords does not match")).oldPassword;
+        boolean oldPasswordIsRight = databaseUserDetails
+                .getEncoder()
+                .matches(oldPassword, databaseUserDetails.getPassword());
+        if (oldPasswordIsRight) {
+            databaseUserDetails.encodeAndSetPassword(newPassword); // cant be null through validation check
         }
     }
     
     public StoredUser editUserFromDto(@Nonnull StoredUser databaseUser, @Nonnull EditUserDto userDto) 
             throws MissingDataException {
         
-        if (databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM) {
-            changePassword(databaseUser, userDto.passwordDto);
-        }
         databaseUser = writePersonalSettings(databaseUser, userDto.settings);
         databaseUser.setUserName(userDto.username);
+        if (databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM) {
+            var localUser = new StoredUserDetails(databaseUser);
+            changePassword(localUser, userDto.passwordDto);
+            databaseUser = localUser.getTransactionObject();
+        }
         return databaseUser;
-        
     }
     
 //    @PutMapping("/user/admin/edit")

@@ -6,6 +6,9 @@ import javax.validation.constraints.NotBlank;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
 public class NewUserDto {
+    public static StoredUserDetails transformToUser(NewUserDto newUser) {
+        return StoredUserDetails.createStoredLocalUser(newUser.username, newUser.password, true);
+    }
     
     @NotBlank
     public String username;

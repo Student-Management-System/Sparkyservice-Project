@@ -17,18 +17,50 @@ public class PersonalSettings implements AnnotatedClass {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int configurationId;
+    private int configurationId;
 
     @OneToOne
     @PrimaryKeyJoinColumn
-    public StoredUser user; 
+    private StoredUser user; 
     
-    @Column(nullable = true)
-    public boolean testVal2 = false;
-    @Column(nullable = true)
-    public boolean testVal3 = false;
-    @Column(nullable = true)
-    public boolean testVal4 = false;
-    @Column(nullable = true)
-    public boolean testVal5 = false;
+    @Column
+    private boolean email_receive = false;
+
+    @Column
+    private String email_address;
+    
+    @Column
+    private boolean wantsAi = false;
+
+    public StoredUser getUser() {
+        return user;
+    }
+    
+    public void setUser(StoredUser user) {
+        this.user = user;
+    }
+    
+    public boolean isEmail_receive() {
+        return email_receive;
+    }
+    
+    public void setEmail_receive(boolean email_receive) {
+        this.email_receive = email_receive;
+    }
+    
+    public String getEmail_address() {
+        return email_address;
+    }
+    
+    public void setEmail_address(String email_address) {
+        this.email_address = email_address;
+    }
+    
+    public boolean isWantsAi() {
+        return wantsAi;
+    }
+    
+    public void setWantsAi(boolean wantsAi) {
+        this.wantsAi = wantsAi;
+    }
 }
