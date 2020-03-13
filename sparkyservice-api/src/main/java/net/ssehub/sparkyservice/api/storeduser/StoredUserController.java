@@ -19,7 +19,6 @@ import net.ssehub.sparkyservice.api.storeduser.EditUserDto;
 import net.ssehub.sparkyservice.api.storeduser.NewUserDto;
 import net.ssehub.sparkyservice.api.storeduser.SettingsDto;
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.db.user.PersonalSettings;
 import net.ssehub.sparkyservice.db.user.StoredUser;
@@ -32,7 +31,7 @@ import net.ssehub.sparkyservice.db.user.StoredUser;
 public class StoredUserController {
     
     @Autowired
-    private StoredUserService userService;
+    private IStoredUserService userService;
     
     @PutMapping("/user/add")
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) {

@@ -88,9 +88,8 @@ public class StoredUserServiceTests {
     }
     
     @Test
-    public void userIdValueTest() throws UserNotFoundException {
-        var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
-        assertTrue(loadedUser.isActive());
+    public void findUserNullTest() throws UserNotFoundException {
+        assertThrows(UserNotFoundException.class, () -> userService.findUserByNameAndRealm(null, null)); 
     }
 }
 
