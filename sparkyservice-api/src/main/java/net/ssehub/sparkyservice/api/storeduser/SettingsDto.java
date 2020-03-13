@@ -1,16 +1,16 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
+import javax.annotation.Nonnull;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-
-import org.springframework.lang.NonNull;
 
 import net.ssehub.sparkyservice.db.user.PersonalSettings;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public class SettingsDto {
     
-    public static StoredUser writePersonalSettings(StoredUser user, SettingsDto settings) {
+    @Nonnull
+    public static StoredUser writePersonalSettings(@Nonnull StoredUser user, @Nonnull SettingsDto settings) {
         PersonalSettings dbSettings = user.getProfileConfiguration();
         dbSettings.setEmail_address(settings.email_address);
         dbSettings.setWantsAi(settings.wantsAi);

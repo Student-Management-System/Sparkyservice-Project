@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
+import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -27,6 +29,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public static final String DEFAULT_ALGO = "BCRYPT";
     private static final long serialVersionUID = 1L;
 
+    @Nonnull
     public static StoredUserDetails createStoredLocalUser(String userName, String rawPassword, boolean isActive) {
         var newUser = new StoredUserDetails(userName, null, DEFAULT_REALM, isActive);
         newUser.encodeAndSetPassword(rawPassword);
@@ -36,13 +39,16 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     @Nullable
     private PasswordEncoder encoder;
 
+    /**
+     * Default constructor - only for testing purposes. 
+     */
+    StoredUserDetails() {}
     public StoredUserDetails(StoredUser userData) {
         super(userData);
     }
 
-    @SuppressWarnings("null")
     private StoredUserDetails(String userName, @Nullable Password passwordEntity, String realm, boolean isActive) {
-        super(userName, passwordEntity, realm, isActive, UserRole.DEFAULT.name());
+        super(userName, passwordEntity, realm, isActive, notNull(UserRole.DEFAULT.name()));
     }
 
     @Nonnull
@@ -83,10 +89,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     }
     
     public void setUserRole(UserRole role) {
-        String name = role.name();
-        if (name != null) { // always true
-            this.role = name;
-        }
+        this.role = notNull(role.name());
     }
     
     @Override
