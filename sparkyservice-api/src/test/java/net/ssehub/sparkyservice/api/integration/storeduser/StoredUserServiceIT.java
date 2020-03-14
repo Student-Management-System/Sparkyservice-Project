@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.integration;
+package net.ssehub.sparkyservice.api.integration.storeduser;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
