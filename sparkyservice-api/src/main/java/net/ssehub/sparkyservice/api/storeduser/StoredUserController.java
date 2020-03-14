@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import net.ssehub.sparkyservice.api.storeduser.EditUserDto;
-import net.ssehub.sparkyservice.api.storeduser.NewUserDto;
-import net.ssehub.sparkyservice.api.storeduser.SettingsDto;
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
+import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
+import net.ssehub.sparkyservice.api.storeduser.dto.NewUserDto;
+import net.ssehub.sparkyservice.api.storeduser.dto.SettingsDto;
 import net.ssehub.sparkyservice.db.user.PersonalSettings;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 

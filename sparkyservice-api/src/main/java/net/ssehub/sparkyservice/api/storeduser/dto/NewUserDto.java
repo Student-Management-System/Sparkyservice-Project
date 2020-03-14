@@ -1,8 +1,10 @@
-package net.ssehub.sparkyservice.api.storeduser;
+package net.ssehub.sparkyservice.api.storeduser.dto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
+import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
+import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
 public class NewUserDto {

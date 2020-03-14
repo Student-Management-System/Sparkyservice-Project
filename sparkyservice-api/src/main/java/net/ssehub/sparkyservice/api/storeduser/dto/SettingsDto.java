@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.storeduser;
+package net.ssehub.sparkyservice.api.storeduser.dto;
 
 import javax.annotation.Nonnull;
 import javax.validation.constraints.Email;

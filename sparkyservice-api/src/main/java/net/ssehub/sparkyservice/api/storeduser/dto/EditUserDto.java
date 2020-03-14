@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.storeduser;
+package net.ssehub.sparkyservice.api.storeduser.dto;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
 import java.util.Optional;
@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import net.ssehub.sparkyservice.api.storeduser.MissingDataException;
+import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public class EditUserDto {
