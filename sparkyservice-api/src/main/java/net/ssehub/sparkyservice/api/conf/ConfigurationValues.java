@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConfigurationValues {
     
-    public static final String AUTH_LOGIN_URL = "/api/authenticate";
+    public static final String AUTH_LOGIN_URL = ControllerPath.AUTHENTICATION_AUTH;
    
     @Value("${jwt.secret}")
     private String jwtSecret;

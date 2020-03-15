@@ -58,16 +58,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
-    private String addUserPath = ControllerPath.GLOBAL_PREFIX
-            + ControllerPath.MANAGEMENT_PREFIX
-            + ControllerPath.MANAGEMENT_ADD_USER;
-    
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
             .antMatchers(ControllerPath.SWAGGER).permitAll()
+            .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             //.antMatchers(addUserPath).hasRole(UserRole.ADMIN.name()) // admin: allowed to add users
             //.antMatchers("/**").permitAll()//maybe remove later
             .anyRequest().authenticated()

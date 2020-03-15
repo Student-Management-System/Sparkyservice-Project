@@ -13,19 +13,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 /**
  * Controller for authentication reachable under /auth
  * @author marcel
  */
 @RestController
-@RequestMapping(value = "/api/")
 public class AuthController {
     
     @Autowired
@@ -45,13 +44,13 @@ public class AuthController {
      * @param password Password of the user
      * @return HTTP body and sets JWT Token inside http header
      */
-    @PostMapping(value = "/authenticate") 
+    @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH) 
     public String authenticate(@RequestParam(value = "username") @NotNull String username, 
                         @RequestParam(value = "password") @NotNull String password) {
         throw new UnsupportedOperationException();
     }
     
-    @PostMapping(value = "/auth") 
+    @PostMapping(value = ControllerPath.GLOBAL_PREFIX + "/auth") 
     public void auth(@RequestParam(value = "username") @NotNull String username, 
                         @RequestParam(value = "password") @NotNull String password,
                         HttpServletResponse response, HttpServletRequest request) {
@@ -67,6 +66,7 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(null);
         }
     }
+    
     /**
      * Handler for an {@link UserNotFoundException}. 
      * @param ex
