@@ -11,8 +11,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
 
 @Configuration
 public class SpringConfig {
@@ -33,10 +31,5 @@ public class SpringConfig {
     @Bean 
     public Validator validator() { 
         return new LocalValidatorFactoryBean(); 
-    }
-    
-    @Bean
-    public IStoredUserService storedUserService() {
-        return new StoredUserService();
     }
 }

@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.integration.storeduser;
 
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,7 +39,7 @@ public class StoredUserServiceIT {
     
     @Autowired
     private IStoredUserService userService;
-
+    
     private static final String TEST_USER_NAME = "eatk234";
     
     @BeforeEach
@@ -56,10 +57,12 @@ public class StoredUserServiceIT {
     @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
     public void storeUserDetailsTest() throws UserNotFoundException {
         var loadedUser = userService.findUserByid(1);
-        assertEquals(TEST_USER_NAME, loadedUser.getUserName());
-        assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm());
-        assertEquals(UserRole.DEFAULT.name(), loadedUser.getRole());
-        assertTrue(loadedUser.isActive());
+        assertAll(
+                () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
+                () -> assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
+                () -> assertEquals(UserRole.DEFAULT.name(), loadedUser.getRole()),
+                () -> assertTrue(loadedUser.isActive())
+            );
     }
     
     /**
@@ -69,7 +72,7 @@ public class StoredUserServiceIT {
      */
     @Test
     @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
-    public void storeAndFindUserTest() throws UserNotFoundException {
+    public void findUserTest() throws UserNotFoundException {
         var loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
         assertNotNull(loadedUser);
     }

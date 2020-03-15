@@ -1,0 +1,10 @@
+{
+  "password": "string",
+  "personalSettings": {
+    "email_address": "string",
+    "email_receive": true,
+    "wantsAi": true
+  },
+  "role": "DEFAULT",
+  "username": "string"
+}

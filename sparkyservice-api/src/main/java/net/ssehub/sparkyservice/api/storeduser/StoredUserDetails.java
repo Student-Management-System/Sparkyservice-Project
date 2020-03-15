@@ -40,9 +40,11 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     private PasswordEncoder encoder;
 
     /**
-     * Default constructor - only for testing purposes. 
+     * Default constructor only used for testing puposes (with reflections). 
      */
-    StoredUserDetails() {}
+    @SuppressWarnings("unused")
+    private StoredUserDetails() {}
+    
     public StoredUserDetails(StoredUser userData) {
         super(userData);
     }
