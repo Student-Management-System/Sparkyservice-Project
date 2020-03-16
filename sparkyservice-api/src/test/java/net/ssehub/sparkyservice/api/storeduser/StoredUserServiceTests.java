@@ -59,7 +59,7 @@ public class StoredUserServiceTests {
 
     @Test
     public void findUserByNameTest() throws UserNotFoundException {
-        List<StoredUser> users = userService.findUsersByUsername(USER_NAME);
+        List<StoredUserDetails> users = userService.findUsersByUsername(USER_NAME);
         assertTrue(!users.isEmpty(), "No user was loaded from service class");
     }
 

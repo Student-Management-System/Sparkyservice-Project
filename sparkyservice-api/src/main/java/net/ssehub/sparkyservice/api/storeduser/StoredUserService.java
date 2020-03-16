@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,23 +26,27 @@ public class StoredUserService implements IStoredUserService {
     }
         
     @Override
-    @Nonnull
-    public List<StoredUser> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
+    public @Nonnull List<StoredUserDetails> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
         Optional<List<StoredUser>> usersByName = repository.findByuserName(username);
         usersByName.orElseThrow(() -> new UserNotFoundException("No user with this name was found in database"));
-        return usersByName.get();
+        usersByName.get().forEach(x -> new StoredUserDetails(x));
+        var list = usersByName.get();
+        List<StoredUserDetails> userDetailsList = new ArrayList<StoredUserDetails>();
+        for (StoredUser transformUser : list) {
+            userDetailsList.add(new StoredUserDetails(transformUser));
+        }
+        return userDetailsList;
     }
     
     @Override
-    @Nonnull
-    public StoredUser findUserByNameAndRealm(@Nullable String username, @Nullable String realm) throws UserNotFoundException {
+    public @Nonnull StoredUserDetails findUserByNameAndRealm(@Nullable String username, @Nullable String realm) throws UserNotFoundException {
         Optional<StoredUser> user = repository.findByuserNameAndRealm(username, realm);
-        return user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
-        //return user.orElseGet("");
+        user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
+        return user.map(StoredUserDetails::new).get();
     }
      
     @Override
-    public StoredUser findUserByid(int id) throws UserNotFoundException {
+    public @Nonnull StoredUserDetails findUserByid(int id) throws UserNotFoundException {
         Optional<StoredUser> user = repository.findById(id);
         user.orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
         return user.map(StoredUserDetails::new).get();
@@ -58,8 +63,7 @@ public class StoredUserService implements IStoredUserService {
      * with the next configured AuthProvider
      */
     @Override
-    @Nonnull
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public @Nonnull UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             if (username == null) {
                 throw new UsernameNotFoundException("User with name \"null\" not found");

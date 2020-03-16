@@ -26,7 +26,6 @@ import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.db.user.StoredUser;
 
 /**
  * Test class for storing information into a database with an in-memory database with {@link StoredUserService}.
@@ -64,12 +63,11 @@ public class StoredUserServiceDatabaseTests {
      */
     @Test
     public void storeUserDetailsTest() throws UserNotFoundException {
-        StoredUser loadedUser = userService.findUserByid(1);
-        loadedUser.getRole();
+        StoredUserDetails loadedUser = userService.findUserByid(1);
         assertAll(
                 () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
                 () -> assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
-                () -> assertEquals(UserRole.DEFAULT.name(), loadedUser.getRole()),
+                () -> assertEquals(UserRole.DEFAULT, loadedUser.getUserRole()),
                 () -> assertTrue(loadedUser.isActive())
             );
     }
@@ -81,18 +79,17 @@ public class StoredUserServiceDatabaseTests {
      */
     @Test
     public void findUserTest() throws UserNotFoundException {
-        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        StoredUserDetails loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
         assertNotNull(loadedUser, "User was not loaded from database.");
     }
     
     @Test
     public void changeRoleValueAndStoreTest() throws UserNotFoundException {
-        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
-        final String testRole = "abbbccc";
-        loadedUser.setRole(testRole);
+        StoredUserDetails loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        loadedUser.setUserRole(UserRole.ADMIN);
         userService.storeUser(loadedUser);
         loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
-        assertEquals(testRole, loadedUser.getRole(), "The role was not changed inside the datbase.");
+        assertEquals(UserRole.ADMIN, loadedUser.getUserRole(), "The role was not changed inside the datbase.");
     }
     
     @Test
@@ -100,7 +97,6 @@ public class StoredUserServiceDatabaseTests {
         var secondUser = new StoredUserDetails();
         secondUser.setUserName(TEST_USER_NAME);
         secondUser.setRealm(StoredUserDetails.DEFAULT_REALM);
-        userService.storeUser(secondUser);
         assertThrows(DataIntegrityViolationException.class, () -> userService.storeUser(secondUser));
     }
     
@@ -113,5 +109,16 @@ public class StoredUserServiceDatabaseTests {
     public void findUserNullTest() throws UserNotFoundException {
         assertThrows(UserNotFoundException.class, () -> userService.findUserByNameAndRealm(null, null), "Null is not"
                 + " supported as input while finding users."); 
+    }
+    
+    @Test
+    public void findMultipleEntries() throws UserNotFoundException {
+        var user = new StoredUserDetails();
+        user.setActive(true);
+        user.setRealm("otherRealm");
+        user.setUserName(TEST_USER_NAME);
+        userService.storeUser(user);
+        var users = userService.findUsersByUsername(TEST_USER_NAME);
+        assertEquals(2, users.size());
     }
 }
