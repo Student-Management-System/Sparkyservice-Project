@@ -188,4 +188,16 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public void setRole(String role) {
         throw new IllegalAccessError("Not able to set role with this method. Use a different setter.");
     }
+    
+    /**
+     * Checks if the user is already stored in the database. When this is false and a store operation is invoked, 
+     * the user will be created. Otherwise his data would be changed. This method does not perform any database action.
+     * To be sure that this user is or is not in the database consider using 
+     * {@link StoredUserService#userExistsInDatabase(StoredUser)}.
+     * 
+     * @return true if the user is already stored in the database, false otherwise.
+     */
+    public boolean isStored() {
+        return this.id != 0;
+    }
 }

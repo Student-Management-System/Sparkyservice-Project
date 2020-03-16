@@ -63,7 +63,7 @@ public class StoredUserServiceDatabaseTests {
      */
     @Test
     public void storeUserDetailsTest() throws UserNotFoundException {
-        StoredUserDetails loadedUser = userService.findUserByid(1);
+        StoredUserDetails loadedUser = userService.findUserById(1);
         assertAll(
                 () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
                 () -> assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm()),

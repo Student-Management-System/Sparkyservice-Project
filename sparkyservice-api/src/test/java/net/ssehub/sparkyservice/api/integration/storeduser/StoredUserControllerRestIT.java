@@ -89,7 +89,7 @@ public class StoredUserControllerRestIT {
         
         assertAll(
                 () -> assertEquals(200, result.getResponse().getStatus()),
-                () -> assertNotNull(userService.findUserByid(1))
+                () -> assertNotNull(userService.findUserById(1))
             );
     }
 

@@ -46,7 +46,7 @@ public class StoredUserService implements IStoredUserService {
     }
      
     @Override
-    public @Nonnull StoredUserDetails findUserByid(int id) throws UserNotFoundException {
+    public @Nonnull StoredUserDetails findUserById(int id) throws UserNotFoundException {
         Optional<StoredUser> user = repository.findById(id);
         user.orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
         return user.map(StoredUserDetails::new).get();
@@ -72,6 +72,19 @@ public class StoredUserService implements IStoredUserService {
             return new StoredUserDetails(storedUser);
         } catch (UserNotFoundException e) {
             throw new UsernameNotFoundException(e.getMessage());
+        }
+    }
+    
+    public boolean userExistsInDatabase(@Nullable StoredUser user) {
+        if (user != null && user.getId() != 0) {
+            try {
+                this.findUserById(user.getId());
+                return true;
+            } catch (UserNotFoundException e) {
+                return false;
+            }
+        } else {
+            return true;
         }
     }
 }

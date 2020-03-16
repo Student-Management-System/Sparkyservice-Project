@@ -91,5 +91,18 @@ public class StoredUserServiceTests {
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertEquals(USER_REALM, loadedUser.getRealm(), "Wrong realm provided by user service");
     }
+    
+    /**
+     * Test for {@link StoredUserService#userExistsInDatabase(StoredUser)}.
+     * 
+     * @throws UserNotFoundException
+     */
+    @Test
+    public void userExistTest() throws UserNotFoundException {
+        when(mockedRepository.findById(1)).thenReturn(user);
+        user.ifPresent(u -> {
+            assertTrue(userService.userExistsInDatabase(u));
+        });
+    }
 }
 
