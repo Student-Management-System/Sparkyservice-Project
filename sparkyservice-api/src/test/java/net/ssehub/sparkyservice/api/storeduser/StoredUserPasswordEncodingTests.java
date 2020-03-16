@@ -1,7 +1,7 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.annotation.Nonnull;
 
@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public class StoredUserPasswordTests {
+public class StoredUserPasswordEncodingTests {
       
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -33,7 +33,7 @@ public class StoredUserPasswordTests {
     public void constructorPasswordHashTest(@Nonnull String passwordToCheck) {
         var user = StoredUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
-        assertTrue("Encoded password does not match with bcrypted password", match);
+        assertTrue(match, "Encoded password does not match with bcrypted password");
     }
 
     @ParameterizedTest
@@ -52,9 +52,9 @@ public class StoredUserPasswordTests {
         user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 
-            assertTrue("BCrypt max length is reached.", match);
+            assertTrue(match, "BCrypt max length is reached.");
         } else {
-            assertFalse("The password should be wrong, but is assumed as correct", match);
+            assertFalse(match, "The password should be wrong, but is assumed as correct");
         }
     }
     // maybe check setPassword() with plain text

@@ -1,9 +1,10 @@
-package net.ssehub.sparkyservice.api.integration.storeduser;
+package net.ssehub.sparkyservice.api.storeduser;
 
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -23,11 +25,13 @@ import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.api.storeduser.UserRole;
-import net.ssehub.sparkyservice.api.testing.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.db.user.StoredUser;
 
 /**
- * Integration test class for storing information into a database with
- * {@link StoredUserService}.
+ * Test class for storing information into a database with an in-memory database with {@link StoredUserService}.
+ * The logic checks will be done in {@link StoredUserServiceTests} where the repositories are mocked and will 
+ * return correct objects. 
  * 
  * @author Marcel
  */
@@ -35,7 +39,8 @@ import net.ssehub.sparkyservice.api.testing.UnitTestDataConfiguration;
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @ContextConfiguration(classes= {UnitTestDataConfiguration.class})
-public class StoredUserServiceIT {
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
+public class StoredUserServiceDatabaseTests {
     
     @Autowired
     private IStoredUserService userService;
@@ -44,7 +49,11 @@ public class StoredUserServiceIT {
     
     @BeforeEach
     public void _storeUserToDB() {
-        var user = StoredUserDetails.createStoredLocalUser(TEST_USER_NAME, "", true);
+        var user = new StoredUserDetails();
+        user.setActive(true);
+        user.setRealm(StoredUserDetails.DEFAULT_REALM);
+        user.setUserName(TEST_USER_NAME);
+        user.setUserRole(UserRole.DEFAULT);
         userService.storeUser(user);
     }
     
@@ -54,9 +63,9 @@ public class StoredUserServiceIT {
      * @throws UserNotFoundException if user is not found in database
      */
     @Test
-    @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
     public void storeUserDetailsTest() throws UserNotFoundException {
-        var loadedUser = userService.findUserByid(1);
+        StoredUser loadedUser = userService.findUserByid(1);
+        loadedUser.getRole();
         assertAll(
                 () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
                 () -> assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
@@ -71,16 +80,14 @@ public class StoredUserServiceIT {
      * @throws UserNotFoundException if user is not found in database
      */
     @Test
-    @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
     public void findUserTest() throws UserNotFoundException {
-        var loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
-        assertNotNull(loadedUser);
+        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        assertNotNull(loadedUser, "User was not loaded from database.");
     }
     
     @Test
-    @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
     public void changeRoleValueAndStoreTest() throws UserNotFoundException {
-        var loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
         final String testRole = "abbbccc";
         loadedUser.setRole(testRole);
         userService.storeUser(loadedUser);
@@ -88,6 +95,23 @@ public class StoredUserServiceIT {
         assertEquals(testRole, loadedUser.getRole(), "The role was not changed inside the datbase.");
     }
     
-    // check duplicate: DataIntegrityViolationException
-    // check 
+    @Test
+    public void dataDuplicateUserTest() {
+        var secondUser = new StoredUserDetails();
+        secondUser.setUserName(TEST_USER_NAME);
+        secondUser.setRealm(StoredUserDetails.DEFAULT_REALM);
+        userService.storeUser(secondUser);
+        assertThrows(DataIntegrityViolationException.class, () -> userService.storeUser(secondUser));
+    }
+    
+    /**
+     * Test if the application function is guaranteed when searching for null 
+     * 
+     * @throws UserNotFoundException
+     */
+    @Test
+    public void findUserNullTest() throws UserNotFoundException {
+        assertThrows(UserNotFoundException.class, () -> userService.findUserByNameAndRealm(null, null), "Null is not"
+                + " supported as input while finding users."); 
+    }
 }

@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.testing;
+package net.ssehub.sparkyservice.api.testconf;
 
 
 import org.springframework.boot.test.context.TestConfiguration;

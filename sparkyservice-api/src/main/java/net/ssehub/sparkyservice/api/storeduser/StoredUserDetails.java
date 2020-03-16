@@ -40,10 +40,9 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     private PasswordEncoder encoder;
 
     /**
-     * Default constructor only used for testing puposes (with reflections). 
+     * Default constructor only used for testing purposes.
      */
-    @SuppressWarnings("unused")
-    private StoredUserDetails() {}
+    StoredUserDetails() {}
     
     public StoredUserDetails(StoredUser userData) {
         super(userData);
@@ -163,6 +162,30 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     
     @Override
     public String getAuthority() {
-        return this.getRole();
+        return super.getRole();
+    }
+    
+    /**
+     * Don't use this method. Use {@link #getUserRole()} instead.
+     * 
+     * In this project we realized the user roles with {@link UserRole} enum class. We do not want to use plain string
+     * for authorization processing.
+     */
+    @Override
+    @Deprecated
+    public String getRole() {
+        throw new IllegalAccessError("Not able to get role with this method. Use a different getter.");
+    }
+    
+    /**
+     * Don't use this method. Use {@link #setUserRole(UserRole)} instead.
+     * 
+     * In this project we realized the user roles with {@link UserRole} enum class. We do not want to use plain string
+     * for authorization processing.
+     */
+    @Override
+    @Deprecated
+    public void setRole(String role) {
+        throw new IllegalAccessError("Not able to set role with this method. Use a different setter.");
     }
 }

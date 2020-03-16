@@ -2,10 +2,8 @@ package net.ssehub.sparkyservice.api.storeduser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -20,9 +18,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import net.ssehub.sparkyservice.api.testing.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
+/**
+ * Tests for {@link StoredUserService} logic. It will mock the repository to be sure only correct object will be 
+ * returned. 
+ * 
+ *
+ * @author Marcel
+ */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes= {UnitTestDataConfiguration.class})
 public class StoredUserServiceTests {
@@ -44,7 +49,7 @@ public class StoredUserServiceTests {
     public void _setup() {
         var user1 = StoredUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
         var user2 = StoredUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
-        user2.setRealm("OTHER");  // To simulate a working database, user with the same name should be in different realms
+        user2.setRealm("OTHER"); // To simulate a working database, user with the same name should be in different realms
         this.userList = Optional.of(Arrays.asList(user1, user2));
         this.user = Optional.of(user1);
         
@@ -68,28 +73,23 @@ public class StoredUserServiceTests {
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertNotNull(loadedUser, "User was null.");
     }
-    
+
     @Test
     public void findUserByNameAndRealmNegativeTest() throws UserNotFoundException {
         assertThrows(UserNotFoundException.class, 
                 () -> userService.findUserByNameAndRealm(USER_NAME, "nonExistentRealm"));
     }
-    
+
     @Test
     public void userNameValueTest() throws UserNotFoundException {
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertEquals(USER_NAME, loadedUser.getUserName(), "Wrong username provided by user service");
     }
-    
+
     @Test
     public void userRealmValueTest() throws UserNotFoundException {
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertEquals(USER_REALM, loadedUser.getRealm(), "Wrong realm provided by user service");
-    }
-    
-    @Test
-    public void findUserNullTest() throws UserNotFoundException {
-        assertThrows(UserNotFoundException.class, () -> userService.findUserByNameAndRealm(null, null)); 
     }
 }
 
