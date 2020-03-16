@@ -29,6 +29,14 @@ where the `pom.xml` is the pom of `sparkyservice-project`. Afterwards you could 
 ## Versioning
 The sub-modules inherit the version from the parent project. Currently they are maintained together and only combined releases are scheduled.
 
+For version editing make use of mavens version plugin:
+
+
+	mvn versions:set -DnewVersion=2.50.1-SNAPSHOT
+	mvn versions:revert
+	mvn versions:commit
+
+
 > Currently this project is in alpha state and not ready to use. 
 
 ## IDE
