@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,32 +29,34 @@ import org.springframework.web.context.WebApplicationContext;
 import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
+import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application-test.properties")
-public class AuthenticationSecurityRestIT {
-    
+public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest {
+
     @Autowired
     private WebApplicationContext context;
 
     @Value("${recovery.enabled}")
     private String inMemoryEnabled;
-    
+
     @Value("${recovery.password}")
     private String inMemoryPassword;
-    
+
     @Value("${recovery.user}")
     private String inMemoryUser;
-    
+
     @Value("${jwt.token.header}")
     private String jwtTokenHeader;
-    
+
     @Value("${jwt.token.prefix}")
     private String jwtTokenPrefix;
-    
+
     private MockMvc mvc;
-    
+
     @BeforeEach
     public void setup() {
         mvc = MockMvcBuilders
@@ -63,8 +64,8 @@ public class AuthenticationSecurityRestIT {
           .apply(SecurityMockMvcConfigurers.springSecurity())
           .build();
     }
-    
-    @Test
+
+    @IntegrationTest
     @Disabled("First draft")
     public void localDatabaseAuthTest() throws Exception {
         
@@ -77,7 +78,7 @@ public class AuthenticationSecurityRestIT {
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     public void securityGuestAuthAccesabilityTest() throws Exception {
         MvcResult result = this.mvc
                 .perform(
@@ -92,13 +93,13 @@ public class AuthenticationSecurityRestIT {
                         + "the authentication site")
             );
     }
-    
+
     /**
      * Tests if the authentication would return an Unauthorized status code if the request doesn't provide credentials.
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     public void guestAuthAccesabilityTest() throws Exception {
         this.mvc
             .perform(
@@ -107,7 +108,7 @@ public class AuthenticationSecurityRestIT {
                      .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isUnauthorized());
     }
-    
+
     /**
      * Test for {@link AuthController#authenticate(String, String)} 
      * (currently realized with {@link JwtAuthenticationFilter}). <br>
@@ -117,7 +118,7 @@ public class AuthenticationSecurityRestIT {
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     public void inMemoryAuthenticationTest() throws Exception {
         assumeTrue(inMemoryEnabled != null, "Could not load application-test.properties");
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "InMemory authentication must "
@@ -134,7 +135,7 @@ public class AuthenticationSecurityRestIT {
                     .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isOk());
     }
-    
+
     /**
      * Tests if the server response send a JWT authorization token with the assumption of a successful 
      * authentication request. This could happen if the server authenticates the user successfully and return HTTP
@@ -142,7 +143,7 @@ public class AuthenticationSecurityRestIT {
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     public void jwtAuthenticationTest() throws Exception {
         assumeTrue(inMemoryEnabled != null, "Could not load application-test.properties");
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "InMemory authentication must "
@@ -172,5 +173,5 @@ public class AuthenticationSecurityRestIT {
            );
 
     }
-    
+
 }

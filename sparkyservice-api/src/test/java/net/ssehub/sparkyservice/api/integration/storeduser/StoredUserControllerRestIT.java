@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,19 +21,27 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import net.ssehub.sparkyservice.api.conf.SecurityConfig;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
+import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
+import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
+import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database after each test
-public class StoredUserControllerRestIT {
-
+@TestPropertySource("classpath:application-test.properties")
+//@ContextConfiguration(classes= {UnitTestDataConfiguration.class, SecurityConfig.class})
+public class StoredUserControllerRestIT extends AbstractContainerDatabaseTest {
+    
     @Autowired
     private WebApplicationContext context;
 
@@ -56,7 +63,7 @@ public class StoredUserControllerRestIT {
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     @WithMockUser(value = "user") //username="spring"
     public void securityAddUserAdminAccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
@@ -75,7 +82,7 @@ public class StoredUserControllerRestIT {
      * 
      * @throws Exception
      */
-    @Test
+    @IntegrationTest
     @WithMockUser(value = "user")
     public void addUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
@@ -93,7 +100,7 @@ public class StoredUserControllerRestIT {
             );
     }
 
-    @Test
+    @IntegrationTest
     @WithMockUser(value = "nonAdminUser")
     public void securityAddUserNonAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
@@ -105,7 +112,7 @@ public class StoredUserControllerRestIT {
             .andExpect(status().isForbidden());
     }
 
-    @Test
+    @IntegrationTest
     public void securityEditUserGuestTest() throws Exception {
         
     }
