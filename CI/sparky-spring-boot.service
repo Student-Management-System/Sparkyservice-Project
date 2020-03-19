@@ -1,0 +1,12 @@
+[Unit]
+Description=Sparky Service
+
+[Service]
+WorkingDirectory=/home/elscha/Sparky
+ExecStart=/usr/bin/java -cp sparkyservice-api-0.0.3-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
+Type=simple
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
