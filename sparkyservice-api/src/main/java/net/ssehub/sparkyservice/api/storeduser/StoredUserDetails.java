@@ -29,8 +29,10 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public static final String DEFAULT_ALGO = "BCRYPT";
     private static final long serialVersionUID = 1L;
 
-    @Nonnull
-    public static StoredUserDetails createStoredLocalUser(String userName, String rawPassword, boolean isActive) {
+
+    public static @Nonnull StoredUserDetails createStoredLocalUser(String userName, String rawPassword,
+            boolean isActive) {
+        
         var newUser = new StoredUserDetails(userName, null, DEFAULT_REALM, isActive);
         newUser.encodeAndSetPassword(rawPassword);
         return newUser;
@@ -43,7 +45,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * Default constructor only used for testing purposes.
      */
     StoredUserDetails() {}
-    
+
     public StoredUserDetails(StoredUser userData) {
         super(userData);
     }
@@ -56,7 +58,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public StoredUser getTransactionObject() {
         return new StoredUser(this.userName, this.passwordEntity, this.realm, this.isActive, this.role);
     }
-    
+
     /**
      * Encodes a raw string to bcrypt hash sets the local password entity.
      * @param rawPassword
@@ -75,7 +77,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
         setPasswordEntity(passwordEntityLocal);
         return getPassword();
     }
-    
+
     @Nonnull
     private String encode(String rawPassword) {
         final String encodedPass = getEncoder().encode(rawPassword);
@@ -84,15 +86,15 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
         } 
         return encodedPass;
     }
-    
+
     public UserRole getUserRole() {
         return UserRole.valueOf(role);
     }
-    
+
     public void setUserRole(UserRole role) {
         this.role = notNull(role.name());
     }
-    
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.asList(this);
@@ -159,12 +161,12 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public boolean isEnabled() {
         return isActive;
     }
-    
+
     @Override
     public String getAuthority() {
         return super.getRole();
     }
-    
+
     /**
      * Don't use this method. Use {@link #getUserRole()} instead.
      * 
@@ -176,7 +178,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public String getRole() {
         throw new IllegalAccessError("Not able to get role with this method. Use a different getter.");
     }
-    
+
     /**
      * Don't use this method. Use {@link #setUserRole(UserRole)} instead.
      * 
@@ -188,7 +190,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public void setRole(String role) {
         throw new IllegalAccessError("Not able to set role with this method. Use a different setter.");
     }
-    
+
     /**
      * Checks if the user is already stored in the database. When this is false and a store operation is invoked, 
      * the user will be created. Otherwise his data would be changed. This method does not perform any database action.
