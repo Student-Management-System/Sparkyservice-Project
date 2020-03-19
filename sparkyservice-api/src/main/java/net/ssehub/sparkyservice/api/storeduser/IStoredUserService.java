@@ -16,5 +16,5 @@ public interface IStoredUserService extends UserDetailsService {
     StoredUserDetails findUserById(int id) throws UserNotFoundException;
     List<StoredUserDetails> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
     StoredUserDetails findUserByNameAndRealm(@Nullable String username,@Nullable String realm) throws UserNotFoundException;
-    boolean userExistsInDatabase(@Nullable StoredUser user);
+    boolean isUserInDatabase(@Nullable StoredUser user);
 }
