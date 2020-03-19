@@ -69,7 +69,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             //.antMatchers("/**").permitAll()//maybe remove later
             .anyRequest().authenticated()
             .and()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues))
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues, storedUserDetailService))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), confValues))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -97,7 +97,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         }
         auth.userDetailsService(storedUserDetailService);
         if (Boolean.parseBoolean(ldapEnabled)) {
-            // TODO check if database is online
             auth.ldapAuthentication()
             .contextSource()
             .url(ldapUrls + ldapBaseDn)

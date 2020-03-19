@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -29,6 +30,7 @@ import org.springframework.web.context.WebApplicationContext;
 import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 
@@ -110,6 +112,21 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
     }
 
     /**
+     * Tests if the authentication return unauthorized on wrong password.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void negativeAuthenticationTest() throws Exception {
+        this.mvc.perform(
+                post(ConfigurationValues.AUTH_LOGIN_URL)
+                   .param("password", "sasd")
+                   .param("username", "user")
+                   .accept(MediaType.TEXT_PLAIN))
+           .andExpect(status().isUnauthorized());
+    }
+    
+    /**
      * Test for {@link AuthController#authenticate(String, String)} 
      * (currently realized with {@link JwtAuthenticationFilter}). <br>
      * Real authentication test with a given password and username. Tests if return status code is 200 (OK). <br><br>
@@ -152,6 +169,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
                 + "application-test.properties");
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
                 + " application-test.properties");
+        
         var result = this.mvc
             .perform(
                  post(ConfigurationValues.AUTH_LOGIN_URL)
@@ -174,4 +192,20 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
 
     }
 
+    @Autowired
+    public IStoredUserService userService; 
+    
+    @IntegrationTest
+    public void storeUserAfterAuthTest() throws Exception {
+        var result = this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                        .param("password", "password")
+                        .param("username", "gauss")
+                        .accept(MediaType.TEXT_PLAIN))
+                .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
+                    + "another problem.");
+        assertNotNull(userService.findUserByNameAndRealm("gauss", "LDAP"), "User was not stored into LDAP realm.");
+    }
 }
