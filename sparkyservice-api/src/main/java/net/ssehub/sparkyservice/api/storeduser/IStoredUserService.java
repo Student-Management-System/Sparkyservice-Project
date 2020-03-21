@@ -13,8 +13,8 @@ public interface IStoredUserService extends UserDetailsService {
     
     <T extends StoredUser> void storeUser(@Nonnull T user);
     
-    StoredUserDetails findUserById(int id) throws UserNotFoundException;
-    List<StoredUserDetails> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
-    StoredUserDetails findUserByNameAndRealm(@Nullable String username,@Nullable String realm) throws UserNotFoundException;
+    @Nonnull StoredUserDetails findUserById(int id) throws UserNotFoundException;
+    @Nonnull List<StoredUserDetails> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
+    @Nonnull StoredUserDetails findUserByNameAndRealm(@Nullable String username, @Nullable String realm) throws UserNotFoundException;
     boolean isUserInDatabase(@Nullable StoredUser user);
 }
