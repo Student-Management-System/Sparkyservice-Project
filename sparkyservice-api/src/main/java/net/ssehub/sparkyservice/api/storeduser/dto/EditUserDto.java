@@ -33,10 +33,9 @@ public class EditUserDto {
      * @throws MissingDataException is thrown when the given transfer object is not valid (especially if anything is null)
      */
     public static StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull EditUserDto userDto ) 
-            throws MissingDataException {
-        
+                                                   throws MissingDataException {
         if (userDto.settings != null && userDto.username != null) {
-            databaseUser = SettingsDto.writePersonalSettings(databaseUser, notNull(userDto.settings)); 
+            databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings)); 
             databaseUser.setUserName(notNull(userDto.username));
             boolean changePassword = userDto.passwordDto != null 
                     && databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM;
@@ -60,8 +59,8 @@ public class EditUserDto {
      * @throws MissingDataException is thrown if the DTO is null or invalid
      */
     public static void changePasswordFromDto(@Nonnull StoredUserDetails databaseUserDetails,
-            @Nullable EditUserDto.ChangePasswordDto passwordDto) throws MissingDataException {
-        
+                                             @Nullable EditUserDto.ChangePasswordDto passwordDto) 
+                                             throws MissingDataException {
         if (passwordDto != null) {
             @Nullable String newPassword = passwordDto.newPassword;
             @Nullable String oldPassword = passwordDto.oldPassword;

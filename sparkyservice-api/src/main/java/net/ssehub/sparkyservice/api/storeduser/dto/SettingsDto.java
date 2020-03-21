@@ -10,7 +10,7 @@ import net.ssehub.sparkyservice.db.user.StoredUser;
 public class SettingsDto {
     
     @Nonnull
-    public static StoredUser writePersonalSettings(@Nonnull StoredUser user, @Nonnull SettingsDto settings) {
+    public static StoredUser applyPersonalSettings(@Nonnull StoredUser user, @Nonnull SettingsDto settings) {
         PersonalSettings dbSettings = user.getProfileConfiguration();
         dbSettings.setEmail_address(settings.email_address);
         dbSettings.setWantsAi(settings.wantsAi);
