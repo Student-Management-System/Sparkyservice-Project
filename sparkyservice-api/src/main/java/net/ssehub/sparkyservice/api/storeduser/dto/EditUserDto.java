@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.api.storeduser.dto;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
