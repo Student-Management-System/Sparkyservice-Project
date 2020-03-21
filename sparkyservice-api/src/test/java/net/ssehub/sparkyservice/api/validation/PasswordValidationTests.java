@@ -36,7 +36,8 @@ public class PasswordValidationTests {
                     { "s", false }, 
                     { "aaaa", false }, 
                     { "123456", true }, 
-                    { "ääüö#ä$%&&", true } 
+                    { "ääüö#ä$%&&", true },
+                    { null, false}
                 }  
            );
     }

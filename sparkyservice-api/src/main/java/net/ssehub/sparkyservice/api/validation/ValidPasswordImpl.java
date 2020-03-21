@@ -7,7 +7,7 @@ public class ValidPasswordImpl implements ConstraintValidator<ValidPassword, Str
 
     @Override
     public boolean isValid(String rawPassword, ConstraintValidatorContext arg1) {
-        boolean passwordLengthOk = rawPassword.length() > 5;
+        boolean passwordLengthOk = rawPassword != null && !rawPassword.isBlank() && rawPassword.length() > 5;
         return passwordLengthOk;
     }
 
