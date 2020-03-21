@@ -51,7 +51,7 @@ public class Password implements AnnotatedClass {
     public Password() {
         this("");
     }
-    
+
     /**
      * Takes a plain text password and hash it with the default password algorithm.
      * @param plainTextPassword
@@ -61,17 +61,16 @@ public class Password implements AnnotatedClass {
         this.passwordString = passwordString;
         this.hashAlgorithm = DEFAULT_HASH_ALGORITHM;
     }
-    
+
     public Password(String passwordString, String hashAlgorithm) {
         this.passwordString = passwordString;
         this.hashAlgorithm = hashAlgorithm;
     }
-    
+
     /**
      * Used algorithm for hashing the @link passworString}; 
      */
-    @Nonnull
-    public String getHashAlgorithm() {
+    public @Nonnull String getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -82,9 +81,8 @@ public class Password implements AnnotatedClass {
     public void setPasswordString(String passwordHash) {
         this.passwordString = passwordHash;
     }
-    
-    @Nonnull
-    public String getPasswordString() {
+
+    public @Nonnull String getPasswordString() {
         return this.passwordString;
     }
 }

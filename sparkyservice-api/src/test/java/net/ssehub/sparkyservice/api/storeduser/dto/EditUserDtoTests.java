@@ -190,10 +190,7 @@ public class EditUserDtoTests {
         var validator = Validation.buildDefaultValidatorFactory().getValidator();
         var userDto = createExampleDto();
         assumeTrue(validator.validate(userDto).isEmpty(), "The provided example dto is not correct. Skip this test");
-        if ("null".equals(username)) {
-            username = null;
-        }
-        userDto.username = username;
+        userDto.username = "null".equals(username) ? null : username;
         assertFalse(validator.validate(userDto).isEmpty(), "The validator pass invalid values for username.");
     }
 }

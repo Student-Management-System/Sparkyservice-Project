@@ -31,8 +31,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
 
 
     public static @Nonnull StoredUserDetails createStoredLocalUser(String userName, String rawPassword,
-            boolean isActive) {
-        
+                                                                   boolean isActive) {
         var newUser = new StoredUserDetails(userName, null, DEFAULT_REALM, isActive);
         newUser.encodeAndSetPassword(rawPassword);
         return newUser;
@@ -54,8 +53,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
         super(userName, passwordEntity, realm, isActive, notNull(UserRole.DEFAULT.name()));
     }
 
-    @Nonnull
-    public StoredUser getTransactionObject() {
+    public @Nonnull StoredUser getTransactionObject() {
         return new StoredUser(this.userName, this.passwordEntity, this.realm, this.isActive, this.role);
     }
 
@@ -78,8 +76,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
         return getPassword();
     }
 
-    @Nonnull
-    private String encode(String rawPassword) {
+    private @Nonnull String encode(String rawPassword) {
         final String encodedPass = getEncoder().encode(rawPassword);
         if (encodedPass == null) {
             throw new RuntimeException("BCryptPasswordEncoder returned null as return value - this should not happen");
@@ -104,8 +101,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * Returns the hashed password of the user. If the user is not in the default realm, it will return an empty string
      * return the stored password - never be null but may be empty if the user isn't in the default realm.
      */
-    @Nonnull
-    public String getPassword() {
+    public @Nonnull String getPassword() {
         final var passwordEntityLocal = passwordEntity;
         if (passwordEntityLocal != null) {
             return passwordEntityLocal.getPasswordString();
@@ -123,8 +119,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * Returns springs default {@link BCryptPasswordEncoder}. 
      * @return default instance of {@link BCryptPasswordEncoder}
      */
-    @Nonnull
-    public PasswordEncoder getEncoder() {
+    public @Nonnull PasswordEncoder getEncoder() {
         PasswordEncoder encoder2 = encoder;
         if (encoder2 != null) {
             return encoder2;
@@ -195,7 +190,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
      * Checks if the user is already stored in the database. When this is false and a store operation is invoked, 
      * the user will be created. Otherwise his data would be changed. This method does not perform any database action.
      * To be sure that this user is or is not in the database consider using 
-     * {@link StoredUserService#userExistsInDatabase(StoredUser)}.
+     * {@link StoredUserService#isUserInDatabase(StoredUser)}.
      * 
      * @return true if the user is already stored in the database, false otherwise.
      */
