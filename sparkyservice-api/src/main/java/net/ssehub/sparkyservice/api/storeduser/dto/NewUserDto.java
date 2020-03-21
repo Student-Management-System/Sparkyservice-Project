@@ -1,22 +1,45 @@
 package net.ssehub.sparkyservice.api.storeduser.dto;
 
+import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
+
+import javax.annotation.Nonnull;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
 public class NewUserDto {
-    public static StoredUserDetails transformToUser(NewUserDto newUser) {
-        return StoredUserDetails.createStoredLocalUser(newUser.username, newUser.password, true);
+    
+    /**
+     * Performs a transformation from DTO object to a StoredUserDetails. 
+     * 
+     * @param newUser valid DTO (username and password required)
+     * @return user with the values of the DTO
+     */
+    public static StoredUserDetails transformToUser(@Nonnull NewUserDto newUser) {
+        String username = newUser.username;
+        String password = newUser.password;
+        if (username != null && password != null) {
+            var storedUser =  StoredUserDetails.createStoredLocalUser(username, password, true);
+            storedUser.setUserRole(notNull(newUser.role));
+            final var settings = newUser.personalSettings;
+            if (settings != null) {                
+                SettingsDto.applyPersonalSettings(storedUser, settings);
+            }
+            return storedUser;
+        } else {
+            throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
+        }
     }
     
     @NotBlank
     public String username;
     
+    @NotNull
     @ValidPassword
-    @NotBlank
     public String password; 
     
     public UserRole role;
