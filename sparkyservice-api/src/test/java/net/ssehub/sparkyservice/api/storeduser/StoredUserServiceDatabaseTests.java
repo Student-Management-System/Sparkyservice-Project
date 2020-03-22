@@ -20,16 +20,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
-import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.db.user.StoredUser;
 
 /**
  * Test class for storing information into a database with an in-memory database with {@link StoredUserService}.
- * The logic checks will be done in {@link StoredUserServiceTests} where the repositories are mocked and will 
+ * The logic checks will be done in {@link IStoredUserServiceTests} where the repositories are mocked and will 
  * return correct objects. 
  * 
  * @author Marcel
@@ -42,7 +38,7 @@ import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 public class StoredUserServiceDatabaseTests {
     
     @Autowired
-    private IStoredUserService userService;
+    private StoredUserService userService;
     
     private static final String TEST_USER_NAME = "eatk234";
     
@@ -52,10 +48,10 @@ public class StoredUserServiceDatabaseTests {
         user.setActive(true);
         user.setRealm(StoredUserDetails.DEFAULT_REALM);
         user.setUserName(TEST_USER_NAME);
-        user.setUserRole(UserRole.DEFAULT);
+        user.setRole(UserRole.DEFAULT);
         userService.storeUser(user);
     }
-    
+
     /**
      * Positive test for storing a {@link StoredUserDetails} into the database. 
      * 
@@ -63,15 +59,22 @@ public class StoredUserServiceDatabaseTests {
      */
     @Test
     public void storeUserDetailsTest() throws UserNotFoundException {
-        StoredUserDetails loadedUser = userService.findUserById(1);
+        StoredUser loadedUser = userService.findUserById(1);
         assertAll(
                 () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
                 () -> assertEquals(StoredUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
-                () -> assertEquals(UserRole.DEFAULT, loadedUser.getUserRole()),
+                () -> assertEquals(UserRole.DEFAULT.name(), loadedUser.getRole()),
                 () -> assertTrue(loadedUser.isActive())
             );
     }
-    
+
+    @Test
+    public void storedUserDetailsInstanceTest() throws UserNotFoundException {
+        var storedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        assertTrue(storedUser instanceof StoredUserDetails, "Users in the local realm should be an instance "
+                + "of " + StoredUserDetails.class.getName());
+    }
+
     /**
      * Positive test for finding a user by name and realm. 
      * 
@@ -79,17 +82,17 @@ public class StoredUserServiceDatabaseTests {
      */
     @Test
     public void findUserTest() throws UserNotFoundException {
-        StoredUserDetails loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
         assertNotNull(loadedUser, "User was not loaded from database.");
     }
     
     @Test
     public void changeRoleValueAndStoreTest() throws UserNotFoundException {
-        StoredUserDetails loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
-        loadedUser.setUserRole(UserRole.ADMIN);
+        StoredUser loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
+        loadedUser.setRole(UserRole.ADMIN);
         userService.storeUser(loadedUser);
         loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, StoredUserDetails.DEFAULT_REALM);
-        assertEquals(UserRole.ADMIN, loadedUser.getUserRole(), "The role was not changed inside the datbase.");
+        assertEquals(UserRole.ADMIN.name(), loadedUser.getRole(), "The role was not changed inside the datbase.");
     }
     
     @Test
@@ -120,5 +123,10 @@ public class StoredUserServiceDatabaseTests {
         userService.storeUser(user);
         var users = userService.findUsersByUsername(TEST_USER_NAME);
         assertEquals(2, users.size());
+    }
+
+    @Test
+    public void loadByUserNameInstanceTest() {
+        assertTrue(userService.loadUserByUsername(TEST_USER_NAME) instanceof StoredUserDetails);
     }
 }

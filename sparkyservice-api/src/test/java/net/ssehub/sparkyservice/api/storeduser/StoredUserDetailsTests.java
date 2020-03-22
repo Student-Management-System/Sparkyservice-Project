@@ -41,12 +41,4 @@ class StoredUserDetailsTests {
         assertEquals(StoredUserDetails.DEFAULT_REALM, userDetails.getRealm(), 
                 "The user is user details are not stored in the default realm.");
     }
-    
-    @Test
-    public void userSetRoleTest() {
-        var userDetails = new StoredUserDetails();
-        userDetails.setUserRole(UserRole.DEFAULT);
-        assertEquals(UserRole.DEFAULT.name(), userDetails.getTransactionObject().getRole(), "Userrole was not translated "
-                + "from ENUM type to string type (which is necessary in oder to store the object into the database.");
-    }
 }

@@ -12,7 +12,7 @@ import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
 public class NewUserDto {
-    
+
     /**
      * Performs a transformation from DTO object to a StoredUserDetails. 
      * 
@@ -24,7 +24,7 @@ public class NewUserDto {
         String password = newUser.password;
         if (username != null && password != null) {
             var storedUser =  StoredUserDetails.createStoredLocalUser(username, password, true);
-            storedUser.setUserRole(notNull(newUser.role));
+            storedUser.setRole(notNull(newUser.role));
             final var settings = newUser.personalSettings;
             if (settings != null) {                
                 SettingsDto.applyPersonalSettings(storedUser, settings);
@@ -34,16 +34,16 @@ public class NewUserDto {
             throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
         }
     }
-    
+
     @NotBlank
     public String username;
-    
+
     @NotNull
     @ValidPassword
     public String password; 
-    
+
     public UserRole role;
-    
+
     /**
      * Optional settings. If they aren't provided by the request body a new default set of settings will be generated.
      */

@@ -17,12 +17,16 @@ import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
+/**
+ *
+ * @author Marcel
+ */
 @Service
 public class StoredUserService implements IStoredUserService {
-    
+
     @Autowired
     private StoredUserRepository repository;
-    
+
     /**
      * {@inheritDoc}.
      */
@@ -31,34 +35,42 @@ public class StoredUserService implements IStoredUserService {
         StoredUser stUser = new StoredUser((StoredUser) user);
         repository.save(stUser);
     }
-        
+
     /**
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull List<StoredUserDetails> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
+    public @Nonnull List<StoredUser> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
         Optional<List<StoredUser>> usersByName = repository.findByuserName(username);
         usersByName.orElseThrow(() -> new UserNotFoundException("No user with this name was found in database"));
         usersByName.get().forEach(x -> new StoredUserDetails(x));
         var list = usersByName.get();
-        List<StoredUserDetails> userDetailsList = new ArrayList<StoredUserDetails>();
+        List<StoredUser> userList = new ArrayList<StoredUser>();
         for (StoredUser transformUser : list) {
-            userDetailsList.add(new StoredUserDetails(transformUser));
+            if (transformUser.getRealm().equals(StoredUserDetails.DEFAULT_REALM)) {
+                userList.add(new StoredUserDetails(transformUser));
+            } else {
+                userList.add(transformUser);
+            }
         }
-        return userDetailsList;
+        return userList;
     }
-    
+
     /**
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull StoredUserDetails findUserByNameAndRealm(@Nullable String username, @Nullable String realm) 
+    public @Nonnull StoredUser findUserByNameAndRealm(@Nullable String username, @Nullable String realm) 
             throws UserNotFoundException {
         Optional<StoredUser> user = repository.findByuserNameAndRealm(username, realm);
         user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
-        return user.map(StoredUserDetails::new).get();
+        if (user.get().getRealm().equals(StoredUserDetails.DEFAULT_REALM)) {
+            return user.map(StoredUserDetails::new).get();
+        } else {
+            return user.get();
+        }
     }
-     
+
     /**
      * {@inheritDoc}.
      */
@@ -70,14 +82,8 @@ public class StoredUserService implements IStoredUserService {
     }
 
     /**
-     * Used by spring security for loading users (springs {@link UserDetails} service) from the local database.
-     * Because this method is only used by spring for local user lookups, 
-     * it will search only in {@link StoredUserDetails.DEDEFAULT_REALM}.
-     * 
-     * @param username name to look for
-     * @return userDetails from the database - never null
-     * @throws When a the given username is not found in the database with the default realm - spring will continue 
-     * with the next configured AuthProvider
+     * This method only searched in the {@link StoredUserDetails#DEFAULT_REALM} for usernames.
+     * {@inheritDoc}
      */
     @Override
     public @Nonnull UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -91,7 +97,7 @@ public class StoredUserService implements IStoredUserService {
             throw new UsernameNotFoundException(e.getMessage());
         }
     }
-    
+
     /**
      * {@inheritDoc}.
      */
@@ -111,17 +117,9 @@ public class StoredUserService implements IStoredUserService {
         }
         return false;
     }
-    
+
     /**
-     * Converts a given {@link UserDetails} to {@link StoredUser}. The details which must be one of the supported 
-     * implementation. 
-     * <br><br>
-     * Supported implementations: <br>
-     * <ul><li> {@link StoredUserDetails}</li>
-     * <li>{@link LdapUserDetailsImpl}</li></ul>
-     * 
-     * @param details typically provided by spring security during authentication process
-     * @return StoredUser object with the values from the user details
+     * {@inheritDoc}.
      */
     public @Nonnull StoredUser convertUserDetailsToStoredUser(@Nullable UserDetails details) {
         var optDetails = Optional.ofNullable(details);
@@ -133,9 +131,10 @@ public class StoredUserService implements IStoredUserService {
         }
         throw new UnsupportedOperationException("Converting with the given user details not supported.");
     }
-    
+
     /**
-     * Cast user details to stored user. 
+     * Cast user details to stored user and tries to use the explicit implementation. 
+     * <br>
      * Supported implementations: <br>
      * <ul><li> {@link StoredUserDetails}</li>
      * <li>{@link LdapUserDetailsImpl}</li></ul>
@@ -152,8 +151,7 @@ public class StoredUserService implements IStoredUserService {
                     "LDAP", 
                     details.isEnabled(),
                     notNull(UserRole.DEFAULT.name()));
-
-        } else if (details instanceof StoredUserDetails)  {
+        } else if (details instanceof StoredUserDetails || details instanceof StoredUser)  {
             storeUser = (StoredUser) details;
         }
         return storeUser;

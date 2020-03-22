@@ -9,18 +9,23 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 import net.ssehub.sparkyservice.db.user.Password;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 /**
- * Class for authentication through Spring Security in a local realm.
+ * Class for authentication with SpringSecurity.  This class should be mainly used for authenticated users which are 
+ * stored in the {@link #DEFAULT_REALM}. 
  * 
- * @author marcel
+ * @author Marcel
  */
 @ParametersAreNonnullByDefault
 public class StoredUserDetails extends StoredUser implements UserDetails, GrantedAuthority {
@@ -28,8 +33,19 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     public static final String DEFAULT_REALM = "LOCAL";
     public static final String DEFAULT_ALGO = "BCRYPT";
     private static final long serialVersionUID = 1L;
+    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
 
+    /**
+     * Creates a new user in the {@link StoredUserDetails#DEFAULT_REALM} and encodes the password. <br>
+     * This type should only be used for users which aren't use any other authentication methods (realms) than 
+     * a {@link UserDetailsService}.
+     * 
+     * @param userName used name of the user (unique per realm!)
+     * @param rawPassword not encrypted password which will be encrypted with bcrypt
+     * @param isActive decide if the user can log in or not
+     * @return new instance of StoredUserDetails. 
+     */
     public static @Nonnull StoredUserDetails createStoredLocalUser(String userName, String rawPassword,
                                                                    boolean isActive) {
         var newUser = new StoredUserDetails(userName, null, DEFAULT_REALM, isActive);
@@ -51,6 +67,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
 
     private StoredUserDetails(String userName, @Nullable Password passwordEntity, String realm, boolean isActive) {
         super(userName, passwordEntity, realm, isActive, notNull(UserRole.DEFAULT.name()));
+        log.debug("New StoredUserDetails created.");
     }
 
     public @Nonnull StoredUser getTransactionObject() {
@@ -88,10 +105,6 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
         return UserRole.valueOf(role);
     }
 
-    public void setUserRole(UserRole role) {
-        this.role = notNull(role.name());
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.asList(this);
@@ -110,6 +123,7 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
                 throw new RuntimeException("User has no password even though he is in the default realm. This "
                         + "shouldn't be happen.");
             } else {
+                log.warn("User is in default realm but doesn*t have a password.");
                 return "";
             }
         }
@@ -160,30 +174,6 @@ public class StoredUserDetails extends StoredUser implements UserDetails, Grante
     @Override
     public String getAuthority() {
         return super.getRole();
-    }
-
-    /**
-     * Don't use this method. Use {@link #getUserRole()} instead.
-     * 
-     * In this project we realized the user roles with {@link UserRole} enum class. We do not want to use plain string
-     * for authorization processing.
-     */
-    @Override
-    @Deprecated
-    public String getRole() {
-        throw new IllegalAccessError("Not able to get role with this method. Use a different getter.");
-    }
-
-    /**
-     * Don't use this method. Use {@link #setUserRole(UserRole)} instead.
-     * 
-     * In this project we realized the user roles with {@link UserRole} enum class. We do not want to use plain string
-     * for authorization processing.
-     */
-    @Override
-    @Deprecated
-    public void setRole(String role) {
-        throw new IllegalAccessError("Not able to set role with this method. Use a different setter.");
     }
 
     /**

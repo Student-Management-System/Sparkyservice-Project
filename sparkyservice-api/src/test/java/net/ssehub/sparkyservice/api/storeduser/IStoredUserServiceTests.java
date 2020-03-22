@@ -24,15 +24,15 @@ import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 /**
- * Tests for {@link StoredUserService} logic. It will mock the repository to be sure only correct object will be 
- * returned. 
- * 
+ * Tests for {@link IStoredUserService} implementation. This test class should use the same implementation bean which 
+ * is normally used in the application to make the test useful. 
+ * The repository will be mocked to be sure, only the correct objects are used. 
  *
  * @author Marcel
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes= {UnitTestDataConfiguration.class})
-public class StoredUserServiceTests {
+public class IStoredUserServiceTests {
     
     @Autowired
     private IStoredUserService userService;
@@ -61,7 +61,7 @@ public class StoredUserServiceTests {
     @Test
     public void findUserByNameTest() throws UserNotFoundException {
         when(mockedRepository.findByuserName(USER_NAME)).thenReturn(userList);
-        List<StoredUserDetails> users = userService.findUsersByUsername(USER_NAME);
+        List<StoredUser> users = userService.findUsersByUsername(USER_NAME);
         assertTrue(!users.isEmpty(), "No user was loaded from service class");
     }
 
@@ -147,7 +147,7 @@ public class StoredUserServiceTests {
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(user);
         assertNotNull(userService.loadUserByUsername(USER_NAME));
     }
-    
+
     @Test
     public void loadUserByNameNullTest() {
         assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername(null));

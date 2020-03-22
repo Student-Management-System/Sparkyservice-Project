@@ -14,6 +14,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import net.ssehub.sparkyservice.db.hibernate.AnnotatedClass;
+import net.ssehub.sparkyservice.util.NullHelpers;
 
 @Entity
 @Table(
@@ -147,6 +148,15 @@ public class StoredUser implements AnnotatedClass {
     }
     
     /**
+     * Helper method if a project uses enums for type safety. It will use the name() method of the enum.
+     * 
+     * @param realm
+     */
+    public void setRealm(Enum<?> realm) {
+        setRealm(NullHelpers.notNull(realm.name()));
+    }
+    
+    /**
      * Single authority role of the user.Only one role at a time is supported.
      * 
      * @return name of a role
@@ -162,6 +172,16 @@ public class StoredUser implements AnnotatedClass {
      */
     public void setRole(String role) {
         this.role = role;
+    }
+    
+    /**
+     * Sets a single authority role to the user. Old role will be overridden.
+     * Helper method if a project uses enums for type safety. It will use the name() method of the enum.
+     * 
+     * @param role name of a role
+     */
+    public void setRole(Enum<?> role) {
+        setRole(NullHelpers.notNull(role.name()));
     }
     
     /**
