@@ -1,0 +1,13 @@
+{
+  "passwordDto": {
+    "newPassword": "string",
+    "oldPassword": "string"
+  },
+  "realm": "LOCAL",
+  "settings": {
+    "email_address": "test@test",
+    "email_receive": true,
+    "wantsAi": true
+  },
+  "username": "testuser"
+}
