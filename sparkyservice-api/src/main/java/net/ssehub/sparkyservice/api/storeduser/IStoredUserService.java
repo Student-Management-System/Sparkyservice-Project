@@ -24,7 +24,7 @@ public interface IStoredUserService extends UserDetailsService {
      * Make a user persistent (in any kind of data storage).
      * 
      * @param <T> A class which must extends from {@link StoredUser} (which holds the JPA definitions).
-     * @param user Is saved in a persistence way
+     * @param user Is saved in a persistence way (must hold username and realm)
      */
     <T extends StoredUser> void storeUser(@Nonnull T user);
 
@@ -72,11 +72,8 @@ public interface IStoredUserService extends UserDetailsService {
     @Nonnull UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
     /**
-     * Converts a given {@link UserDetails} to {@link StoredUser}. The details must be a supported implementation 
-     * (anything which extends from {@link StoredUser}).
-     * 
-     * @param details typically provided by spring security during authentication process
-     * @return StoredUser object with the values from the user details
+     * The default transformer used by this service.
+     * @return 
      */
-    @Nonnull StoredUser convertUserDetailsToStoredUser(@Nullable UserDetails details);
+    StoredUserTransformer getDefaultTransformer();
 }

@@ -1,11 +1,11 @@
 package net.ssehub.sparkyservice.api.integration.storeduser;
 
-import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
 import static net.ssehub.sparkyservice.api.conf.ControllerPath.MANAGEMENT_ADD_USER;
 import static net.ssehub.sparkyservice.api.conf.ControllerPath.MANAGEMENT_EDIT_USER;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,12 +35,10 @@ import org.springframework.web.context.WebApplicationContext;
 
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.StoredUserController;
-import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
-import net.ssehub.sparkyservice.db.user.StoredUser;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes= {TestUserConfiguration.class})
@@ -165,7 +164,7 @@ public class StoredUserControllerRestIT extends AbstractContainerDatabaseTest {
      * @throws Exception
      */
     @IntegrationTest
-    @WithUserDetails(userDetailsServiceBeanName="defaultUserService") // must NOT match with values from EditUserDto.json.txt
+    @WithUserDetails(value = "testuser123", userDetailsServiceBeanName="defaultUserService") // must NOT match with values from EditUserDto.json.txt
     public void editOtherUsersNegativeTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
@@ -183,6 +182,8 @@ public class StoredUserControllerRestIT extends AbstractContainerDatabaseTest {
      */
     @IntegrationTest
     @WithMockUser(value = "user")
+    @Disabled
     public void editUserAdminSuccessTest() throws Exception {
+        fail("Not implemented");
     }
 }

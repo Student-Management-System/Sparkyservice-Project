@@ -55,10 +55,10 @@ public class AuthController {
                         @RequestParam(value = "password") @NotNull String password,
                         HttpServletResponse response, HttpServletRequest request) {
         try {
-            UsernamePasswordAuthenticationToken userDetails = JwtAuthentication.
+            UsernamePasswordAuthenticationToken userDetails = JwtAuth.
                     extractCredentialsFromHttpRequest(request);
             var authentication = this.authManager.authenticate(userDetails);
-            var token = JwtAuthentication.createJwtToken(authentication, confValues);
+            var token = JwtAuth.createJwtFromAuthentication(authentication, confValues);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             response.addHeader(confValues.getJwtTokenHeader(), 
                     confValues.getJwtTokenPrefix() + token);

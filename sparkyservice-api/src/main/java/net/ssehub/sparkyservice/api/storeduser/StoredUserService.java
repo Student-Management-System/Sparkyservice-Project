@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.storeduser;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
+import static net.ssehub.sparkyservice.api.conf.ConfigurationValues.REALM_UNKNOWN;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,6 @@ import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.db.user.StoredUser;
@@ -33,7 +33,11 @@ public class StoredUserService implements IStoredUserService {
     @Override
     public <T extends StoredUser> void storeUser(@Nonnull T user) {
         StoredUser stUser = new StoredUser((StoredUser) user);
-        repository.save(stUser);
+        if (user.getRealm().isBlank() || user.getUserName().isBlank()) {
+            throw new IllegalArgumentException("Realm and username must not be blank."); 
+        } else if (!user.getRealm().equals(REALM_UNKNOWN)) {
+            repository.save(stUser);
+        }
     }
 
     /**
@@ -118,42 +122,8 @@ public class StoredUserService implements IStoredUserService {
         return false;
     }
 
-    /**
-     * {@inheritDoc}.
-     */
-    public @Nonnull StoredUser convertUserDetailsToStoredUser(@Nullable UserDetails details) {
-        var optDetails = Optional.ofNullable(details);
-        if (optDetails.isPresent() && optDetails.get().getUsername() != null) {
-            @Nullable StoredUser storeUser = castUserToStoredOne(notNull(optDetails.get()));
-            if (storeUser != null && !isUserInDatabase(storeUser)) {
-                return storeUser;
-            }
-        }
-        throw new UnsupportedOperationException("Converting with the given user details not supported.");
-    }
-
-    /**
-     * Cast user details to stored user and tries to use the explicit implementation. 
-     * <br>
-     * Supported implementations: <br>
-     * <ul><li> {@link StoredUserDetails}</li>
-     * <li>{@link LdapUserDetailsImpl}</li></ul>
-     * 
-     * @param details typically provided by spring security during authentication process
-     * @return StoredUser which holds data from the given details
-     */
-    private @Nullable StoredUser castUserToStoredOne(@Nonnull UserDetails details) {
-        StoredUser storeUser = null;
-        if (details instanceof LdapUserDetailsImpl) {
-            storeUser = new StoredUser(
-                    notNull(details.getUsername()),
-                    null, 
-                    "LDAP", 
-                    details.isEnabled(),
-                    notNull(UserRole.DEFAULT.name()));
-        } else if (details instanceof StoredUserDetails || details instanceof StoredUser)  {
-            storeUser = (StoredUser) details;
-        }
-        return storeUser;
+    @Override
+    public StoredUserTransformer getDefaultTransformer() {
+        return new LightUserTransformerImpl(this);
     }
 }

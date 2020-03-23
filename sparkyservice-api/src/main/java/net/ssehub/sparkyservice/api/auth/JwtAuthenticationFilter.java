@@ -15,17 +15,19 @@ import org.slf4j.LoggerFactory;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
+import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
+import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final ConfigurationValues confValues;
-    private final StoredUserService userService;
+    private final IStoredUserService userService;
 
-    private final Logger log = LoggerFactory.getLogger(JwtAuthentication.class);
-    
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, 
-                                   ConfigurationValues jwtConf, IStoredUserService userSerivce) {
+    private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
+
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, ConfigurationValues jwtConf,
+                                   IStoredUserService userSerivce) {
         this.userService = (StoredUserService) userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
@@ -34,7 +36,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        var userDetails = JwtAuthentication.extractCredentialsFromHttpRequest(request);
+        var userDetails = JwtAuth.extractCredentialsFromHttpRequest(request);
         return authenticationManager.authenticate(userDetails);
     }
 
@@ -44,14 +46,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         log.info("Successful authentication with JWT");
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
+            var details = (UserDetails) principal;
+            StoredUser user;
             try {
-                var user = userService.convertUserDetailsToStoredUser((UserDetails) principal);
-                userService.storeUser(user);
-            } catch (UnsupportedOperationException e) {
-                log.warn("Could not store authenticated user");
+                user = userService.getDefaultTransformer().extendFromUserDetails(details);
+                if (!userService.isUserInDatabase(user)) {
+                    userService.storeUser(user);
+                }
+                String token = JwtAuth.createJwtTokenWithRealm(details, confValues, user.getRealm());
+                response.addHeader(confValues.getJwtTokenHeader(), confValues.getJwtTokenPrefix() + " " + token);
+            } catch (UserNotFoundException e) {
+                log.info("A user which is currently logged in, is not found in the database");
             }
         }
-        String token = JwtAuthentication.createJwtToken(authentication, confValues);
-        response.addHeader(confValues.getJwtTokenHeader(), confValues.getJwtTokenPrefix() + " " + token);
     }
 }
