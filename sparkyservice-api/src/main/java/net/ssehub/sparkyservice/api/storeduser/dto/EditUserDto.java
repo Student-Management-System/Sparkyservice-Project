@@ -32,7 +32,7 @@ public class EditUserDto {
      * @return the StoredUser with changed values
      * @throws MissingDataException is thrown when the given transfer object is not valid (especially if anything is null)
      */
-    public static StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull EditUserDto userDto ) 
+    public static @Nonnull StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull EditUserDto userDto ) 
                                                    throws MissingDataException {
         if (userDto.settings != null && userDto.username != null) {
             databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings)); 
