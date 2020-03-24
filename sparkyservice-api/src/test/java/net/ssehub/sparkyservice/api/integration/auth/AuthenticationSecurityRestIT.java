@@ -4,20 +4,21 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.TestPropertySource;
@@ -30,6 +31,7 @@ import org.springframework.web.context.WebApplicationContext;
 import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
@@ -65,12 +67,6 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
           .webAppContextSetup(context)
           .apply(SecurityMockMvcConfigurers.springSecurity())
           .build();
-    }
-
-    @IntegrationTest
-    @Disabled("First draft")
-    public void localDatabaseAuthTest() throws Exception {
-        
     }
 
     /**
@@ -207,5 +203,44 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
         assertNotNull(userService.findUserByNameAndRealm("gauss", "LDAP"), "User was not stored into LDAP realm.");
+    }
+    
+    /**
+     * Test for {@link AuthController#isTokenValid(org.springframework.security.core.Authentication)}.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void checkAuthNegativeTest() throws Exception {
+        this.mvc
+            .perform(
+                get(ControllerPath.AUTHENTICATION_CHECK)
+                   .accept(MediaType.APPLICATION_JSON_VALUE))
+           .andExpect(status().isForbidden());
+    }
+    
+    /**
+     * Tests an authentication attempt with a real JWT token and not with a mocked user.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void authWithJwtTokenTest() throws Exception {
+        assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
+        var result = this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                        .param("password", inMemoryPassword)
+                        .param("username", inMemoryUser)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
+        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        this.mvc
+            .perform(
+                get(ControllerPath.AUTHENTICATION_CHECK)
+                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
+                   .accept(MediaType.APPLICATION_JSON_VALUE))
+           .andExpect(status().isOk());
     }
 }

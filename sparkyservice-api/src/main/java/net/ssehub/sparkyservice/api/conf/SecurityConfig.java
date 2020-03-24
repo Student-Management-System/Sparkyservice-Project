@@ -66,6 +66,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             .antMatchers(ControllerPath.MANAGEMENT_ADD_USER).hasRole(UserRole.ADMIN.name()) // admin: allowed to add users
+            .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             //.antMatchers("/**").permitAll()//maybe remove later
             .anyRequest().authenticated()
             .and()
