@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public interface StoredUserTransformer {

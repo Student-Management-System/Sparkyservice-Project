@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,6 +26,7 @@ import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
 import net.ssehub.sparkyservice.api.storeduser.dto.NewUserDto;
+import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.UserEditException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
@@ -57,8 +57,7 @@ public class StoredUserController {
     }
 
     @PutMapping(ControllerPath.MANAGEMENT_EDIT_USER)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid EditUserDto userDto,
-                              @AuthenticationPrincipal @Nullable UserDetails users, Authentication auth)
+    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid EditUserDto userDto, @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Could not get authentication");

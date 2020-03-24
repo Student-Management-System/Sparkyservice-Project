@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
+import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
+
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,7 +60,7 @@ public class JwtAuth {
                 .claim("rol", roles)
                 .claim("realm", "") // TODO
                 .compact();
-            return token;
+            return notNull(token);
     }
 
     public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) {

@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 import net.ssehub.sparkyservice.util.NullHelpers;
 

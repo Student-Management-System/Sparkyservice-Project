@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.storeduser;
+package net.ssehub.sparkyservice.api.storeduser.exceptions;
 
 public class MissingDataException extends Exception {
     private static final long serialVersionUID = -8538327422413216690L;
