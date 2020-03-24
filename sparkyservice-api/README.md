@@ -23,3 +23,13 @@ to the docker socket.
 Otherwise skip all integrations tests
 
 	mvn install -DskipIts
+	
+# Developing
+
+## Test instance:
+For developers which uses this project, we provide a test live instance reachable under `147.172.178.30:8080`. 
+
+## Swagger
+Swagger is reachable under `/swagger-ui.html`. On the live instance: `147.172.178.30:8080/swagger-ui.html`.
+
+
