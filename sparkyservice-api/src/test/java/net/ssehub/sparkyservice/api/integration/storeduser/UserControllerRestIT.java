@@ -34,7 +34,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserController;
+import net.ssehub.sparkyservice.api.storeduser.UserController;
 import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
@@ -45,7 +45,7 @@ import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 //@ContextConfiguration(classes= {UnitTestDataConfiguration.class, SecurityConfig.class})
-public class StoredUserControllerRestIT extends AbstractContainerDatabaseTest {
+public class UserControllerRestIT extends AbstractContainerDatabaseTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -135,7 +135,7 @@ public class StoredUserControllerRestIT extends AbstractContainerDatabaseTest {
     }
 
     /**
-     * Test for {@link StoredUserController#editLocalUser(EditUserDto, UserDetails)}. <br>
+     * Test for {@link UserController#editLocalUser(EditUserDto, UserDetails)}. <br>
      * Tests if a user can edit his own data. For mocking the user a specific test DetailsService is used:
      * {@link TestUserConfiguration#defaultDetailsService() which authenticates a user in the DEFAULT_REALM and with 
      * username "testuser". This configuration must match with the values of EditUserDto.json.txt

@@ -34,9 +34,9 @@ import net.ssehub.sparkyservice.db.user.StoredUser;
  * @author Marcel
  */
 @RestController
-public class StoredUserController {
+public class UserController {
 
-    private Logger log = LoggerFactory.getLogger(StoredUserController.class);
+    private Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private IStoredUserService userService;
