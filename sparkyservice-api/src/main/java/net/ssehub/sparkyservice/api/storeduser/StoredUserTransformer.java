@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
@@ -41,6 +42,8 @@ public interface StoredUserTransformer {
     @Nonnull StoredUser castFromUserDetails(@Nullable UserDetails details) throws MissingDataException;
 
     @Nonnull StoredUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
-    
+
     @Nullable StoredUser extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException;
+
+    @Nonnull StoredUser extendFromUserDto(@Nullable UserDto user) throws MissingDataException, UserNotFoundException;
 }

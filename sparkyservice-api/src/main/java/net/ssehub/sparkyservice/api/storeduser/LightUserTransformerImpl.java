@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 import net.ssehub.sparkyservice.util.NullHelpers;
@@ -35,7 +36,7 @@ public final class LightUserTransformerImpl implements StoredUserTransformer {
     LightUserTransformerImpl(IStoredUserService userService) {
         this.userSerivce = userService;
     }
-    
+
     /**
      * {@inheritDoc}
      * 
@@ -141,14 +142,26 @@ public final class LightUserTransformerImpl implements StoredUserTransformer {
      * <li> {@link UserDetails}</li></ul>
      */
     @Override
-    public @Nullable StoredUser extendFromAny(@Nullable Object principal) throws UserNotFoundException, MissingDataException {
+    public @Nullable StoredUser extendFromAny(@Nullable Object principal) 
+                                              throws UserNotFoundException, MissingDataException {
         StoredUser user = null;
         if (principal instanceof SparkysAuthPrincipal) {
-            var userPrincipal = (SparkysAuthPrincipal) principal;
-            user = extendFromSparkyPrincipal(userPrincipal);
+            user = extendFromSparkyPrincipal((SparkysAuthPrincipal) principal);
         } else if (principal instanceof UserDetails) {
             user = castFromUserDetails((UserDetails) principal);
+        } else if (principal instanceof UserDto) {
+            user = extendFromUserDto((UserDto) principal);
         }
         return user;
+    }
+
+    @Override
+    public @Nonnull StoredUser extendFromUserDto(@Nullable UserDto userDto) 
+                                                 throws MissingDataException, UserNotFoundException {
+        if (userDto != null && userDto.username != null && userDto.realm != null) {
+            //StoredUser user = new StoredUser(userDto.username, null, userDto.realm, false, UserRole.DEFAULT.name());
+            return userSerivce.findUserByNameAndRealm(userDto.username, userDto.realm);
+        }
+        throw new MissingDataException("Identifier not provided");
     }
 }
