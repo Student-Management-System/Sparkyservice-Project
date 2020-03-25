@@ -39,7 +39,6 @@ public class JwtAuth {
         }
     }
 
-
     public static String createJwtToken(UserDetails user, ConfigurationValues jwtConf) {
         return createJwtTokenWithRealm(user, jwtConf, "");
     }
@@ -58,7 +57,7 @@ public class JwtAuth {
                 .setSubject(user.getUsername())
                 .setExpiration(new Date(System.currentTimeMillis() + 864000000))
                 .claim("rol", roles)
-                .claim("realm", "") // TODO
+                .claim("realm", realm)
                 .compact();
             return notNull(token);
     }
