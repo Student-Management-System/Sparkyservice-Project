@@ -2,6 +2,8 @@ package net.ssehub.sparkyservice.api.storeduser.dto;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
 
+import java.io.Serializable;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -9,10 +11,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
+import net.ssehub.sparkyservice.api.storeduser.UserRole;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
-public class UserDto {
+public class UserDto implements Serializable {
+
+    private static final long serialVersionUID = 4775708076296820879L;
 
     public static class ChangePasswordDto {
         public String oldPassword;
@@ -32,17 +37,31 @@ public class UserDto {
      * @throws MissingDataException is thrown when the given transfer object is not valid (especially 
      *         if anything is null)
      */
-    public static @Nonnull StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto ) 
+    public static @Nonnull StoredUser defaultUserDtoEdit(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto ) 
                                                    throws MissingDataException {
+        return editUserFromDto(databaseUser, userDto, false);
+    }
+
+    public static @Nonnull StoredUser adminUserDtoEdit(@Nonnull StoredUser databaseUser, 
+                                                       @Nonnull UserDto userDto) throws MissingDataException {
+        return editUserFromDto(databaseUser, userDto, true);
+    }
+    
+    private static @Nonnull StoredUser editUserFromDto(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto, 
+                                                       boolean adminMode) throws MissingDataException {
         if (userDto.settings != null && userDto.username != null) {
             databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings));
             databaseUser.setUserName(notNull(userDto.username));
             boolean changePassword = userDto.passwordDto != null 
                     && databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM;
+            boolean adminPassChange = adminMode && userDto.passwordDto.newPassword != null;
             if (changePassword) {
-                var localUser = new StoredUserDetails(databaseUser);
-                changePasswordFromDto(localUser, userDto.passwordDto);
-                databaseUser = localUser.getTransactionObject();
+                defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
+            } else if (adminPassChange) {
+                adminApplyNewPasswordFromDto(databaseUser, userDto.passwordDto.newPassword);
+            }
+            if (adminMode && userDto.role != null) {
+                databaseUser.setRole(notNull(userDto.role));
             }
             return databaseUser;
         } else {
@@ -51,29 +70,59 @@ public class UserDto {
     }
 
     /**
-     * Changes the password of the given user with the given passwordDto. The {@link ChangePasswordDto#oldPassword} must
+     * Try to apply a new password to the given user. The {@link ChangePasswordDto#oldPassword} must
      * match the one which is already stored in the database. Otherwise the password won't be changed.
      * 
      * @param databaseUserDetails user who's password should be changed
      * @param passwordDto contains old and new password (both values can be null)
-     * @throws MissingDataException is thrown if the DTO is null or invalid
      */
-    public static void changePasswordFromDto(@Nonnull StoredUserDetails databaseUserDetails,
-                                             @Nullable UserDto.ChangePasswordDto passwordDto) 
-                                             throws MissingDataException {
-        if (passwordDto != null) {
+    public static void defaultApplyNewPasswordFromDto(@Nullable StoredUser databaseUser,
+                                                      @Nullable UserDto.ChangePasswordDto passwordDto) {
+        if (passwordDto != null && databaseUser != null) {
             @Nullable String newPassword = passwordDto.newPassword;
             @Nullable String oldPassword = passwordDto.oldPassword;
             if (newPassword != null && oldPassword != null) {
-                boolean oldPasswordIsRight = databaseUserDetails
-                        .getEncoder()
-                        .matches(oldPassword, databaseUserDetails.getPassword());
-                if (oldPasswordIsRight) {
-                    databaseUserDetails.encodeAndSetPassword(newPassword);
-                }
+                applyPasswordFromDto(databaseUser, newPassword, oldPassword, false);
             }
-        } else {
-            throw new MissingDataException("PasswordDto is null");
+        }
+    }
+
+    /**
+     * Apply a new password to the given user. 
+     * 
+     * @param databaseUser User where the password should be changed
+     * @param newPassword New raw password
+     */
+    public static void adminApplyNewPasswordFromDto(@Nullable StoredUser databaseUser,
+                                                    @Nullable String newPassword) {
+        if (databaseUser != null && newPassword != null) {
+            applyPasswordFromDto(databaseUser, newPassword, "", true);
+        }
+    }
+
+    /**
+     * Changes the password of a given use with the given password DTO. <br>
+     * In case of an admin mode, only a new password must be provided in order to succeed.
+     * 
+     * @param databaseUser User to edit
+     * @param newPassword New raw password (necessary)
+     * @param oldPassword The old hashed password (only on non adminEdits necessary)
+     * @param adminEdit Decide if the old password must match with the new one
+     */
+    private static void applyPasswordFromDto(@Nonnull StoredUser databaseUser, @Nonnull String newPassword,
+                                             @Nonnull String oldPassword, boolean adminEdit) {
+        if (!newPassword.isBlank()) {
+            StoredUserDetails localUser;
+            if (databaseUser instanceof StoredUserDetails) {
+                localUser = (StoredUserDetails) databaseUser;
+                if (adminEdit || localUser.getEncoder().matches(oldPassword, localUser.getPassword())) {
+                    localUser.encodeAndSetPassword(newPassword);
+                } 
+            } else {
+                localUser = new StoredUserDetails(databaseUser);
+                localUser.encodeAndSetPassword(newPassword);
+                databaseUser.setPasswordEntity(localUser.getPasswordEntity()); // make pass by reference possible.
+            }
         }
     }
 
@@ -92,4 +141,6 @@ public class UserDto {
     @Valid
     @NotNull
     public SettingsDto settings;
+
+    public UserRole role;
 }

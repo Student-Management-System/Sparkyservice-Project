@@ -77,7 +77,7 @@ public class UserController {
                 log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);
                 throw new AccessViolationException("Could not edit other users data");
             } 
-            authenticatedUser = UserDto.editUserFromDtoValues(authenticatedUser, userDto);
+            authenticatedUser = UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
         } catch (UserNotFoundException e) {
             log.info("User is logged  in but no data is in the database. Maybe database is down?");
