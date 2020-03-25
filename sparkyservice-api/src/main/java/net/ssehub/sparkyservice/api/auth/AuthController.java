@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 
 /**
- * Controller for authentication reachable under /auth
+ * Controller for authentication
  * @author marcel
  */
 @RestController
