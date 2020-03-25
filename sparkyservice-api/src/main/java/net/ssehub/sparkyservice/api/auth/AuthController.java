@@ -28,7 +28,7 @@ public class AuthController {
      * @return HTTP body and sets JWT Token inside http header
      */
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH) 
-    public String authenticate(@RequestParam(value = "username") @NotNull String username, 
+    public void authenticate(@RequestParam(value = "username") @NotNull String username, 
                         @RequestParam(value = "password") @NotNull String password) {
         throw new UnsupportedOperationException();
     }

@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,7 +11,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +33,7 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
+import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 
@@ -152,7 +153,9 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
     /**
      * Tests if the server response send a JWT authorization token with the assumption of a successful 
      * authentication request. This could happen if the server authenticates the user successfully and return HTTP
-     * status code 200 but does not generate a JWT token, does not set this token in the response header. 
+     * status code 200 but does not generate a JWT token, does not set this token in the response header. <br>
+     * <br>
+     * Uses an the inMemoryAuthentication account.
      * 
      * @throws Exception
      */
@@ -191,8 +194,14 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
     @Autowired
     public IStoredUserService userService; 
     
+    /**
+     * LDAP authentication test. After a successful authenentication, a profile of the LDAP user shozuld be stored into 
+     * the database.
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
-    public void storeUserAfterAuthTest() throws Exception {
+    public void storeUserAfterLdapAuthTest() throws Exception {
         var result = this.mvc
                 .perform(
                      post(ConfigurationValues.AUTH_LOGIN_URL)
@@ -211,7 +220,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerDatabaseTest 
      * @throws Exception
      */
     @IntegrationTest
-    public void checkAuthNegativeTest() throws Exception {
+    public void securityCheckAuthNegativeTest() throws Exception {
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)

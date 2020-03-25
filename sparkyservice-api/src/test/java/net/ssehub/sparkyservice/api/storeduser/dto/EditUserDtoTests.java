@@ -22,8 +22,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
-import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
-import net.ssehub.sparkyservice.api.storeduser.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 
