@@ -46,7 +46,9 @@ public class StoredUserController {
 
     @PutMapping(ControllerPath.MANAGEMENT_ADD_USER)
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
-        final var newUser = StoredUserDetails.createStoredLocalUser(newUserDto.username, newUserDto.password, true);
+        @Nonnull String username = notNull(newUserDto.username); // spring validation
+        @Nonnull String password = notNull(newUserDto.password); // spring validation
+        final var newUser = StoredUserDetails.createStoredLocalUser(username, password, true);
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
             // return newUser.toString();
@@ -60,25 +62,15 @@ public class StoredUserController {
     public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid EditUserDto userDto, @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
-            throw new InternalError("Could not get authentication");
+            throw new InternalError("Authentication not received");
         }
-        @Nonnull Object principal = notNull(Optional.ofNullable(auth.getPrincipal()).orElse(""));
         @Nullable StoredUser authenticatedUser = null;
-        if (auth.getPrincipal() instanceof SparkysAuthPrincipal) {
-            var userPrincipal = (SparkysAuthPrincipal) principal;
-            try {
-                authenticatedUser = transformer.extendFromSparkyPrincipal(userPrincipal);
-            } catch (UserNotFoundException e) {
-                log.info("User is logged  in but no data is in the database. Maybe database is down?");
-                throw new UserNotFoundException("Could not edit user, reason: " + e.getMessage() + ". Maybe our databse"
-                        + " is offline or the logged in user was deleted.");
+        try {
+            authenticatedUser = transformer.extendFromAny(auth.getPrincipal());
+            if (authenticatedUser == null) {
+                log.warn("Unknown user type is logged in: " + auth.getPrincipal().toString());
+                throw new AccessViolationException("User not known.");
             }
-        } else if (auth.getPrincipal() instanceof UserDetails) {
-            authenticatedUser = transformer.castFromUserDetails((UserDetails) principal);
-        }
-        if (authenticatedUser == null) {
-            throw new AccessViolationException("Unkown user type.");
-        } else {
             boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username) 
                     && authenticatedUser.getRealm().equals(userDto.realm);
             if (!selfEdit) {
@@ -87,6 +79,12 @@ public class StoredUserController {
             } 
             authenticatedUser = EditUserDto.editUserFromDtoValues(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
+        } catch (UserNotFoundException e) {
+            log.info("User is logged  in but no data is in the database. Maybe database is down?");
+            throw new UserNotFoundException("Could not edit user, reason: " + e.getMessage() + ". Maybe our databse"
+                    + " is offline or the logged in user was deleted.");
+        } catch (MissingDataException e) {
+            
         }
     }
 

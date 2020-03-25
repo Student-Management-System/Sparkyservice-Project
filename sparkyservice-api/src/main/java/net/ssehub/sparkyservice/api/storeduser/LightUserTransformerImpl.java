@@ -22,7 +22,7 @@ import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 import net.ssehub.sparkyservice.util.NullHelpers;
 
-public class LightUserTransformerImpl implements StoredUserTransformer {
+public final class LightUserTransformerImpl implements StoredUserTransformer {
 
     @Autowired
     private IStoredUserService userSerivce;
@@ -37,12 +37,13 @@ public class LightUserTransformerImpl implements StoredUserTransformer {
     }
     
     /**
-     * {@inheritDoc}.
+     * {@inheritDoc}
      * 
      * This implementation tries to be lightweight as possible and get all necessary information from the
      * provided user details without doing database operations. If too much information are missing, 
      * it tries to load them from the data backend (database). 
      */
+    @Override
     public @Nonnull StoredUser extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException {
         if (details != null && details.getUsername() != null && !details.getUsername().isEmpty()) {
             StoredUser storeUser; 
@@ -75,6 +76,7 @@ public class LightUserTransformerImpl implements StoredUserTransformer {
      * @throws Thrown if the provided information are too less in order to create an object and the user is not found
      * in the database
      */
+    @Override
     public @Nonnull StoredUser castFromUserDetails(@Nullable UserDetails details) throws MissingDataException {
         StoredUser storeUser = null;
         if (details instanceof LdapUserDetailsImpl) {
@@ -97,6 +99,9 @@ public class LightUserTransformerImpl implements StoredUserTransformer {
         return NullHelpers.notNull(returnVal);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @Nonnull StoredUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) 
             throws UserNotFoundException {
@@ -126,5 +131,24 @@ public class LightUserTransformerImpl implements StoredUserTransformer {
             throw new UnsupportedOperationException("Not supported: Can't parse user no role "
                     + "or with more than one role.");
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * Supported principal instances: <br>
+     * <ul><li> {@link SparkysAuthPrincipal}</li>
+     * <li> {@link UserDetails}</li></ul>
+     */
+    @Override
+    public @Nullable StoredUser extendFromAny(@Nullable Object principal) throws UserNotFoundException, MissingDataException {
+        StoredUser user = null;
+        if (principal instanceof SparkysAuthPrincipal) {
+            var userPrincipal = (SparkysAuthPrincipal) principal;
+            user = extendFromSparkyPrincipal(userPrincipal);
+        } else if (principal instanceof UserDetails) {
+            user = castFromUserDetails((UserDetails) principal);
+        }
+        return user;
     }
 }

@@ -41,4 +41,6 @@ public interface StoredUserTransformer {
     @Nonnull StoredUser castFromUserDetails(@Nullable UserDetails details) throws MissingDataException;
 
     @Nonnull StoredUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
+    
+    @Nullable StoredUser extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException;
 }
