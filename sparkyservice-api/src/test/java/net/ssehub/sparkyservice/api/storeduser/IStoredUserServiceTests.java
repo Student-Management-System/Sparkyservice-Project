@@ -22,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.db.user.StoredUser;
+import net.ssehub.sparkyservice.util.NullHelpers;
 
 /**
  * Tests for {@link IStoredUserService} implementation. This test class should use the same implementation bean which 
@@ -151,6 +152,13 @@ public class IStoredUserServiceTests {
     @Test
     public void loadUserByNameNullTest() {
         assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername(null));
+    }
+
+    @Test
+    public void storeUserBlankTest() {
+        var user = new StoredUser("", null, "", true, NullHelpers.notNull(UserRole.ADMIN.name()));
+        assertThrows(IllegalArgumentException.class, 
+                () -> userService.storeUser(user));
     }
 }
 
