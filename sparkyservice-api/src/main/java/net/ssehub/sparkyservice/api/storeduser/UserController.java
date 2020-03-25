@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
+import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
 import net.ssehub.sparkyservice.api.storeduser.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.UserEditException;
@@ -59,7 +59,7 @@ public class UserController {
     }
 
     @PutMapping(ControllerPath.MANAGEMENT_EDIT_USER)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid EditUserDto userDto, @Nullable Authentication auth)
+    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Authentication not received");
@@ -77,7 +77,7 @@ public class UserController {
                 log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);
                 throw new AccessViolationException("Could not edit other users data");
             } 
-            authenticatedUser = EditUserDto.editUserFromDtoValues(authenticatedUser, userDto);
+            authenticatedUser = UserDto.editUserFromDtoValues(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
         } catch (UserNotFoundException e) {
             log.info("User is logged  in but no data is in the database. Maybe database is down?");

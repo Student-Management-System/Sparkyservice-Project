@@ -35,7 +35,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.UserController;
-import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto;
+import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
@@ -135,7 +135,7 @@ public class UserControllerRestIT extends AbstractContainerDatabaseTest {
     }
 
     /**
-     * Test for {@link UserController#editLocalUser(EditUserDto, UserDetails)}. <br>
+     * Test for {@link UserController#editLocalUser(UserDto, UserDetails)}. <br>
      * Tests if a user can edit his own data. For mocking the user a specific test DetailsService is used:
      * {@link TestUserConfiguration#defaultDetailsService() which authenticates a user in the DEFAULT_REALM and with 
      * username "testuser". This configuration must match with the values of EditUserDto.json.txt

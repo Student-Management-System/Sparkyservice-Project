@@ -22,7 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
-import net.ssehub.sparkyservice.api.storeduser.dto.EditUserDto.ChangePasswordDto;
+import net.ssehub.sparkyservice.api.storeduser.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 
 public class EditUserDtoTests {
@@ -51,12 +51,12 @@ public class EditUserDtoTests {
     }
 
     /**
-     * Creates a simple and complete {@link EditUserDto} object for testing purposes. 
+     * Creates a simple and complete {@link UserDto} object for testing purposes. 
      * 
      * @return complete testing dto
      */
-    private @Nonnull EditUserDto createExampleDto() {
-        var editUserDto = new EditUserDto();
+    private @Nonnull UserDto createExampleDto() {
+        var editUserDto = new UserDto();
         editUserDto.username = "user";
         editUserDto.realm = "realm";
         editUserDto.passwordDto = new ChangePasswordDto();
@@ -70,7 +70,7 @@ public class EditUserDtoTests {
     }
 
     /**
-     * Test for {@link EditUserDto#changePasswordFromDto(StoredUserDetails, ChangePasswordDto)}. <br>
+     * Test for {@link UserDto#changePasswordFromDto(StoredUserDetails, ChangePasswordDto)}. <br>
      * Tests if the password is correctly changed inside user object.
      * 
      * @throws MissingDataException should not happen - would be a result of wrong setup method: 
@@ -82,12 +82,12 @@ public class EditUserDtoTests {
         var userDto = createExampleDto();
         PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        EditUserDto.changePasswordFromDto(user, userDto.passwordDto);
+        UserDto.changePasswordFromDto(user, userDto.passwordDto);
         assertTrue(encoder.matches(newPassword, user.getPassword()));
     }
 
     /**
-     * Test for {@link EditUserDto#changePasswordFromDto(StoredUserDetails, ChangePasswordDto)}. <br>
+     * Test for {@link UserDto#changePasswordFromDto(StoredUserDetails, ChangePasswordDto)}. <br>
      * Tests if the password is unchanged if the passwordDto provides the wrong old password. 
      * 
      * @throws MissingDataException should not happen - would be a result of wrong setup method: 
@@ -101,12 +101,12 @@ public class EditUserDtoTests {
         user.encodeAndSetPassword(oldPassword);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         
-        EditUserDto.changePasswordFromDto(user, passwordDto);
+        UserDto.changePasswordFromDto(user, passwordDto);
         assertFalse(encoder.matches(newPassword, user.getPassword()));
     }
 
     /**
-     * Test for {@link EditUserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, EditUserDto)}.<br>
+     * Test for {@link UserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      *
      * @throws MissingDataException
      */
@@ -114,57 +114,57 @@ public class EditUserDtoTests {
     public void editUserPasswordFromDtoTest() throws MissingDataException {
         user.setRealm(StoredUserDetails.DEFAULT_REALM);
         user.encodeAndSetPassword(oldPassword);
-        EditUserDto.editUserFromDtoValues(user, createExampleDto());
+        UserDto.editUserFromDtoValues(user, createExampleDto());
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         assertTrue(encoder.matches(newPassword, user.getPassword()));
     }
 
     /**
-     * Test for {@link EditUserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, EditUserDto)}.<br>
+     * Test for {@link UserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      * The given User is in the local realm and has no password entitiy. In reality this should never happen, but when
      * it happen a {@link RuntimeException} should be thrown to indicate that something went wrong.
      */
     @Test
     public void editUserPasswordFromDtoNegativeTest() {
         user.setRealm(StoredUserDetails.DEFAULT_REALM);
-        assertThrows(RuntimeException.class, () -> EditUserDto.editUserFromDtoValues(user, createExampleDto()));
+        assertThrows(RuntimeException.class, () -> UserDto.editUserFromDtoValues(user, createExampleDto()));
     }
 
     /**
-     * Test for {@link EditUserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, EditUserDto)}.<br>
+     * Test for {@link UserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      * 
      * @throws MissingDataException should not happen - would be a result of wrong setup method: 
      * {@link #createExampleDto()}
      */
     @Test
     public void editUserEmailFromDtoTest() throws MissingDataException {
-        EditUserDto.editUserFromDtoValues(user, createExampleDto());
+        UserDto.editUserFromDtoValues(user, createExampleDto());
         assertEquals(userEmaiL, user.getProfileConfiguration().getEmail_address(), "User email was not changed in user "
                 + "object");
     }
 
     /**
-     * Test for {@link EditUserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, EditUserDto)}.<br>
+     * Test for {@link UserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      * 
      * @throws MissingDataException should not happen - would be a result of wrong setup method: 
      * {@link #createExampleDto()}
      */
     @Test
     public void editUserNameFromDtoTest() throws MissingDataException {
-        EditUserDto.editUserFromDtoValues(user, createExampleDto());
+        UserDto.editUserFromDtoValues(user, createExampleDto());
         assertEquals("user", user.getUsername(), "Username was not changed in user "
                 + "object");
     }
 
     /**
-     * Test for {@link EditUserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, EditUserDto)}.<br>
+     * Test for {@link UserDto#editUserFromDtoValues(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      * Tests if the method throws the correct exception when values of the dto are <code>null</code>.
      */
     @Test
     public void editNullTest()  {
         var dto = createExampleDto();
         dto.username = null;
-        assertThrows(MissingDataException.class, () ->  EditUserDto.editUserFromDtoValues(user, dto));
+        assertThrows(MissingDataException.class, () ->  UserDto.editUserFromDtoValues(user, dto));
     }
 
     /**
@@ -180,7 +180,7 @@ public class EditUserDtoTests {
     }
 
     /**
-     * Test for {@link EditUserDto#username} validation. Tries different input which the validator should not pass.
+     * Test for {@link UserDto#username} validation. Tries different input which the validator should not pass.
      */
     @ParameterizedTest
     @ValueSource(strings = { " ", "", "null" })
@@ -189,6 +189,20 @@ public class EditUserDtoTests {
         var userDto = createExampleDto();
         assumeTrue(validator.validate(userDto).isEmpty(), "The provided example dto is not correct. Skip this test");
         userDto.username = "null".equals(username) ? null : username;
+        assertFalse(validator.validate(userDto).isEmpty(), "The validator pass invalid values for username.");
+    }
+
+    /**
+     * Test for {@link UserDto.ChangePasswordDto#newPassword} validation. 
+     * Tries different input which the validator should not pass.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { " ", "", "null" })
+    public void editDtoValidationPasswordTest(String password) {
+        var validator = Validation.buildDefaultValidatorFactory().getValidator();
+        var userDto = createExampleDto();
+        assumeTrue(validator.validate(userDto).isEmpty(), "The provided example dto is not correct. Skip this test");
+        userDto.passwordDto.newPassword = "null".equals(password) ? null : password;
         assertFalse(validator.validate(userDto).isEmpty(), "The validator pass invalid values for username.");
     }
 }

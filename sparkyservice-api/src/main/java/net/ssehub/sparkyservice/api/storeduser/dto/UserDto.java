@@ -12,10 +12,9 @@ import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
-public class EditUserDto {
-    
+public class UserDto {
+
     public static class ChangePasswordDto {
-        @NotBlank
         public String oldPassword;
 
         @NotBlank
@@ -23,19 +22,20 @@ public class EditUserDto {
     }
 
     /**
-     * Takes a {@link EditUserDto} object and changed the value of the given user. This happens recursive (it will
+     * Takes a {@link UserDto} object and changed the value of the given user. This happens recursive (it will
      * change {@link SettingsDto} and {@link ChangePasswordDto} as well). <br>
      * Does not support changing the realm.
      * 
      * @param databaseUser user which values should be changed
      * @param userDto transfer object which holds the new data
      * @return the StoredUser with changed values
-     * @throws MissingDataException is thrown when the given transfer object is not valid (especially if anything is null)
+     * @throws MissingDataException is thrown when the given transfer object is not valid (especially 
+     *         if anything is null)
      */
-    public static @Nonnull StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull EditUserDto userDto ) 
+    public static @Nonnull StoredUser editUserFromDtoValues(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto ) 
                                                    throws MissingDataException {
         if (userDto.settings != null && userDto.username != null) {
-            databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings)); 
+            databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings));
             databaseUser.setUserName(notNull(userDto.username));
             boolean changePassword = userDto.passwordDto != null 
                     && databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM;
@@ -59,7 +59,7 @@ public class EditUserDto {
      * @throws MissingDataException is thrown if the DTO is null or invalid
      */
     public static void changePasswordFromDto(@Nonnull StoredUserDetails databaseUserDetails,
-                                             @Nullable EditUserDto.ChangePasswordDto passwordDto) 
+                                             @Nullable UserDto.ChangePasswordDto passwordDto) 
                                              throws MissingDataException {
         if (passwordDto != null) {
             @Nullable String newPassword = passwordDto.newPassword;
