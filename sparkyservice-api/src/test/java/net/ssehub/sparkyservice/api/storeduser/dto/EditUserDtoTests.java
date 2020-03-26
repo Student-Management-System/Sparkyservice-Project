@@ -208,13 +208,13 @@ public class EditUserDtoTests {
 
     /**
      * Test for {@link UserDto#defaultUserDtoEdit(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
-     * Tests if the method throws the correct exception when values of the dto are <code>null</code>.
+     * Tests if the method does not "crash" when values of the dto are <code>null</code>.
      */
     @Test
     public void editNullTest()  {
         var dto = createExampleDto();
         dto.username = null;
-        assertThrows(MissingDataException.class, () ->  UserDto.defaultUserDtoEdit(user, dto));
+        assertDoesNotThrow(() ->  UserDto.defaultUserDtoEdit(user, dto));
     }
 
     /**
