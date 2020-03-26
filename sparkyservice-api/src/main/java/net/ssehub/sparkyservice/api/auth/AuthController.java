@@ -21,11 +21,11 @@ public class AuthController {
 
     /**
      * This method does nothing. The method header is important to let swagger list this authentication method.
-     * The authentication is handled through @link {@link JwtAuthenticationFilter} which listens on the same
+     * The authentication is handled through {@link JwtAuthenticationFilter} which listens on the same
      * path than this method.
+     * 
      * @param username Username of the user
      * @param password Password of the user
-     * @return HTTP body and sets JWT Token inside http header
      */
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH) 
     public void authenticate(@RequestParam(value = "username") @NotNull String username, 
