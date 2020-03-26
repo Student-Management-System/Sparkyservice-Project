@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.storeduser.StoredUserDetails;
 import net.ssehub.sparkyservice.api.storeduser.UserRole;
-import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public class UserDto implements Serializable {
@@ -27,28 +26,38 @@ public class UserDto implements Serializable {
     }
 
     /**
-     * Takes a {@link UserDto} object and changed the value of the given user. This happens recursive (it will
-     * change {@link SettingsDto} and {@link ChangePasswordDto} as well). <br>
-     * Does not support changing the realm.
+     * Changes the values of the given user with values from the DTO. This happens recursive (it will
+     * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
      * 
-     * @param databaseUser user which values should be changed
-     * @param userDto transfer object which holds the new data
-     * @return the StoredUser with changed values
-     * @throws MissingDataException is thrown when the given transfer object is not valid (especially 
-     *         if anything is null)
+     * This is done with "limit permissions". Which means some fields which should only be changed with higher 
+     * permissions won't be changed and are skipped.
+     * 
+     * Those permissions are:
+     * </li><li> The old password must be provided in order to change it
+     * </li><li> User can not modify roles: {@link StoredUser#setRole(Enum)}
+     * </ul>
+     * 
+     * @param databaseUser User which values should be changed
+     * @param userDto Transfer object which holds the new data
      */
-    public static @Nonnull StoredUser defaultUserDtoEdit(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto ) 
-                                                   throws MissingDataException {
-        return editUserFromDto(databaseUser, userDto, false);
+    public static void defaultUserDtoEdit(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto ) {
+        editUserFromDto(databaseUser, userDto, false);
     }
 
-    public static @Nonnull StoredUser adminUserDtoEdit(@Nonnull StoredUser databaseUser, 
-                                                       @Nonnull UserDto userDto) throws MissingDataException {
-        return editUserFromDto(databaseUser, userDto, true);
+    /**
+     * Changes the values of the given user with values from the DTO. This happens recursive (it will
+     * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
+     * 
+     * Any other data will be modified.
+     * 
+     * @param databaseUser User which values should be changed
+     * @param userDto Holds the new data
+     */
+    public static void adminUserDtoEdit(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto) {
+        editUserFromDto(databaseUser, userDto, true);
     }
-    
-    private static @Nonnull StoredUser editUserFromDto(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto, 
-                                                       boolean adminMode) throws MissingDataException {
+
+    private static void editUserFromDto(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto, boolean adminMode) {
         if (userDto.settings != null && userDto.username != null) {
             databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings));
             databaseUser.setUserName(notNull(userDto.username));
@@ -63,9 +72,6 @@ public class UserDto implements Serializable {
             if (adminMode && userDto.role != null) {
                 databaseUser.setRole(notNull(userDto.role));
             }
-            return databaseUser;
-        } else {
-            throw new MissingDataException("EditUserDto is not valid. Something was null");
         }
     }
 

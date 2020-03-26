@@ -114,7 +114,7 @@ public class EditUserDtoTests {
      * @throws MissingDataException
      */
     @Test
-    public void editPasswordFromDtoTest() throws MissingDataException {
+    public void editPasswordFromDtoTest() {
         user.setRealm(StoredUserDetails.DEFAULT_REALM);
         user.encodeAndSetPassword(oldPassword);
         UserDto.defaultUserDtoEdit(user, createExampleDto());
@@ -141,7 +141,7 @@ public class EditUserDtoTests {
      * @throws MissingDataException
      */
     @Test
-    public void adminEditDtoPasswordTest() throws MissingDataException {
+    public void adminEditDtoPasswordTest() {
         var dto = createExampleDto();
         user.encodeAndSetPassword(oldPassword);
         dto.passwordDto.oldPassword = null;
@@ -180,7 +180,7 @@ public class EditUserDtoTests {
      * {@link #createExampleDto()}
      */
     @Test
-    public void editEmailFromDtoTest() throws MissingDataException {
+    public void editEmailFromDtoTest() {
         UserDto.defaultUserDtoEdit(user, createExampleDto());
         assertEquals(userEmaiL, user.getProfileConfiguration().getEmail_address(), "User email was not changed in user "
                 + "object");
@@ -193,7 +193,7 @@ public class EditUserDtoTests {
      * {@link #createExampleDto()}
      */
     @Test
-    public void editNameFromDtoTest() throws MissingDataException {
+    public void editNameFromDtoTest() {
         UserDto.defaultUserDtoEdit(user, createExampleDto());
         assertEquals("user", user.getUsername(), "Username was not changed in user "
                 + "object");
@@ -263,7 +263,7 @@ public class EditUserDtoTests {
      * @throws MissingDataException
      */
     @Test
-    public void adminEditRoleTest() throws MissingDataException {
+    public void adminEditRoleTest() {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
         UserDto.adminUserDtoEdit(user, dto);
@@ -277,7 +277,7 @@ public class EditUserDtoTests {
      * @throws MissingDataException
      */
     @Test
-    public void defaultEditRoleDeniedTest() throws MissingDataException {
+    public void defaultEditRoleDeniedTest() {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
         UserDto.defaultUserDtoEdit(user, dto);

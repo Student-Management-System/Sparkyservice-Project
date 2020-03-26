@@ -77,14 +77,12 @@ public class UserController {
                 log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);
                 throw new AccessViolationException("Could not edit other users data");
             } 
-            authenticatedUser = UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
+            UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
         } catch (UserNotFoundException e) {
             log.info("User is logged  in but no data is in the database. Maybe database is down?");
             throw new UserNotFoundException("Could not edit user, reason: " + e.getMessage() + ". Maybe our databse"
                     + " is offline or the logged in user was deleted.");
-        } catch (MissingDataException e) {
-            
         }
     }
 
