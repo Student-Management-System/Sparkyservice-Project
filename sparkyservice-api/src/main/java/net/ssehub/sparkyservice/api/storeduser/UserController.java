@@ -2,8 +2,6 @@ package net.ssehub.sparkyservice.api.storeduser;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
 
-import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -14,14 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
@@ -73,22 +69,20 @@ public class UserController {
             }
             boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username) 
                     && authenticatedUser.getRealm().equals(userDto.realm);
-            if (!selfEdit) {
+            if (authenticatedUser.getRole().equals(UserRole.ADMIN.name())) {
+                UserDto.adminUserDtoEdit(authenticatedUser, userDto);
+            } else if (selfEdit) {
+                UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
+                userService.storeUser(authenticatedUser);
+            } else {
                 log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);
                 throw new AccessViolationException("Could not edit other users data");
-            } 
-            UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
-            userService.storeUser(authenticatedUser);
+            }
         } catch (UserNotFoundException e) {
             log.info("User is logged  in but no data is in the database. Maybe database is down?");
             throw new UserNotFoundException("Could not edit user, reason: " + e.getMessage() + ". Maybe our databse"
                     + " is offline or the logged in user was deleted.");
         }
-    }
-
-    // @PutMapping(ControllerPath.MANAGEMENT_EDIT_ADMIN)
-    public void editAdminUser(@RequestBody @NotNull @Nonnull @Valid Object user) {
-        // TODO
     }
 
 //    @GetMapping("/user/delete")

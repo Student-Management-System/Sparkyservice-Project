@@ -24,12 +24,12 @@ public class TestUserConfiguration {
 
     @Bean(name = "defaultUserService")
     public UserDetailsService defaultDetailsService() {
-        return new TestUserDetailsService(UserRole.ADMIN);
+        return new TestUserDetailsService(UserRole.DEFAULT);
     }
     
     @Bean(name = "adminUserService")
     public UserDetailsService adminDetailsService() {
-        return new TestUserDetailsService(UserRole.DEFAULT);
+        return new TestUserDetailsService(UserRole.ADMIN);
     }
 
     static class TestUserDetailsService implements UserDetailsService {

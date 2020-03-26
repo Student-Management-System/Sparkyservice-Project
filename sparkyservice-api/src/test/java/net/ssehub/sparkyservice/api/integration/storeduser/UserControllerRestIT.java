@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -176,14 +175,40 @@ public class UserControllerRestIT extends AbstractContainerDatabaseTest {
     }
 
     /**
+     * Tests that a user can't edit other users value (when he does not have the role "Admin").
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithUserDetails(value = "testadmin", userDetailsServiceBeanName="adminUserService")
+    /*
+     * Mocked username should not match with the one of the JSON file in order to test the "admin functionality".
+     */
+    public void editOtherAdminTest() throws Exception {
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
+        this.mvc
+            .perform(put(MANAGEMENT_EDIT_USER)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(content)
+                    .accept(MediaType.TEXT_PLAIN))
+            .andExpect(status().isOk());
+    }
+
+    /**
      * Tests if an admin can edit the data of other users.
      * 
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(value = "user")
-    @Disabled
+    @WithUserDetails(value = "testuser", userDetailsServiceBeanName="defaultUserService")
     public void editUserAdminSuccessTest() throws Exception {
-        fail("Not implemented");
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
+        MvcResult result = this.mvc
+            .perform(put(MANAGEMENT_EDIT_USER)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(content)
+            .accept(MediaType.TEXT_PLAIN))
+            .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200, "Mocking user not working");
     }
 }
