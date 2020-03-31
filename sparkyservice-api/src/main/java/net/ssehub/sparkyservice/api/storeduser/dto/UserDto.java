@@ -59,15 +59,15 @@ public class UserDto implements Serializable {
 
     private static void editUserFromDto(@Nonnull StoredUser databaseUser, @Nonnull UserDto userDto, boolean adminMode) {
         if (userDto.settings != null && userDto.username != null) {
-            databaseUser = SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings));
+            SettingsDto.applyPersonalSettings(databaseUser, notNull(userDto.settings));
             databaseUser.setUserName(notNull(userDto.username));
             boolean changePassword = userDto.passwordDto != null 
                     && databaseUser.getRealm() == StoredUserDetails.DEFAULT_REALM;
-            boolean adminPassChange = adminMode && userDto.passwordDto.newPassword != null;
-            if (changePassword) {
-                defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
-            } else if (adminPassChange) {
-                adminApplyNewPasswordFromDto(databaseUser, userDto.passwordDto.newPassword);
+            boolean adminPassChange = adminMode && changePassword && userDto.passwordDto.newPassword != null;
+            if (adminPassChange) {
+            	adminApplyNewPasswordFromDto(databaseUser, userDto.passwordDto.newPassword);
+            } else if (changePassword) {
+            	defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
             }
             if (adminMode && userDto.role != null) {
                 databaseUser.setRole(notNull(userDto.role));
