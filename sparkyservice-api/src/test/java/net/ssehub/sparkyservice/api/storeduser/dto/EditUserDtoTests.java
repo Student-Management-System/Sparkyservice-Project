@@ -144,6 +144,7 @@ public class EditUserDtoTests {
     public void adminEditDtoPasswordTest() {
         var dto = createExampleDto();
         user.encodeAndSetPassword(oldPassword);
+        user.setRealm(StoredUserDetails.DEFAULT_REALM);
         dto.passwordDto.oldPassword = null;
         UserDto.adminUserDtoEdit(user, dto);
         PasswordEncoder encoder = new BCryptPasswordEncoder();

@@ -30,7 +30,8 @@ public class UserDto implements Serializable {
      * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
      * 
      * This is done with "limit permissions". Which means some fields which should only be changed with higher 
-     * permissions won't be changed and are skipped.
+     * permissions won't be changed and are skipped. Changing the password is only supported if the user is in 
+     * {@link StoredUserDetails#DEFAULT_REALM}.
      * 
      * Those permissions are:
      * </li><li> The old password must be provided in order to change it
@@ -48,7 +49,8 @@ public class UserDto implements Serializable {
      * Changes the values of the given user with values from the DTO. This happens recursive (it will
      * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
      * 
-     * Any other data will be modified.
+     * Any other data will be modified. Changing the password is only supported if the user is in 
+     * {@link StoredUserDetails#DEFAULT_REALM}.
      * 
      * @param databaseUser User which values should be changed
      * @param userDto Holds the new data

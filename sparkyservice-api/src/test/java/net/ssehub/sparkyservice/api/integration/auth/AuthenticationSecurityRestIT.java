@@ -33,7 +33,6 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerDatabaseTest;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 
