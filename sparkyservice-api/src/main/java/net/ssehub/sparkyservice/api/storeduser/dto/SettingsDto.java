@@ -9,13 +9,11 @@ import net.ssehub.sparkyservice.db.user.StoredUser;
 
 public class SettingsDto {
     
-    @Nonnull
-    public static StoredUser applyPersonalSettings(@Nonnull StoredUser user, @Nonnull SettingsDto settings) {
+    public static void applyPersonalSettings(@Nonnull StoredUser user, @Nonnull SettingsDto settings) {
         PersonalSettings dbSettings = user.getProfileConfiguration();
         dbSettings.setEmail_address(settings.email_address);
         dbSettings.setWantsAi(settings.wantsAi);
         dbSettings.setEmail_receive(settings.email_receive);
-        return user;
     }
     
     @NotNull // TODO Marcel: Test if necessary

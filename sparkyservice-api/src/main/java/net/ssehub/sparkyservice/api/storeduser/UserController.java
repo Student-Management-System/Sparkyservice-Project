@@ -25,6 +25,7 @@ import net.ssehub.sparkyservice.api.storeduser.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.UserEditException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @author Marcel
@@ -55,7 +56,7 @@ public class UserController {
     }
 
     @PutMapping(ControllerPath.MANAGEMENT_EDIT_USER)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
+    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @ApiIgnore @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Authentication not received");

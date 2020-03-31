@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.storeduser.IStoredUserService;
-import net.ssehub.sparkyservice.api.storeduser.StoredUserService;
 import net.ssehub.sparkyservice.api.storeduser.UserNotFoundException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
 
@@ -28,7 +27,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, ConfigurationValues jwtConf,
                                    IStoredUserService userSerivce) {
-        this.userService = (StoredUserService) userSerivce;
+        this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.confValues = jwtConf;
