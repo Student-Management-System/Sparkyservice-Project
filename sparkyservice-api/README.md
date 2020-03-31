@@ -33,3 +33,9 @@ For developers which uses this project, we provide a test live instance reachabl
 Swagger is reachable under `/swagger-ui.html`. On the live instance: `147.172.178.30:8080/swagger-ui.html`.
 
 
+# Configuration
+If you run the application for the first time, you have to create all tables. Set the following property to `update` or `create`:
+
+	spring.jpa.hibernate.ddl-auto = update
+	
+With this setting a strict dependency to the configured database is set. 
