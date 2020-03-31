@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.storeduser.dto.UserDto;
@@ -25,7 +27,6 @@ import net.ssehub.sparkyservice.api.storeduser.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.storeduser.exceptions.UserEditException;
 import net.ssehub.sparkyservice.db.user.StoredUser;
-import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * @author Marcel
@@ -41,6 +42,7 @@ public class UserController {
     @Autowired
     private StoredUserTransformer transformer;
 
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.MANAGEMENT_ADD_USER)
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         @Nonnull String username = notNull(newUserDto.username); // spring validation
@@ -55,8 +57,9 @@ public class UserController {
         }
     }
 
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.MANAGEMENT_EDIT_USER)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @ApiIgnore @Nullable Authentication auth)
+    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Authentication not received");
