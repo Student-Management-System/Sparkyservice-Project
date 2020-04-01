@@ -20,7 +20,7 @@ class LocalUserDetailsTests {
     @Test
     public void userDetailsFactoryPasswordTest() {
         final String password = "tst34";
-        var userDetails = LocalUserDetails.createStoredLocalUser("test", password, false);
+        var userDetails = LocalUserDetails.newLocalUser("test", password, false);
 
         String passwordAlgo = notNull(userDetails.getPasswordEntity()).getHashAlgorithm();
         assertEquals(LocalUserDetails.DEFAULT_ALGO, passwordAlgo, 
@@ -32,13 +32,13 @@ class LocalUserDetailsTests {
     
     @Test
     public void userDetailsFactoryActiveTest() {
-        var userDetails = LocalUserDetails.createStoredLocalUser("test", "", false);
+        var userDetails = LocalUserDetails.newLocalUser("test", "", false);
         assertFalse(userDetails.isActive());
     }
     
     @Test
     public void userDetailsFactoryDefaultRealmTest() {
-        var userDetails = LocalUserDetails.createStoredLocalUser("test", "", false);
+        var userDetails = LocalUserDetails.newLocalUser("test", "", false);
         assertEquals(LocalUserDetails.DEFAULT_REALM, userDetails.getRealm(), 
                 "The user is user details are not stored in the default realm.");
     }

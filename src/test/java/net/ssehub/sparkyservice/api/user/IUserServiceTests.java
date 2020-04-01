@@ -57,8 +57,8 @@ public class IUserServiceTests {
 
     @BeforeEach
     public void _setup() {
-        var user1 = LocalUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
-        var user2 = LocalUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
+        var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, true);
+        var user2 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, true);
         user2.setRealm(UserRealm.MEMORY); // To simulate a working database, user with the same name should be in different realms
         user1.setId(1);
         user2.setId(2);

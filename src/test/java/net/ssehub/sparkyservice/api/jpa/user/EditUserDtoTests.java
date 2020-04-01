@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.dto;
+package net.ssehub.sparkyservice.api.jpa.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -23,8 +22,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -88,7 +85,7 @@ public class EditUserDtoTests {
         var userDto = createExampleDto();
         PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        UserDto.defaultApplyNewPasswordFromDto(user, userDto.passwordDto);
+        User.defaultApplyNewPasswordFromDto(user, userDto.passwordDto);
         assertTrue(encoder.matches(newPassword, user.getPassword()));
     }
 
@@ -107,7 +104,7 @@ public class EditUserDtoTests {
         user.encodeAndSetPassword(oldPassword);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         
-        UserDto.defaultApplyNewPasswordFromDto(user, passwordDto);
+        User.defaultApplyNewPasswordFromDto(user, passwordDto);
         assertFalse(encoder.matches(newPassword, user.getPassword()));
     }
 
@@ -120,7 +117,7 @@ public class EditUserDtoTests {
     public void editPasswordFromDtoTest() {
         user.setRealm(LocalUserDetails.DEFAULT_REALM);
         user.encodeAndSetPassword(oldPassword);
-        UserDto.defaultUserDtoEdit(user, createExampleDto());
+        User.defaultUserDtoEdit(user, createExampleDto());
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         assertTrue(encoder.matches(newPassword, user.getPassword()));
     }
@@ -134,7 +131,7 @@ public class EditUserDtoTests {
     @Test
     public void editPasswordFromDtoNegativeTest() {
         user.setRealm(LocalUserDetails.DEFAULT_REALM);
-        assertDoesNotThrow(() -> UserDto.defaultUserDtoEdit(user, createExampleDto()));
+        assertDoesNotThrow(() -> User.defaultUserDtoEdit(user, createExampleDto()));
     }
 
     /**
@@ -149,7 +146,7 @@ public class EditUserDtoTests {
         user.encodeAndSetPassword(oldPassword);
         user.setRealm(LocalUserDetails.DEFAULT_REALM);
         dto.passwordDto.oldPassword = null;
-        UserDto.adminUserDtoEdit(user, dto);
+        User.adminUserDtoEdit(user, dto);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         assertTrue(encoder.matches(newPassword, user.getPassword()), "Password was not changed even though "
                 + "the admin mode is on");
@@ -161,10 +158,10 @@ public class EditUserDtoTests {
     @Test
     public void editNullPasswordTest() {
         assertAll(
-                () -> { assertDoesNotThrow(() -> UserDto.defaultApplyNewPasswordFromDto(user, null)); },
-                () -> { assertDoesNotThrow(() -> UserDto.adminApplyNewPasswordFromDto(user, null)); },
-                () -> { assertDoesNotThrow(() -> UserDto.defaultApplyNewPasswordFromDto(null, null)); },
-                () -> { assertDoesNotThrow(() -> UserDto.adminApplyNewPasswordFromDto(null, null)); }
+                () -> { assertDoesNotThrow(() -> User.defaultApplyNewPasswordFromDto(user, null)); },
+                () -> { assertDoesNotThrow(() -> User.adminApplyNewPasswordFromDto(user, null)); },
+                () -> { assertDoesNotThrow(() -> User.defaultApplyNewPasswordFromDto(null, null)); },
+                () -> { assertDoesNotThrow(() -> User.adminApplyNewPasswordFromDto(null, null)); }
             );
     }
 
@@ -172,7 +169,7 @@ public class EditUserDtoTests {
     @ValueSource(strings = { " ", "", "null"})
     public void editBlankPasswordNegativeTest(String newPassword) {
         user.encodeAndSetPassword(oldPassword);
-        UserDto.adminApplyNewPasswordFromDto(user, "null".equals(newPassword) ? null : newPassword);
+        User.adminApplyNewPasswordFromDto(user, "null".equals(newPassword) ? null : newPassword);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         assertFalse(encoder.matches(newPassword, user.getPassword()), "Blank passwords shouldn't be changed");
     }
@@ -185,7 +182,7 @@ public class EditUserDtoTests {
      */
     @Test
     public void editEmailFromDtoTest() {
-        UserDto.defaultUserDtoEdit(user, createExampleDto());
+        User.defaultUserDtoEdit(user, createExampleDto());
         assertEquals(userEmaiL, user.getProfileConfiguration().getEmail_address(), "User email was not changed in user "
                 + "object");
     }
@@ -198,14 +195,14 @@ public class EditUserDtoTests {
      */
     @Test
     public void editNameFromDtoTest() {
-        UserDto.defaultUserDtoEdit(user, createExampleDto());
+        User.defaultUserDtoEdit(user, createExampleDto());
         assertEquals("user", user.getUsername(), "Username was not changed in user "
                 + "object");
     }
 
     @Test
     public void adminEditNameTest() throws MissingDataException {
-        UserDto.adminUserDtoEdit(user, createExampleDto());
+        User.adminUserDtoEdit(user, createExampleDto());
         assertEquals("user", user.getUsername(), "Username was not changed in user "
                 + "object");
     }
@@ -218,7 +215,7 @@ public class EditUserDtoTests {
     public void editNullTest()  {
         var dto = createExampleDto();
         dto.username = null;
-        assertDoesNotThrow(() ->  UserDto.defaultUserDtoEdit(user, dto));
+        assertDoesNotThrow(() ->  User.defaultUserDtoEdit(user, dto));
     }
 
     /**
@@ -270,7 +267,7 @@ public class EditUserDtoTests {
     public void adminEditRoleTest() {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
-        UserDto.adminUserDtoEdit(user, dto);
+        User.adminUserDtoEdit(user, dto);
         assertEquals(UserRole.ADMIN, user.getRole(), "An administrator could not change the users role");
     }
 
@@ -284,7 +281,7 @@ public class EditUserDtoTests {
     public void defaultEditRoleDeniedTest() {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
-        UserDto.defaultUserDtoEdit(user, dto);
+        User.defaultUserDtoEdit(user, dto);
         assertNotEquals(UserRole.ADMIN.name(), user.getRole(), "A normal user could change a role of a user");
     }
 }

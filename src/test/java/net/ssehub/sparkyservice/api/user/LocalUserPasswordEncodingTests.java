@@ -33,7 +33,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void constructorPasswordHashTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match, "Encoded password does not match with bcrypted password");
     }
@@ -41,7 +41,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void manualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
         user.encodeAndSetPassword(passwordToCheck);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match);
@@ -50,7 +50,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void negativeManualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.createStoredLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
         user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 

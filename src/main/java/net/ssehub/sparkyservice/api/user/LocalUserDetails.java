@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.user;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -16,9 +18,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
+import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 
 /**
  * Class for authentication with SpringSecurity.  This class should be mainly used for authenticated users which are 
@@ -28,7 +32,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
  */
 @ParametersAreNonnullByDefault
 public class LocalUserDetails extends User implements UserDetails, GrantedAuthority {
-    
+
     @Nonnull
     public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
     public static final String DEFAULT_ALGO = "BCRYPT";
@@ -48,11 +52,34 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
      * @param isActive decide if the user can log in or not
      * @return new instance of StoredUserDetails. 
      */
-    public static @Nonnull LocalUserDetails createStoredLocalUser(String userName, String rawPassword,
+    public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword,
                                                                    boolean isActive) {
         var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, isActive);
         newUser.encodeAndSetPassword(rawPassword);
         return newUser;
+    }
+
+
+    /**
+     * Performs a transformation from DTO object to a local user. 
+     * 
+     * @param newUser valid DTO (username and password required)
+     * @return user with the values of the DTO
+     */
+    public static LocalUserDetails createNewUserFromDto(NewUserDto newUser) {
+        String username = newUser.username;
+        String password = newUser.password;
+        if (username != null && password != null) {
+            var storedUser =  LocalUserDetails.newLocalUser(username, password, true);
+            storedUser.setRole(notNull(newUser.role));
+            final var settings = newUser.personalSettings;
+            if (settings != null) {                
+                PersonalSettings.applyPersonalSettingsDto(storedUser, settings);
+            }
+            return storedUser;
+        } else {
+            throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
+        }
     }
 
     @Nullable

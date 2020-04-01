@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.dto;
+package net.ssehub.sparkyservice.api.jpa.user;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
+import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 
 public class NewUserDtoTests {
 
@@ -82,7 +83,7 @@ public class NewUserDtoTests {
     public void transformToUserTest() {
         var userDto = createExampleDto();
         userDto.setPersonalSettings(new SettingsDto());
-        LocalUserDetails details = NewUserDto.transformToUser(userDto);
+        LocalUserDetails details = LocalUserDetails.createNewUserFromDto(userDto);
         assertAll( 
             () -> assertEquals(userDto.username, details.getUsername()),
             () -> assertEquals(userDto.role, details.getRole()),
@@ -96,7 +97,5 @@ public class NewUserDtoTests {
     @Test
     public void transformNullUserValuesTest() {
         var userDto = new NewUserDto();
-        assertThrows(IllegalArgumentException.class, 
-                () -> NewUserDto.transformToUser(userDto));
-    }
+        assertThrows(IllegalArgumentException.class, () -> LocalUserDetails.createNewUserFromDto(userDto));}
 }

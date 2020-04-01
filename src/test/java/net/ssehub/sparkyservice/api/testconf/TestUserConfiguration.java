@@ -41,7 +41,7 @@ public class TestUserConfiguration {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            var basicUser = LocalUserDetails.createStoredLocalUser(NullHelpers.notNull(username), "abcdefgh", true);
+            var basicUser = LocalUserDetails.newLocalUser(NullHelpers.notNull(username), "abcdefgh", true);
             basicUser.setRole(NullHelpers.notNull(role));
             return basicUser;
         }

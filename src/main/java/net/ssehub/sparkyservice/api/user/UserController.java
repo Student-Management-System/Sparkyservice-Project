@@ -49,7 +49,7 @@ public class UserController {
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         @Nonnull String username = notNull(newUserDto.username); // spring validation
         @Nonnull String password = notNull(newUserDto.password); // spring validation
-        final var newUser = LocalUserDetails.createStoredLocalUser(username, password, true);
+        final var newUser = LocalUserDetails.newLocalUser(username, password, true);
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
             // return newUser.toString();
@@ -76,9 +76,9 @@ public class UserController {
             boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username) 
                     && authenticatedUser.getRealm().equals(userDto.realm);
             if (authenticatedUser.getRole() == UserRole.ADMIN) {
-                UserDto.adminUserDtoEdit(authenticatedUser, userDto);
+                User.adminUserDtoEdit(authenticatedUser, userDto);
             } else if (selfEdit) {
-                UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
+                User.defaultUserDtoEdit(authenticatedUser, userDto);
                 userService.storeUser(authenticatedUser);
             } else {
                 log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);

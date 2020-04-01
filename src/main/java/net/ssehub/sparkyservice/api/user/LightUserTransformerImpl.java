@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,6 +165,8 @@ public final class LightUserTransformerImpl implements UserTransformer {
     public @Nonnull User extendFromUserDto(@Nullable UserDto userDto)
             throws MissingDataException, UserNotFoundException {
         if (userDto != null && userDto.username != null && userDto.realm != null) {
+            // validate and try a cast
+            // TODO implement a castMethod before doing a heavy database transaction.
             // StoredUser user = new StoredUser(userDto.username, null, userDto.realm,
             // false, UserRole.DEFAULT.name());
             return userSerivce.findUserByNameAndRealm(userDto.username, userDto.realm);
