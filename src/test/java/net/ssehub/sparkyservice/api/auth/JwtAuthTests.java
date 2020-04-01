@@ -25,6 +25,7 @@ import org.springframework.security.core.GrantedAuthority;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
@@ -61,7 +62,7 @@ public class JwtAuthTests {
         Constructor<LocalUserDetails> constructor = LocalUserDetails.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         LocalUserDetails user = notNull(constructor.newInstance());
-        user.setRealm("DEFAULT");;
+        user.setRealm(UserRealm.LOCAL);
         user.setUserName("TestUser");
         user.setRole(UserRole.ADMIN);
         String token = JwtAuth.createJwtTokenWithRealm(user, confValues, user.getRealm());
@@ -73,7 +74,7 @@ public class JwtAuthTests {
         assertAll(
                 () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
                 () -> assertEquals("TestUser", ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
-                () -> assertEquals("DEFAULT", ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm()),
+                () -> assertEquals(LocalUserDetails.DEFAULT_REALM, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm()),
                 () -> assertEquals(UserRole.ADMIN.name(), tokenAuthy.getAuthority())
             );
     }
@@ -88,7 +89,7 @@ public class JwtAuthTests {
         assertAll(
                 () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
                 () -> assertEquals("TestUser", ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
-                () -> assertEquals("", ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm())
+                () -> assertEquals(UserRealm.UNKNOWN, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm())
             );
     }
 

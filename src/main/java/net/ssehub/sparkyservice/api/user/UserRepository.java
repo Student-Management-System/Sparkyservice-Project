@@ -7,9 +7,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 
 @Repository
 interface UserRepository extends CrudRepository<User, Integer>{
-    Optional<User> findByuserNameAndRealm(String username, String realm);
+    Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
     Optional<List<User>> findByuserName(String username);
 }

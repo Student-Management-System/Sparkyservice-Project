@@ -1,6 +1,5 @@
 package net.ssehub.sparkyservice.api.user;
 
-import static net.ssehub.sparkyservice.api.conf.ConfigurationValues.REALM_UNKNOWN;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
 /**
@@ -34,9 +34,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public <T extends User> void storeUser(@Nonnull T user) {
         User stUser = new User((User) user);
-        if (user.getRealm().isBlank() || user.getUserName().isBlank()) {
+        if (user.getRealm() == null || user.getUserName().isBlank()) {
             throw new IllegalArgumentException("Realm and username must not be blank."); 
-        } else if (!user.getRealm().equals(REALM_UNKNOWN)) {
+        } else if (user.getRealm() != UserRealm.UNKNOWN) {
             repository.save(stUser);
         }
     }
@@ -48,7 +48,7 @@ public class UserServiceImpl implements IUserService {
     public @Nonnull List<User> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
         Optional<List<User>> usersByName = repository.findByuserName(username);
         usersByName.orElseThrow(() -> new UserNotFoundException("No user with this name was found in database"));
-        usersByName.get().forEach(x -> new LocalUserDetails(x));
+        usersByName.get().forEach(user -> new LocalUserDetails(notNull(user)));
         var list = usersByName.get();
         List<User> userList = new ArrayList<User>();
         for (User transformUser : list) {
@@ -65,11 +65,11 @@ public class UserServiceImpl implements IUserService {
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable String realm) 
+    public @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
             throws UserNotFoundException {
         Optional<User> user = repository.findByuserNameAndRealm(username, realm);
         user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
-        if (user.get().getRealm().equals(LocalUserDetails.DEFAULT_REALM)) {
+        if (user.get().getRealm() == LocalUserDetails.DEFAULT_REALM) {
             return user.map(LocalUserDetails::new).get();
         } else {
             return user.get();
@@ -87,7 +87,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     /**
-     * This method only searched in the {@link LocalUserDetails#DEFAULT_REALM} for usernames.
+     * This method only searches for users with the given name which are in {@link UserRealm#LOCAL}.
      * {@inheritDoc}
      */
     @Override

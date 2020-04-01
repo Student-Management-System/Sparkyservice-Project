@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
@@ -67,7 +68,7 @@ public class UserServiceImplDatabaseTests {
         assertAll(
                 () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
                 () -> assertEquals(LocalUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
-                () -> assertEquals(UserRole.DEFAULT.name(), loadedUser.getRole()),
+                () -> assertEquals(UserRole.DEFAULT, loadedUser.getRole()),
                 () -> assertTrue(loadedUser.isActive())
             );
     }
@@ -96,7 +97,7 @@ public class UserServiceImplDatabaseTests {
         loadedUser.setRole(UserRole.ADMIN);
         userService.storeUser(loadedUser);
         loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
-        assertEquals(UserRole.ADMIN.name(), loadedUser.getRole(), "The role was not changed inside the datbase.");
+        assertEquals(UserRole.ADMIN, loadedUser.getRole(), "The role was not changed inside the datbase.");
     }
     
     @Test
@@ -122,7 +123,7 @@ public class UserServiceImplDatabaseTests {
     public void findMultipleEntries() throws UserNotFoundException {
         var user = new LocalUserDetails();
         user.setActive(true);
-        user.setRealm("otherRealm");
+        user.setRealm(UserRealm.LDAP);
         user.setUserName(TEST_USER_NAME);
         userService.storeUser(user);
         var users = userService.findUsersByUsername(TEST_USER_NAME);

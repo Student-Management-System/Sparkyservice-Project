@@ -6,6 +6,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,12 +15,10 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import net.ssehub.sparkyservice.api.util.NullHelpers;
+import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 
 @Entity
-@Table(
-    name = "user_stored", 
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"userName", "realm"})})
+@Table(name = "user_stored", uniqueConstraints = { @UniqueConstraint(columnNames = { "userName", "realm" }) })
 @ParametersAreNonnullByDefault
 public class User {
 
@@ -35,36 +35,36 @@ public class User {
 
     @Column
     protected boolean isActive;
-    
-    @OneToOne(cascade = {CascadeType.ALL})
+
+    @OneToOne(cascade = { CascadeType.ALL })
     @Nullable
     protected Password passwordEntity;
 
     @Nonnull
-    @Column(nullable = false, length = 50)
-    protected String realm;
-    
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    protected UserRealm realm;
+
     @Nonnull
     @Column(nullable = false)
-    protected String role;
+    @Enumerated(EnumType.STRING)
+    protected UserRole role;
 
-    @OneToOne(cascade = {CascadeType.ALL}, targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
+    @OneToOne(cascade = {
+            CascadeType.ALL }, targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
     protected PersonalSettings profileConfiguration;
 
     /**
      * Default constructor used by hibernate.
      */
-    protected User() {
-        this.realm = "";
-        this.role = "";
-        this.userName = "";
+    @SuppressWarnings("unused")
+    private User() {
+        role = UserRole.DEFAULT;
+        userName = "";
+        realm = UserRealm.UNKNOWN;
     }
-        
-    public User(String userName, 
-            @Nullable Password passwordEntity, 
-            String realm, 
-            boolean isActive, 
-            String role) {
+
+    public User(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive, UserRole role) {
         this.userName = userName;
         this.passwordEntity = passwordEntity;
         this.realm = realm;
@@ -82,17 +82,18 @@ public class User {
         this.passwordEntity = user.passwordEntity;
         this.profileConfiguration = user.profileConfiguration;
     }
-    
+
     public int getId() {
         return id;
     }
-    
+
     public void setId(int id) {
         this.id = id;
     }
 
     /**
-     * Is unique per realm and is never null or empty. It can be used as identifier in combination with the realm.
+     * Is unique per realm and is never null or empty. It can be used as identifier
+     * in combination with the realm.
      * 
      * @return name of the user which is unique per realm
      */
@@ -101,7 +102,8 @@ public class User {
     }
 
     /**
-     * Overrides the old username - it have to pe unique per realm and max length 50.
+     * Overrides the old username - it have to pe unique per realm and max length
+     * 50.
      * 
      * @param userName unique string per realm
      */
@@ -128,65 +130,22 @@ public class User {
     public void setPasswordEntity(@Nullable Password password) {
         this.passwordEntity = password;
     }
-    
+
     /**
-     * @param the authentication realm of the user. 
+     * Sets a single authority role to the user. Old role will be overridden.
+     * 
+     * @param role Users permission role
      */
-    public String getRealm() {
-        return realm;
+    public void setRole(UserRole role) {
+        this.role = role;
     }
 
     /**
-     * @param realm name with max character size of 50
-     */
-    public void setRealm(String realm) {
-        if (realm.length() > 50) {
-            throw new IllegalArgumentException("");
-        }
-        this.realm = realm;
-    }
-    
-    /**
-     * Helper method if a project uses enums for type safety. It will use the name() method of the enum.
+     * {@link PersonalSettings} of the user where extra settings are stored like
+     * email addressees.
      * 
-     * @param realm
-     */
-    public void setRealm(Enum<?> realm) {
-        setRealm(NullHelpers.notNull(realm.name()));
-    }
-    
-    /**
-     * Single authority role of the user.Only one role at a time is supported.
-     * 
-     * @return name of a role
-     */
-    public String getRole() {
-        return role;
-    }
-    
-    /**
-     * Sets a single authority role to the user. Old role will be overridden.
-     * 
-     * @param role name of a role
-     */
-    public void setRole(String role) {
-        this.role = role;
-    }
-    
-    /**
-     * Sets a single authority role to the user. Old role will be overridden.
-     * Helper method if a project uses enums for type safety. It will use the name() method of the enum.
-     * 
-     * @param role name of a role
-     */
-    public void setRole(Enum<?> role) {
-        setRole(NullHelpers.notNull(role.name()));
-    }
-    
-    /**
-     * {@link PersonalSettings} of the user where extra settings are stored like email addressees.
-     * 
-     * @return associated profile of this StoredUser - if no exists, a new will be generated
+     * @return associated profile of this StoredUser - if no exists, a new will be
+     *         generated
      */
     @Nonnull
     public PersonalSettings getProfileConfiguration() {
@@ -202,5 +161,30 @@ public class User {
 
     public void setProfileConfiguration(@Nullable PersonalSettings profileConfiguration) {
         this.profileConfiguration = profileConfiguration;
+    }
+
+    public UserRealm getRealm() {
+        return realm;
+    }
+
+    public void setRealm(UserRealm realm) {
+        this.realm = realm;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    /**
+     * Checks if the user is already stored in the database. When this is false and
+     * a store operation is invoked, the user will be created. Otherwise his data
+     * would be changed. This method does not perform any database action. To be
+     * sure that this user is or is not in the database consider using
+     * {@link UserServiceImpl#isUserInDatabase(User)}.
+     * 
+     * @return true if the user is already stored in the database, false otherwise.
+     */
+    public boolean isStored() {
+        return this.id != 0;
     }
 }

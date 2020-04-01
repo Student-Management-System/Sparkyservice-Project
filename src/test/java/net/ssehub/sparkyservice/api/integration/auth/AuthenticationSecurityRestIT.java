@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -33,6 +32,7 @@ import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.IUserService;
@@ -153,7 +153,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     /**
      * Tests if the server response send a JWT authorization token with the assumption of a successful 
      * authentication request. This could happen if the server authenticates the user successfully and return HTTP
-     * status code 200 but does not generate a JWT token, does not set this token in the response header. <br>
+     * status code 200 but does not generate a JWT token or does not set this token in the response header. <br>
      * <br>
      * Uses an the inMemoryAuthentication account.
      * 
@@ -195,7 +195,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     public IUserService userService; 
     
     /**
-     * LDAP authentication test. After a successful authenentication, a profile of the LDAP user shozuld be stored into 
+     * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 
      * the database.
      * 
      * @throws Exception
@@ -211,7 +211,8 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUserByNameAndRealm("gauss", "LDAP"), "User was not stored into LDAP realm.");
+        assertNotNull(userService.findUserByNameAndRealm("gauss", UserRealm.LDAP), 
+                "User was not stored into " + UserRealm.LDAP + " realm.");
     }
     
     /**

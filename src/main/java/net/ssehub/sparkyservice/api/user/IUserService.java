@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
 /**
@@ -48,7 +49,7 @@ public interface IUserService extends UserDetailsService {
     @Nonnull List<User> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
 
     
-    @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable String realm) throws UserNotFoundException;
+    @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) throws UserNotFoundException;
 
     /**
      * Checks if the given user is already stored in the used data storage. This could used as an indicator if the 

@@ -1,7 +1,5 @@
 package net.ssehub.sparkyservice.api.user;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -19,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 /**
@@ -30,11 +29,14 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 @ParametersAreNonnullByDefault
 public class LocalUserDetails extends User implements UserDetails, GrantedAuthority {
     
-    public static final String DEFAULT_REALM = "LOCAL";
+    @Nonnull
+    public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
     public static final String DEFAULT_ALGO = "BCRYPT";
     private static final long serialVersionUID = 1L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
+    @Nonnull
+    private final UserRealm realm = UserRealm.LOCAL;
 
     /**
      * Creates a new user in the {@link LocalUserDetails#DEFAULT_REALM} and encodes the password. <br>
@@ -59,15 +61,18 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
     /**
      * Default constructor only used for testing purposes.
      */
-    LocalUserDetails() {}
+    LocalUserDetails() {
+        super("", new Password(""), UserRealm.UNKNOWN, false, UserRole.DEFAULT);
+    }
 
     public LocalUserDetails(User userData) {
         super(userData);
+        log.debug("New LocalUserDetails created.");
     }
 
-    private LocalUserDetails(String userName, @Nullable Password passwordEntity, String realm, boolean isActive) {
-        super(userName, passwordEntity, realm, isActive, notNull(UserRole.DEFAULT.name()));
-        log.debug("New StoredUserDetails created.");
+    private LocalUserDetails(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive) {
+        super(userName, passwordEntity, realm, isActive, UserRole.DEFAULT);
+        log.debug("New LocalUserDetails created.");
     }
 
     public @Nonnull User getTransactionObject() {
@@ -81,7 +86,7 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
      */
     public String encodeAndSetPassword(String rawPassword) {
         var passwordEntityLocal = passwordEntity;
-        if (passwordEntityLocal!= null) {
+        if (passwordEntityLocal != null) {
             @Nonnull final String encodedPass = encode(rawPassword);
             passwordEntityLocal.setPasswordString(encodedPass);
             passwordEntityLocal.setHashAlgorithm(DEFAULT_ALGO);
@@ -101,10 +106,6 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
         return encodedPass;
     }
 
-    public UserRole getUserRole() {
-        return UserRole.valueOf(role);
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.asList(this);
@@ -119,11 +120,11 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
         if (passwordEntityLocal != null) {
             return passwordEntityLocal.getPasswordString();
         } else {
-            if (realm == DEFAULT_REALM) {
-                throw new RuntimeException("User has no password even though he is in the default realm. This "
+            if (realm == UserRealm.LOCAL) {
+                throw new RuntimeException("User has no password even though he is in the local realm. This "
                         + "shouldn't be happen.");
             } else {
-                log.warn("User is in default realm but doesn*t have a password.");
+                log.warn("User is in local realm but doesn't have a password.");
                 return "";
             }
         }
@@ -150,19 +151,16 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
 
     @Override
     public boolean isAccountNonExpired() {
-        // TODO Auto-generated method stub
         return isActive;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        // TODO Auto-generated method stub
         return isActive;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        // TODO Auto-generated method stub
         return isActive;
     }
 
@@ -173,18 +171,6 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
 
     @Override
     public String getAuthority() {
-        return super.getRole();
-    }
-
-    /**
-     * Checks if the user is already stored in the database. When this is false and a store operation is invoked, 
-     * the user will be created. Otherwise his data would be changed. This method does not perform any database action.
-     * To be sure that this user is or is not in the database consider using 
-     * {@link UserServiceImpl#isUserInDatabase(User)}.
-     * 
-     * @return true if the user is already stored in the database, false otherwise.
-     */
-    public boolean isStored() {
-        return this.id != 0;
+        return getRole().name();
     }
 }

@@ -3,22 +3,36 @@ package net.ssehub.sparkyservice.api.auth;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+
 class AuthPrincipalImplementation implements SparkysAuthPrincipal {
-    private @Nonnull String realm;
+    private @Nonnull UserRealm realm;
 
     private @Nonnull String name;
 
-    public AuthPrincipalImplementation(@Nullable String realm, @Nullable String name) {
+    public AuthPrincipalImplementation(@Nullable UserRealm realm, @Nullable String name) {
         super();
         if (realm == null || name == null) {
             throw new IllegalArgumentException("Arguments must have a value");
-        }
+        } 
         this.realm = realm;
+        this.name = name;
+    }
+    
+    public AuthPrincipalImplementation(@Nullable String realmString, @Nullable String name) {
+        if (realmString == null || name == null) {
+            throw new IllegalArgumentException("Arguments must have a value");
+        } 
+        try {
+            this.realm = UserRealm.valueOf(realmString);
+        } catch (Exception e) {
+            this.realm = UserRealm.UNKNOWN;
+        }
         this.name = name;
     }
 
     @Override
-    public @Nonnull String getRealm() {
+    public @Nonnull UserRealm getRealm() {
         return realm;
     }
 

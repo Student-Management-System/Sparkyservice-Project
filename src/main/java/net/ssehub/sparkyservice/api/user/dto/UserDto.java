@@ -11,6 +11,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
@@ -126,7 +127,7 @@ public class UserDto implements Serializable {
                 if (adminEdit || localUser.getEncoder().matches(oldPassword, localUser.getPassword())) {
                     localUser.encodeAndSetPassword(newPassword);
                 } 
-            } else {
+            } else if (databaseUser.getRealm() == UserRealm.LOCAL){
                 localUser = new LocalUserDetails(databaseUser);
                 localUser.encodeAndSetPassword(newPassword);
                 databaseUser.setPasswordEntity(localUser.getPasswordEntity()); // make pass by reference possible.
@@ -137,8 +138,8 @@ public class UserDto implements Serializable {
     @NotBlank
     public String username;
 
-    @NotBlank
-    public String realm;
+    @NotNull
+    public UserRealm realm;
 
     /**
      * Not necessary. Won't have any effect if the user is in any other realm than the local one (like LDAP). 

@@ -21,6 +21,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.IUserService;
@@ -49,7 +50,7 @@ public class IUserServiceTests {
     
     private static final String USER_NAME = "test213";
     private static final String USER_PW = "abcdefh";
-    private static final String USER_REALM = LocalUserDetails.DEFAULT_REALM;
+    private static final UserRealm USER_REALM = LocalUserDetails.DEFAULT_REALM;
 
     private Optional<List<User>> userList;
     private Optional<User> user;
@@ -58,7 +59,7 @@ public class IUserServiceTests {
     public void _setup() {
         var user1 = LocalUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
         var user2 = LocalUserDetails.createStoredLocalUser(USER_NAME, USER_PW, true);
-        user2.setRealm("OTHER"); // To simulate a working database, user with the same name should be in different realms
+        user2.setRealm(UserRealm.MEMORY); // To simulate a working database, user with the same name should be in different realms
         user1.setId(1);
         user2.setId(2);
         this.userList = Optional.of(Arrays.asList(user1, user2));
@@ -86,9 +87,9 @@ public class IUserServiceTests {
     }
 
     @Test
-    public void findUserByNameAndRealmNegativeTest() throws UserNotFoundException {
+    public void findUserByNameAndRealmNullTest() throws UserNotFoundException {
         assertThrows(UserNotFoundException.class, 
-                () -> userService.findUserByNameAndRealm(USER_NAME, "nonExistentRealm"));
+                () -> userService.findUserByNameAndRealm(null, null));
     }
 
     @Test
@@ -162,7 +163,7 @@ public class IUserServiceTests {
 
     @Test
     public void storeUserBlankTest() {
-        var user = new User("", null, "", true, NullHelpers.notNull(UserRole.ADMIN.name()));
+        var user = new User("", null, UserRealm.UNKNOWN, false, UserRole.DEFAULT);
         assertThrows(IllegalArgumentException.class, 
                 () -> userService.storeUser(user));
     }

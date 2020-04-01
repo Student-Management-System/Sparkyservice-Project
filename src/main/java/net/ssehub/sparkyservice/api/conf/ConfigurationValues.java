@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 public class ConfigurationValues {
     
     public static final String AUTH_LOGIN_URL = ControllerPath.AUTHENTICATION_AUTH;
-    public static final String REALM_UNKNOWN = "UNKNOWN";
-    public static final String REALM_LDAP = "LDAP";
     
     @Value("${jwt.secret}")
     private String jwtSecret;

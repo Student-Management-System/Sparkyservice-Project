@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
@@ -63,7 +64,7 @@ public class EditUserDtoTests {
     private @Nonnull UserDto createExampleDto() {
         var editUserDto = new UserDto();
         editUserDto.username = "user";
-        editUserDto.realm = "realm";
+        editUserDto.realm = UserRealm.UNKNOWN;
         editUserDto.passwordDto = new ChangePasswordDto();
         editUserDto.passwordDto.newPassword = newPassword;
         editUserDto.passwordDto.oldPassword = oldPassword;
@@ -127,13 +128,13 @@ public class EditUserDtoTests {
     /**
      * Test for {@link UserDto#defaultUserDtoEdit(net.ssehub.sparkyservice.db.user.StoredUser, UserDto)}.<br>
      * The given User is in the local realm and has no password entity. In reality this should never happen, but when
-     * it happen a {@link RuntimeException} should be thrown instead of a NullPointer to indicate that something 
+     * it happens, the application should not throw anything. 
      * went wrong.
      */
     @Test
     public void editPasswordFromDtoNegativeTest() {
         user.setRealm(LocalUserDetails.DEFAULT_REALM);
-        assertThrows(RuntimeException.class, () -> UserDto.defaultUserDtoEdit(user, createExampleDto()));
+        assertDoesNotThrow(() -> UserDto.defaultUserDtoEdit(user, createExampleDto()));
     }
 
     /**
@@ -270,7 +271,7 @@ public class EditUserDtoTests {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
         UserDto.adminUserDtoEdit(user, dto);
-        assertEquals(UserRole.ADMIN.name(), user.getRole(), "An administrator could not change the users role");
+        assertEquals(UserRole.ADMIN, user.getRole(), "An administrator could not change the users role");
     }
 
     /**

@@ -23,6 +23,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 
 public class JwtAuth {
     private JwtAuth() {}
@@ -42,26 +43,27 @@ public class JwtAuth {
     }
 
     public static String createJwtToken(UserDetails user, ConfigurationValues jwtConf) {
-        return createJwtTokenWithRealm(user, jwtConf, "");
+        return createJwtTokenWithRealm(user, jwtConf, UserRealm.UNKNOWN);
     }
 
-    public static @Nonnull String createJwtTokenWithRealm(UserDetails user, ConfigurationValues jwtConf, String realm) {
+    public static @Nonnull String createJwtTokenWithRealm(UserDetails user, ConfigurationValues jwtConf, 
+            UserRealm realm) {
         var roles = user.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-            var signingKey = jwtConf.getJwtSecret().getBytes();
-            var token = Jwts.builder()
-                .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
-                .setHeaderParam("typ", jwtConf.getJwtTokenType())
-                .setIssuer(jwtConf.getJwtTokenIssuer())
-                .setAudience(jwtConf.getJwtTokenAudience())
-                .setSubject(user.getUsername())
-                .setExpiration(new Date(System.currentTimeMillis() + 864000000))
-                .claim("rol", roles)
-                .claim("realm", realm)
-                .compact();
-            return notNull(token);
+            .stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList());
+        var signingKey = jwtConf.getJwtSecret().getBytes();
+        var token = Jwts.builder()
+            .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
+            .setHeaderParam("typ", jwtConf.getJwtTokenType())
+            .setIssuer(jwtConf.getJwtTokenIssuer())
+            .setAudience(jwtConf.getJwtTokenAudience())
+            .setSubject(user.getUsername())
+            .setExpiration(new Date(System.currentTimeMillis() + 864000000))
+            .claim("rol", roles)
+            .claim("realm", realm)
+            .compact();
+        return notNull(token);
     }
 
     public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) {

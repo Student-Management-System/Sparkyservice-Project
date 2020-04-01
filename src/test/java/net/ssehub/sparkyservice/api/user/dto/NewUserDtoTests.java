@@ -17,8 +17,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
-import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 
 public class NewUserDtoTests {
 
@@ -73,7 +71,7 @@ public class NewUserDtoTests {
         LocalUserDetails details = NewUserDto.transformToUser(userDto);
         assertAll( 
             () -> assertEquals(userDto.username, details.getUsername()),
-            () -> assertEquals(userDto.role, details.getUserRole()),
+            () -> assertEquals(userDto.role, details.getRole()),
             () -> assertNotNull(details.getPasswordEntity())
         );
     }

@@ -75,7 +75,7 @@ public class UserController {
             }
             boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username) 
                     && authenticatedUser.getRealm().equals(userDto.realm);
-            if (authenticatedUser.getRole().equals(UserRole.ADMIN.name())) {
+            if (authenticatedUser.getRole() == UserRole.ADMIN) {
                 UserDto.adminUserDtoEdit(authenticatedUser, userDto);
             } else if (selfEdit) {
                 UserDto.defaultUserDtoEdit(authenticatedUser, userDto);
