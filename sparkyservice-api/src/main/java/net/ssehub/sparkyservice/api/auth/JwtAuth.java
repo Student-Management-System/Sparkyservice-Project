@@ -2,6 +2,8 @@ package net.ssehub.sparkyservice.api.auth;
 
 import static net.ssehub.sparkyservice.util.NullHelpers.notNull;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,12 +76,19 @@ public class JwtAuth {
             .get("rol")).stream()
             .map(authority -> new SimpleGrantedAuthority((String) authority))
             .collect(Collectors.toList());
+        Date expiration = parsedToken.getBody().getExpiration();
         var realm = (String) parsedToken.getBody().get("realm");
         if (!StringUtils.isEmpty(username)) {
             SparkysAuthPrincipal principal = new AuthPrincipalImplementation(realm, username);
-            return new UsernamePasswordAuthenticationToken(principal, null, authorities);
+            return new UsernamePasswordAuthenticationToken(principal, expirationDateAsString(expiration), authorities);
         } else {
             return null;
         }
+    }
+    
+    private static String expirationDateAsString(Date expDate) {
+        String pattern = "MM/dd/yyyy HH:mm:ss";
+        DateFormat df = new SimpleDateFormat(pattern);
+        return df.format(expDate);
     }
 }
