@@ -60,6 +60,20 @@ public class NewUserDtoTests {
     }
 
     /**
+     * Test validation for {@link NewUserDto#password} with different input which aren't valid.
+     * 
+     * @param password the password input to check
+     */
+    @Test
+    public void newUserRoleValidation() {
+        var validator = Validation.buildDefaultValidatorFactory().getValidator();
+        var userDto = createExampleDto();
+        assumeTrue(validator.validate(userDto).isEmpty(), "The provided example dto is not correct. Skip this test");
+        userDto.role = null;
+        assertFalse(validator.validate(userDto).isEmpty(), "Role (was null) was not validated. ");
+    }
+
+    /**
      * Tests for {@link NewUserDto#transformToUser(NewUserDto)}. <br>
      * Transform a DTO to a {@link LocalUserDetails} and checks if each value is transformed. <br>
      * Does not check the transformation of {@link NewUserDto#getPersonalSettings()}. This is done in another test.

@@ -42,6 +42,7 @@ public class NewUserDto {
     @ValidPassword
     public String password; 
 
+    @NotNull
     public UserRole role;
 
     /**
