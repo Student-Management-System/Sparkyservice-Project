@@ -12,6 +12,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,16 +33,22 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
 public class JwtAuth {
     private JwtAuth() {}
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
     public static UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+        boolean passwordAvailable = password != null && !password.isBlank();
+        LOG.debug("[HTTP Parameter] Username: " + username + " | Password available: " + passwordAvailable );
         if (username == null && password == null) {
             try {
                 CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class); 
                 username = cred.username;
                 password = cred.password;
+                boolean avail = password != null && !password.isBlank();
+                LOG.debug("[HTTP Body] Username: " + username + " | Password available: " + avail );
             } catch (MismatchedInputException e) {
+                LOG.debug("Credentials not avaiable in requests input stream");
                 // do nothing - is thrown on invalid values like null
             } catch (java.io.IOException e) {
                 throw new RuntimeException(e);
