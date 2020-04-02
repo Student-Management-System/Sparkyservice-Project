@@ -19,18 +19,33 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
 public class JwtAuth {
     private JwtAuth() {}
 
     public static UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
-        var username = request.getParameter("username");
-        var password = request.getParameter("password");
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        if (username == null && password == null) {
+            try {
+                CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class); 
+                username = cred.username;
+                password = cred.password;
+            } catch (MismatchedInputException e) {
+                // do nothing - is thrown on invalid values like null
+            } catch (java.io.IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 

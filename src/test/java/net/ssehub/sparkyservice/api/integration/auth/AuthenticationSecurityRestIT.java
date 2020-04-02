@@ -257,4 +257,23 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                    .accept(MediaType.APPLICATION_JSON_VALUE))
            .andExpect(status().isOk());
     }
+
+    /**
+     * Tests an authentication attempt with in memory username as password where the data is send as http content
+     * in JSON format. 
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void jwtAuthJsonSerializeTest() throws Exception {
+        //assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
+        final String jsonCredentials = 
+                "{ \"username\": \"" + inMemoryUser + "\" , \"password\": \"" + inMemoryPassword + "\"}";
+        this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                     .content(jsonCredentials)
+                     .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }
