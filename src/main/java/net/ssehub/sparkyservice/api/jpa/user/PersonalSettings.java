@@ -71,4 +71,12 @@ public class PersonalSettings {
     public void setWantsAi(boolean wantsAi) {
         this.wantsAi = wantsAi;
     }
+
+    public SettingsDto asDto() {
+        var dto = new SettingsDto();
+        dto.email_address = getEmail_address();
+        dto.email_receive = isEmail_receive();
+        dto.wantsAi = isWantsAi();
+        return dto;
+    }
 }

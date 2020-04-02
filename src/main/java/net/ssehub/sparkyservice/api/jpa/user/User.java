@@ -135,6 +135,15 @@ public class User {
         }
     }
 
+    public static UserDto userAsDto(User user) {
+        var dto = new UserDto();
+        dto.realm = user.getRealm();
+        dto.role = user.getRole();
+        dto.settings = user.getProfileConfiguration().asDto();
+        dto.username = user.getUserName();
+        return dto;
+    }
+
     /**
      * Unique identifier (primary key) for local user.
      */
@@ -301,5 +310,7 @@ public class User {
         return this.id != 0;
     }
 
-    
+    public UserDto asDto() {
+        return User.userAsDto(this);
+    }
 }

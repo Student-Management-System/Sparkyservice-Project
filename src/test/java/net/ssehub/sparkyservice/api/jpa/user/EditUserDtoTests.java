@@ -284,4 +284,18 @@ public class EditUserDtoTests {
         User.defaultUserDtoEdit(user, dto);
         assertNotEquals(UserRole.ADMIN.name(), user.getRole(), "A normal user could change a role of a user");
     }
+
+    @Test
+    public void userAsDtoTest() {
+        var dto = createExampleDto();
+        User.defaultUserDtoEdit(user, dto);
+        var userDto = user.asDto();
+        assertAll(
+                () -> assertEquals(dto.realm, userDto.realm, "Realm not correctly changed or transformed"),
+                //() -> assertEquals(dto.role, userDto.role, "Role not correctly changed or transformed"), Currently not implemented 
+                () -> assertEquals(dto.username, userDto.username, "Username not correctly changed or transformed"),
+                () ->assertEquals(dto.settings.email_address, userDto.settings.email_address, 
+                        "Email not correctly changed or transformed")
+            );
+    }
 }
