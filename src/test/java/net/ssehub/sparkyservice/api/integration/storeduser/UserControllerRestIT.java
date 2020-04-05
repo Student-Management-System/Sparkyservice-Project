@@ -1,12 +1,11 @@
 package net.ssehub.sparkyservice.api.integration.storeduser;
 
-import static net.ssehub.sparkyservice.api.conf.ControllerPath.MANAGEMENT_ADD_USER;
-import static net.ssehub.sparkyservice.api.conf.ControllerPath.MANAGEMENT_EDIT_USER;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Files;
@@ -31,6 +30,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
@@ -67,11 +67,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username="admin", roles = "ROLE_ADMIN")
     public void securityAddUserAdminAccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
-            .perform(put(MANAGEMENT_ADD_USER)
+            .perform(put(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -90,7 +90,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void addUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         MvcResult result = this.mvc
-            .perform(put(MANAGEMENT_ADD_USER)
+            .perform(put(ControllerPath.USERS_PREFIX)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(content)
             .accept(MediaType.TEXT_PLAIN))
@@ -109,7 +109,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void securityAddUserNonAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
-            .perform(put(MANAGEMENT_ADD_USER)
+            .perform(put(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -125,7 +125,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void securityEditUserGuestTest() throws Exception {
         this.mvc
             .perform(
-                put(MANAGEMENT_ADD_USER)
+                put(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("")
                     .accept(MediaType.TEXT_PLAIN))
@@ -149,7 +149,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
          */
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(put(MANAGEMENT_EDIT_USER)
+            .perform(patch(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -166,7 +166,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editOtherUsersNegativeTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(put(MANAGEMENT_EDIT_USER)
+            .perform(patch(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -174,7 +174,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     }
 
     /**
-     * Tests that a user can't edit other users value (when he does not have the role "Admin").
+     * Tests if an admin can edit the data of other users.
      * 
      * @throws Exception
      */
@@ -186,7 +186,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editOtherAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(put(MANAGEMENT_EDIT_USER)
+            .perform(patch(ControllerPath.USERS_PREFIX)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -203,7 +203,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         MvcResult result = this.mvc
-            .perform(put(MANAGEMENT_EDIT_USER)
+            .perform(patch(ControllerPath.USERS_PREFIX)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(content)
             .accept(MediaType.TEXT_PLAIN))

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,6 +22,7 @@ import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${ldap.urls}")
     private String ldapUrls;
@@ -65,9 +67,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .authorizeRequests()
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
-            .antMatchers(ControllerPath.MANAGEMENT_ADD_USER).hasRole(UserRole.ADMIN.name()) // admin: allowed to add users
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
-            //.antMatchers("/**").permitAll()//maybe remove later
             .anyRequest().authenticated()
             .and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues, storedUserDetailService))
@@ -78,7 +78,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
     
     @Override // allow swagger 
-    // TODO Marcel: test if necessary
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/v3/api-docs/**", "/swagger-ui/**");
     }

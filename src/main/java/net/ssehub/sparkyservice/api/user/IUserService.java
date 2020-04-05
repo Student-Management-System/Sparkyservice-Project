@@ -52,6 +52,12 @@ public interface IUserService extends UserDetailsService {
     @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) throws UserNotFoundException;
 
     /**
+     * A list with all users in the data storage. Never null but may be empty.
+     * 
+     * @return
+     */
+    @Nonnull List<User> findAllUsers();
+    /**
      * Checks if the given user is already stored in the used data storage. This could used as an indicator if the 
      * user will be edited or a new one is created.
      * 
@@ -78,4 +84,8 @@ public interface IUserService extends UserDetailsService {
      * @return 
      */
     UserTransformer getDefaultTransformer();
+
+    void deleteUser(User user);
+
+    void deleteUser(String username, UserRealm realm);
 }

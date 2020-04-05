@@ -11,8 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -45,7 +47,8 @@ public class UserController {
     private UserTransformer transformer;
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    @PutMapping(ControllerPath.MANAGEMENT_ADD_USER)
+    @PutMapping(ControllerPath.USERS_PREFIX)
+    @Secured("Admin")
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         @Nonnull String username = notNull(newUserDto.username); // spring validation
         @Nonnull String password = notNull(newUserDto.password); // spring validation
@@ -60,7 +63,7 @@ public class UserController {
     }
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    @PutMapping(ControllerPath.MANAGEMENT_EDIT_USER)
+    @PatchMapping(ControllerPath.USERS_PREFIX)
     public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
                               throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {

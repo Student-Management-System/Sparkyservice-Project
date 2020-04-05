@@ -9,6 +9,8 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +29,8 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private UserRepository repository;
+
+    private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     /**
      * {@inheritDoc}.
@@ -126,5 +130,40 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserTransformer getDefaultTransformer() {
         return new LightUserTransformerImpl(this);
+    }
+
+    @Override
+    public @Nonnull List<User> findAllUsers() {
+        var list = new ArrayList<User>();
+        Iterable<User> optList = repository.findAll();
+        for (User user : optList) {
+            list.add(user);
+        }
+        return list;
+    }
+
+    @Override
+    public void deleteUser(@Nullable User user) {
+        if (user == null) {
+            log.info("Can't delete null user");
+        } else {
+            if (user.getId() != 0) {
+                repository.deleteById(user.getId());
+            } else {
+                repository.delete(user);
+            }
+        }
+        
+    }
+
+    @Override
+    public void deleteUser(@Nullable String username, @Nullable UserRealm realm) {
+        User user;
+        try {
+            user = findUserByNameAndRealm(username, realm);
+            deleteUser(user);
+        } catch (UserNotFoundException e) {
+            log.info("Can't delete user with name: " + username + "|" + realm + " it was not found in database");
+        }
     }
 }
