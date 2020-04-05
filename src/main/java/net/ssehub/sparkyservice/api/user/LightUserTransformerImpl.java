@@ -123,11 +123,9 @@ public final class LightUserTransformerImpl implements UserTransformer {
     private @Nonnull UserRole getRoleFromAuthority(@Nullable Collection<? extends GrantedAuthority> authorities) {
         if (authorities != null && authorities.size() == 1) {
             for (var authority : authorities) {
-                if (authority.getAuthority().endsWith(UserRole.ADMIN.name())) {
-                    return UserRole.ADMIN;
-                } else if (authority.getAuthority().endsWith(UserRole.DEFAULT.name())) {
-                    return UserRole.DEFAULT;
-                } else {
+                try {
+                    return UserRole.DEFAULT.getEnum(authority.getAuthority());
+                } catch (IllegalArgumentException e){
                     // if we want to use remote authorities (ex. from LDAP) set them here.
                     log.warn("Invalid role found:" + authorities.toString() + ". Using default role");
                 }
@@ -168,7 +166,7 @@ public final class LightUserTransformerImpl implements UserTransformer {
             // validate and try a cast
             // TODO implement a castMethod before doing a heavy database transaction.
             // StoredUser user = new StoredUser(userDto.username, null, userDto.realm,
-            // false, UserRole.DEFAULT.name());
+            // false, UserRole.DEFAULT);
             return userSerivce.findUserByNameAndRealm(userDto.username, userDto.realm);
         }
         throw new MissingDataException("Identifier not provided");

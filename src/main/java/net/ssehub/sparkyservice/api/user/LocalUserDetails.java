@@ -198,6 +198,6 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
 
     @Override
     public String getAuthority() {
-        return getRole().name();
+        return getRole().getAuthority();
     }
 }

@@ -75,7 +75,7 @@ public class JwtAuthTests {
                 () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
                 () -> assertEquals("TestUser", ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
                 () -> assertEquals(LocalUserDetails.DEFAULT_REALM, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm()),
-                () -> assertEquals(UserRole.ADMIN.name(), tokenAuthy.getAuthority())
+                () -> assertEquals(UserRole.FullName.ADMIN, tokenAuthy.getAuthority())
             );
     }
 

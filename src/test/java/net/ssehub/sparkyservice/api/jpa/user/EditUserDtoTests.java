@@ -282,7 +282,7 @@ public class EditUserDtoTests {
         var dto = createExampleDto();
         dto.role = UserRole.ADMIN;
         User.defaultUserDtoEdit(user, dto);
-        assertNotEquals(UserRole.ADMIN.name(), user.getRole(), "A normal user could change a role of a user");
+        assertNotEquals(UserRole.ADMIN, user.getRole(), "A normal user could change a role of a user");
     }
 
     @Test

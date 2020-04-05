@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
 /**
@@ -57,7 +58,7 @@ public interface IUserService extends UserDetailsService {
      * 
      * @return
      */
-    @Secured("ROLE_ADMIN")
+    @Secured(UserRole.FullName.ADMIN)
     @Nonnull List<User> findAllUsers();
     /**
      * Checks if the given user is already stored in the used data storage. This could used as an indicator if the 
@@ -89,6 +90,6 @@ public interface IUserService extends UserDetailsService {
 
     void deleteUser(User user);
 
-    @Secured("ROLE_ADMIN")
+    @Secured(UserRole.FullName.ADMIN)
     void deleteUser(String username, UserRealm realm);
 }

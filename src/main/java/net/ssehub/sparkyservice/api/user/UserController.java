@@ -48,7 +48,7 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.USERS_PREFIX)
-    @Secured("ROLE_ADMIN")
+    @Secured(UserRole.FullName.ADMIN)
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         @Nonnull String username = notNull(newUserDto.username); // spring validation
         @Nonnull String password = notNull(newUserDto.password); // spring validation

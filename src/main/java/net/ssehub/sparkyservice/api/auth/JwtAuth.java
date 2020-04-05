@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
@@ -29,6 +28,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
 public class JwtAuth {
@@ -99,7 +99,7 @@ public class JwtAuth {
             .getSubject();
         var authorities = ((List<?>) parsedToken.getBody()
             .get("rol")).stream()
-            .map(authority -> new SimpleGrantedAuthority((String) authority))
+            .map(authority -> UserRole.DEFAULT.getEnum((String) authority))
             .collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
         var realm = (String) parsedToken.getBody().get("realm");
