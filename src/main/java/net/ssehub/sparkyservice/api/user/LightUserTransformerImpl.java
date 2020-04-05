@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
+import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
@@ -85,7 +85,7 @@ public final class LightUserTransformerImpl implements UserTransformer {
     @Override
     public @Nonnull User castFromUserDetails(@Nullable UserDetails details) throws MissingDataException {
         User storeUser = null;
-        if (details instanceof LdapUserDetailsImpl) {
+        if (details instanceof LdapUserDetails) {
             var role = getRoleFromAuthority(details.getAuthorities());
             storeUser = new User(details.getUsername(), null, UserRealm.LDAP, details.isEnabled(), role);
         } else if (details instanceof LocalUserDetails || details instanceof User) {
