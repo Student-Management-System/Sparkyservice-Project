@@ -14,4 +14,5 @@ interface UserRepository extends CrudRepository<User, Integer>{
     Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
     Optional<List<User>> findByuserName(String username);
     Iterable<User> findAll();
+    Iterable<User> findByRealm(UserRealm realm);
 }

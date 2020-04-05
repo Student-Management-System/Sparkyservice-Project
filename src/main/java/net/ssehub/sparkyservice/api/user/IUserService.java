@@ -92,4 +92,7 @@ public interface IUserService extends UserDetailsService {
 
     @Secured(UserRole.FullName.ADMIN)
     void deleteUser(String username, UserRealm realm);
+
+    @Secured(UserRole.FullName.ADMIN)
+    List<User> findAllUsersInRealm(UserRealm realm);
 }

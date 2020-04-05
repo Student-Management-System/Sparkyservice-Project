@@ -13,8 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -25,6 +29,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -42,7 +47,7 @@ public class UserController {
 
     @Autowired
     private IUserService userService;
-    
+
     @Autowired
     private UserTransformer transformer;
 
@@ -50,8 +55,8 @@ public class UserController {
     @PutMapping(ControllerPath.USERS_PREFIX)
     @Secured(UserRole.FullName.ADMIN)
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
-        @Nonnull String username = notNull(newUserDto.username); // spring validation
-        @Nonnull String password = notNull(newUserDto.password); // spring validation
+        final @Nonnull String username = notNull(newUserDto.username); // spring validation
+        final @Nonnull String password = notNull(newUserDto.password); // spring validation
         final var newUser = LocalUserDetails.newLocalUser(username, password, true);
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
@@ -63,9 +68,9 @@ public class UserController {
     }
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    @PatchMapping(ControllerPath.USERS_PREFIX)
+    @PatchMapping(ControllerPath.USERS_PATCH)
     public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
-                              throws MissingDataException, UserNotFoundException, AccessViolationException {
+            throws MissingDataException, UserNotFoundException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Authentication not received");
         }
@@ -76,7 +81,7 @@ public class UserController {
                 log.warn("Unknown user type is logged in: " + auth.getPrincipal().toString());
                 throw new AccessViolationException("User not known.");
             }
-            boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username) 
+            boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
                     && authenticatedUser.getRealm().equals(userDto.realm);
             if (authenticatedUser.getRole() == UserRole.ADMIN) {
                 User.adminUserDtoEdit(authenticatedUser, userDto);
@@ -94,15 +99,58 @@ public class UserController {
         }
     }
 
-//    @GetMapping("/user/delete")
-//    @GetMapping("/user/changepass")
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @GetMapping(ControllerPath.USERS_PREFIX)
+    @Secured(UserRole.FullName.ADMIN)
+    public UserDto[] getAllUsers() {
+        var list = userService.findAllUsers();
+        var dtoArray = new UserDto[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            dtoArray[i] = list.get(i).asDto();
+        }
+        return dtoArray;
+    }
+
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}")
+    @Secured(UserRole.FullName.ADMIN)
+    public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
+        var list = userService.findAllUsersInRealm(realm);
+        var dtoArray = new UserDto[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            dtoArray[i] = list.get(i).asDto();
+        }
+        return dtoArray;
+    }
+
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}/{username}")
+    public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
+            Authentication auth) throws AccessViolationException, MissingDataException {
+        var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
+        var role =  UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
+        User authenticatedUser = userService.getDefaultTransformer().extendFromAny(auth.getPrincipal());
+        if (authenticatedUser != null && username.equals(authenticatedUser.getUserName()) || role == UserRole.ADMIN) {
+            var user = userService.findUserByNameAndRealm(username, realm);
+            return user.asDto();
+        } else {
+            throw new AccessViolationException("User is not correctly authenticated or tries to modify others  data.");
+        }
+    }
+
+    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @DeleteMapping(ControllerPath.USERS_DELETE)
+    @Secured(UserRole.FullName.ADMIN)
+    public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) { 
+        userService.deleteUser(username, realm);
+    }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessViolationException.class)
     public String handleUserEditException(AccessViolationException ex) {
         return handleException(ex);
     }
-    
+
     @ResponseStatus(code = HttpStatus.NOT_MODIFIED)
     @ExceptionHandler(MissingDataException.class)
     public String handleUserNotFound(MissingDataException ex) {

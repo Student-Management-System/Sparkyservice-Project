@@ -1,10 +1,14 @@
 package net.ssehub.sparkyservice.api.integration.storeduser;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +35,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
+import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
@@ -71,7 +81,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void securityAddUserAdminAccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
-            .perform(put(ControllerPath.USERS_PREFIX)
+            .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -90,7 +100,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void addUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         MvcResult result = this.mvc
-            .perform(put(ControllerPath.USERS_PREFIX)
+            .perform(put(ControllerPath.USERS_PUT)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(content)
             .accept(MediaType.TEXT_PLAIN))
@@ -109,7 +119,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void securityAddUserNonAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
-            .perform(put(ControllerPath.USERS_PREFIX)
+            .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -125,7 +135,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void securityEditUserGuestTest() throws Exception {
         this.mvc
             .perform(
-                put(ControllerPath.USERS_PREFIX)
+                put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("")
                     .accept(MediaType.TEXT_PLAIN))
@@ -149,7 +159,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
          */
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(patch(ControllerPath.USERS_PREFIX)
+            .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -166,7 +176,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editOtherUsersNegativeTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(patch(ControllerPath.USERS_PREFIX)
+            .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -186,7 +196,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editOtherAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
-            .perform(patch(ControllerPath.USERS_PREFIX)
+            .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
@@ -203,11 +213,118 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     public void editUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         MvcResult result = this.mvc
-            .perform(patch(ControllerPath.USERS_PREFIX)
+            .perform(patch(ControllerPath.USERS_PATCH)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(content)
             .accept(MediaType.TEXT_PLAIN))
             .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Mocking user not working");
+    }
+
+    /**
+     * Tests if non-admin user is forbidden to delete other users.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "DEFAULT")
+    public void securityNonAdminDeleteTest() throws Exception {
+        var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        this.mvc
+        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.TEXT_PLAIN))
+        .andExpect(status().isForbidden()); 
+    }
+
+    /**
+     * Test for {@link UserController#deleteUser(UserRealm, String)}.
+     * <br>
+     * A non authenticated user (guests) should not be able to reach the controller (return status 403 - forbidden).
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void securityGuestDeleteTest() throws Exception {
+        this.mvc
+        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.TEXT_PLAIN))
+        .andExpect(status().isForbidden()); 
+    }
+
+    /**
+     * Tests if an administrator can delete other users via {@link UserController#deleteUser(UserRealm, String)}.
+     * <br>
+     * <br> For this test a user must be successful written to the database. It will skips if this is not working.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "ADMIN")
+    public void functionAdminDeleteTest() throws Exception {
+        var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        this.mvc
+        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+        assertFalse(userService.isUserInDatabase(user));
+    }
+
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "ADMIN")
+    public void functionGetSingleUserTest() throws Exception {
+        var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        MvcResult result = this.mvc
+                .perform(get(ControllerPath.USERS_GET_SINGLE, UserRealm.LDAP, "testuser")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+        
+        assertEquals(200, result.getResponse().getStatus());
+        String dtoString = result.getResponse().getContentAsString();
+        assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoString, UserDto.class), 
+                "Some wrong values was returned from the controller. The content is not a valid json dto"); 
+        var returnedUserDto =  new ObjectMapper().readValue(dtoString, UserDto.class);
+        assertDtoEquals(user.asDto(), returnedUserDto);
+    }
+
+    @IntegrationTest
+    @Disabled
+    public void functionGetAllTest() throws Exception {
+        var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        user.setUserName("testuser2");
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        MvcResult result = this.mvc
+                .perform(get(ControllerPath.USERS_GET_SINGLE, UserRealm.LDAP, "testuser")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+        
+        assumeTrue(result.getResponse().getStatus() == 200);
+        String dtoArrayString = result.getResponse().getContentAsString();
+        assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoArrayString, UserDto[].class));        
+    }
+    
+    public static void assertDtoEquals(UserDto dto1, UserDto dto2) {
+        assertAll(
+                () -> assertEquals(dto1.username, dto2.username),
+                () -> assertEquals(dto1.realm, dto2.realm),
+                () -> assertEquals(dto1.settings.email_address, dto2.settings.email_address)
+            );
     }
 }

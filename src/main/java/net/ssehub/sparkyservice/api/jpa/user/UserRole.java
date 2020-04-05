@@ -10,7 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author Marcel
  */
 public enum UserRole implements GrantedAuthority {
-    DEFAULT(FullName.USER), ADMIN(FullName.ADMIN);
+    DEFAULT(FullName.DEFAULT), ADMIN(FullName.ADMIN);
 
     private @Nonnull final String authority;
 
@@ -58,6 +58,6 @@ public enum UserRole implements GrantedAuthority {
      */
     public class FullName {
         public static final String ADMIN = "ROLE_ADMIN";
-        public static final String USER = "ROLE_DEFAULT";
+        public static final String DEFAULT = "ROLE_DEFAULT";
     }
 }

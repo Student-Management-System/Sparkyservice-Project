@@ -166,4 +166,18 @@ public class UserServiceImpl implements IUserService {
             log.info("Can't delete user with name: " + username + "|" + realm + " it was not found in database");
         }
     }
+
+    @Override
+    public List<User> findAllUsersInRealm(@Nullable UserRealm realm) {
+        Iterable<User> optList = repository.findByRealm(realm);
+        if (optList instanceof List) {
+            return (List<User>) optList;
+        } else {
+            var list = new ArrayList<User>();
+            for (User user : optList) {
+                list.add(user);
+            }
+            return list;
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.user;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -166,6 +168,21 @@ public class IUserServiceTests {
         var user = new User("", null, UserRealm.UNKNOWN, false, UserRole.DEFAULT);
         assertThrows(IllegalArgumentException.class, 
                 () -> userService.storeUser(user));
+    }
+
+    @Test
+    public void iterableToListCastTest() {
+        when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(user.get()));
+        var castedUserList = userService.findAllUsersInRealm(USER_REALM);
+        assertAll(
+                () -> assertEquals(1, castedUserList.size()),
+                () -> assertEquals(user.get(), castedUserList.get(0))
+            );
+    }
+
+    @Test
+    public void nullKeepAliveDeleteTest() {
+        assertDoesNotThrow(() -> userService.deleteUser(null));
     }
 }
 
