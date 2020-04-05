@@ -67,7 +67,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ROLE_ADMIN")
+    @WithMockUser(username="admin", roles = "ADMIN")
     public void securityAddUserAdminAccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
