@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -56,6 +57,7 @@ public interface IUserService extends UserDetailsService {
      * 
      * @return
      */
+    @Secured("ROLE_ADMIN")
     @Nonnull List<User> findAllUsers();
     /**
      * Checks if the given user is already stored in the used data storage. This could used as an indicator if the 
@@ -87,5 +89,6 @@ public interface IUserService extends UserDetailsService {
 
     void deleteUser(User user);
 
+    @Secured("ROLE_ADMIN")
     void deleteUser(String username, UserRealm realm);
 }
