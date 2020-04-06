@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +57,13 @@ public final class LightUserTransformerImpl implements UserTransformer {
             try {
                 storeUser = castFromUserDetails(details);
             } catch (MissingDataException e) {
-                storeUser = userSerivce.findUserByNameAndRealm(details.getUsername(), UserRealm.LDAP);
+                if (details instanceof LdapUserDetails) {
+                    storeUser = userSerivce.findUserByNameAndRealm(details.getUsername(), UserRealm.LDAP);
+                }
+                log.info("Can't search a specific realm. Search for any user with the given username to complete"
+                        + " the request. This could lead to problems!");
+                var user = userSerivce.findUsersByUsername(details.getUsername()).get(0);
+                storeUser = notNull(user);
             }
             return storeUser;
         }
@@ -86,8 +91,14 @@ public final class LightUserTransformerImpl implements UserTransformer {
     public @Nonnull User castFromUserDetails(@Nullable UserDetails details) throws MissingDataException {
         User storeUser = null;
         if (details instanceof LdapUserDetails) {
-            var role = getRoleFromAuthority(details.getAuthorities());
-            storeUser = new User(details.getUsername(), null, UserRealm.LDAP, details.isEnabled(), role);
+            try {
+                var role = getRoleFromAuthority(details.getAuthorities());
+                String username = Optional.ofNullable(details.getUsername()).orElse("");
+                storeUser = new User(notNull(username), null, UserRealm.LDAP, details.isEnabled(), role);
+            } catch (UnsupportedOperationException e) {
+                log.debug("Using incomplete information for ldap user.");
+                throw new MissingDataException("Can't cast LDAP user from user details due to wrong roles");
+            }
         } else if (details instanceof LocalUserDetails || details instanceof User) {
             storeUser = (User) details;
         } else if (details instanceof org.springframework.security.core.userdetails.User) {
@@ -126,14 +137,13 @@ public final class LightUserTransformerImpl implements UserTransformer {
                 try {
                     return UserRole.DEFAULT.getEnum(authority.getAuthority());
                 } catch (IllegalArgumentException e){
-                    // if we want to use remote authorities (ex. from LDAP) set them here.
                     log.warn("Invalid role found:" + authorities.toString() + ". Using default role");
                 }
             }
             return UserRole.DEFAULT;
         } else {
             throw new UnsupportedOperationException(
-                    "Not supported: Can't parse user no role " + "or with more than one role.");
+                    "Not supported: Can't parse user no role or with more than one role.");
         }
     }
 
