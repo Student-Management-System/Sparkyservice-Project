@@ -30,6 +30,9 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private UserRepository repository;
 
+    @Autowired
+    private UserTransformer transformer;
+
     private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     /**
@@ -129,7 +132,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserTransformer getDefaultTransformer() {
-        return new LightUserTransformerImpl(this);
+        return transformer;
     }
 
     @Override
