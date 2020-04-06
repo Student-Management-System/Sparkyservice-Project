@@ -56,7 +56,7 @@ public class UserController {
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.USERS_PREFIX)
     @Secured(UserRole.FullName.ADMIN)
-    public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
+    public UserDto addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         final @Nonnull String username = notNull(newUserDto.username); // spring validation
         final @Nonnull String password = notNull(newUserDto.password); // spring validation
         final @Nonnull var role = notNull(Optional.ofNullable(newUserDto.role).orElse(UserRole.DEFAULT));
@@ -64,6 +64,7 @@ public class UserController {
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
             log.info("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
+            return newUser.asDto();
         } else {
             log.info("No user added: Duplicate entry");
             throw new UserEditException("Can't add user: Already existing");
@@ -72,7 +73,7 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth) 
+    public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth) 
             throws AccessViolationException, UserNotFoundException, MissingDataException {
         if (auth == null || !auth.isAuthenticated()) {
             throw new AccessViolationException("Not authenticated");
@@ -87,14 +88,17 @@ public class UserController {
             if (selfEdit) {
                 User.adminUserDtoEdit(authenticatedUser, userDto);
                 userService.storeUser(authenticatedUser);
+                return authenticatedUser.asDto();
             } else {
                 var databaseUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
                 User.adminUserDtoEdit(databaseUser, userDto);
                 userService.storeUser(databaseUser);
+                return authenticatedUser.asDto();
             }
         } else if (selfEdit) {
             User.defaultUserDtoEdit(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
+            return authenticatedUser.asDto();
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges", 
                     authenticatedUser.getUserName(), authenticatedUser.getRealm());

@@ -85,7 +85,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
-                    .accept(MediaType.TEXT_PLAIN))
+                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
@@ -104,7 +104,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(put(ControllerPath.USERS_PUT)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(content)
-            .accept(MediaType.TEXT_PLAIN))
+            .accept(MediaType.APPLICATION_JSON))
             .andReturn();
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
         
@@ -163,7 +163,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
-                    .accept(MediaType.TEXT_PLAIN))
+                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
@@ -205,7 +205,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
-                    .accept(MediaType.TEXT_PLAIN))
+                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }
 
@@ -227,7 +227,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
-                    .accept(MediaType.TEXT_PLAIN))
+                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
         var editedUser = userService.findUserByNameAndRealm("testuser", UserRealm.LOCAL);
         assertEquals(UserRole.ADMIN, editedUser.getRole());
@@ -253,7 +253,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
             .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
-                    .accept(MediaType.TEXT_PLAIN))
+                    .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
         var editedUser = userService.findUserByNameAndRealm("testuserLdap", UserRealm.LDAP);
         assertAll(
