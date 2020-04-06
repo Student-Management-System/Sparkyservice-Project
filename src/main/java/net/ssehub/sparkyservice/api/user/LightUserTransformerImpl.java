@@ -159,7 +159,7 @@ public final class LightUserTransformerImpl implements UserTransformer {
      * </ul>
      */
     @Override
-    public @Nullable User extendFromAny(@Nullable Object principal) throws UserNotFoundException, MissingDataException {
+    public @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException {
         User user = null;
         if (principal instanceof SparkysAuthPrincipal) {
             user = extendFromSparkyPrincipal((SparkysAuthPrincipal) principal);

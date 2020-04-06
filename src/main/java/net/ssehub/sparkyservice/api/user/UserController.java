@@ -73,7 +73,7 @@ public class UserController {
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
     public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
-            throws MissingDataException, UserNotFoundException, AccessViolationException {
+            throws MissingDataException, AccessViolationException {
         if (auth == null) {
             throw new InternalError("Authentication not received");
         }

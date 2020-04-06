@@ -27,6 +27,12 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
+/**
+ * Heavy in aspect of database transaction implementation of {@link UserTransformer}. 
+ * This implementation tries to update all given information as much as possible from the database. 
+ * 
+ * @author Marcel
+ */
 @Service
 public class HeavyUserTransformerImpl implements UserTransformer {
 
@@ -87,7 +93,7 @@ public class HeavyUserTransformerImpl implements UserTransformer {
     @Override
     public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
         if (principal != null) {
-            userSerivce.findUserByNameAndRealm(principal.getName(), principal.getRealm());
+            return userSerivce.findUserByNameAndRealm(principal.getName(), principal.getRealm());
         }
         throw new UserNotFoundException("Can't find user: null");
     }
@@ -100,9 +106,14 @@ public class HeavyUserTransformerImpl implements UserTransformer {
             return extendFromUserDetails((UserDetails) principal);
         } else if (principal instanceof UsernamePasswordAuthenticationToken) {
             var auth = (Authentication) principal;
-            var authPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
             var role = getRoleFromAuthority(auth.getAuthorities());
-            return new User(authPrincipal.getName(), null, UserRealm.MEMORY, true, role);
+            if (auth.getPrincipal() instanceof SparkysAuthPrincipal) {
+                var authPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
+                return new User(authPrincipal.getName(), null, authPrincipal.getRealm(), true, role);
+            } else if (auth.getPrincipal() instanceof String) {
+                @Nonnull String username = notNull((String) auth.getPrincipal());
+                return new User(username, null, UserRealm.MEMORY, true, role);
+            }
         }
         throw new MissingDataException("Principal implementation not known.");
     }

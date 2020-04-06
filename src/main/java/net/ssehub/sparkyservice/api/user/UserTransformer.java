@@ -52,9 +52,8 @@ public interface UserTransformer {
      * @return extend User  - may be null in case of unsupported principal
      * @throws MissingDataException If the principal object is a supported implementation but does not hold enough 
      *                              information.
-     * @throws UserNotFoundException will be removed in the future // TODO @Marcel
      */
-    @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException;
+    @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException;
 
     /**
      * Tries to extend the information of the given data transfer object in order to create a user. 
@@ -62,7 +61,6 @@ public interface UserTransformer {
      * @param user DTO object which should be casted or extended to a {@link User} object
      * @return User
      * @throws MissingDataException Is thrown if to less information are available for extended the DTO to a user
-     * @throws UserNotFoundException will be removed in the future // TODO @Marcel
      */
-    @Nonnull User extendFromUserDto(@Nullable UserDto user) throws MissingDataException, UserNotFoundException;
+    @Nonnull User extendFromUserDto(@Nullable UserDto user) throws MissingDataException;
 }
