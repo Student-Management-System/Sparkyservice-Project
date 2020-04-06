@@ -38,6 +38,7 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
+import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
@@ -201,6 +202,59 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
                     .content(content)
                     .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isOk());
+    }
+
+    /**
+     * An in memory user is authenticated and tries to change the role of other users.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "ADMIN")
+    public void editOtherInMemoryAdminTest() throws Exception {
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
+        // Should match with the data of the given json txt content:
+        var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
+        userService.storeUser(editUserLocal);
+        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        
+        this.mvc
+            .perform(patch(ControllerPath.USERS_PATCH)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(content)
+                    .accept(MediaType.TEXT_PLAIN))
+            .andExpect(status().isOk());
+        var editedUser = userService.findUserByNameAndRealm("testuser", UserRealm.LOCAL);
+        assertEquals(UserRole.ADMIN, editedUser.getRole());
+    }
+
+    /**
+     * An in memory user is authenticated and tries to change data of a stored ldap user via 
+     * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication)
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "ADMIN")
+    public void editLdapUserRolesTest() throws Exception {
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoLdap.json.txt"));
+        // Should match with the data of the given json txt content:
+        var editUserLocal = new User("testuserLdap", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        editUserLocal.getProfileConfiguration().setEmail_receive(true);
+        userService.storeUser(editUserLocal);
+        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        
+        this.mvc
+            .perform(patch(ControllerPath.USERS_PATCH)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(content)
+                    .accept(MediaType.TEXT_PLAIN))
+            .andExpect(status().isOk());
+        var editedUser = userService.findUserByNameAndRealm("testuserLdap", UserRealm.LDAP);
+        assertAll(
+                () -> assertEquals(UserRole.ADMIN, editedUser.getRole()),
+                () -> assertFalse(editedUser.getProfileConfiguration().isEmail_receive())
+            );
     }
 
     /**
