@@ -54,7 +54,7 @@ public interface UserTransformer {
      * @throws MissingDataException If the principal object is a supported implementation but does not hold enough 
      *                              information.
      */
-    @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException;
+    @Nullable User extendFromAnyPrincipal(@Nullable Object principal) throws MissingDataException;
 
     /**
      * Tries to extend the information of the given data transfer object in order to create a user. 

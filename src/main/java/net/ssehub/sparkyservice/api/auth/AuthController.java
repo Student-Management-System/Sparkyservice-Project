@@ -81,15 +81,11 @@ public class AuthController {
             }
             throw new AccessViolationException("Not authenticated");
         }
-        var user = userService.getDefaultTransformer().extendFromAny(auth);
+        var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
         var dto = new AuthenticationInfoDto();
-        if (user != null) {
-            dto.user = user.asDto();
-            //dto.token = (TokenDto) auth.getCredentials();
-            return dto;
-        } else {
-            throw new AccessViolationException("Wrong authentication object");
-        }
+        dto.user = user.asDto();
+        //dto.token = (TokenDto) auth.getCredentials();
+        return dto;
     }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)

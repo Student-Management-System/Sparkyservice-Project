@@ -61,7 +61,7 @@ public class UserTransformerTest {
     public void extendFromUserDetails() throws UserNotFoundException, MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var userDetails = new org.springframework.security.core.userdetails.User("testuser", "testpass", Arrays.asList(authority));
-        User extendedUser = NullHelpers.notNull(transformer.extendFromAny(userDetails)); // in reality this is maybe null!
+        User extendedUser = NullHelpers.notNull(transformer.extendFromAnyPrincipal(userDetails)); // in reality this is maybe null!
         assertAll(
                 () -> assertTrue(extendedUser != null),
                 () -> assertEquals("testuser", extendedUser.getUserName()),
@@ -99,7 +99,7 @@ public class UserTransformerTest {
     public void userNameTokenRealmTest() throws MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var token = new UsernamePasswordAuthenticationToken(new TestPrincipal(), "test", Arrays.asList(authority));
-        var extendedUser = NullHelpers.notNull(transformer.extendFromAny(token));
+        var extendedUser = NullHelpers.notNull(transformer.extendFromAuthentication(token));
         assertAll(
                 () -> assertNotNull(extendedUser),
                 () -> assertEquals(UserRealm.LOCAL, extendedUser.getRealm())
@@ -110,7 +110,7 @@ public class UserTransformerTest {
     public void userNameTokenTest() throws MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var token = new UsernamePasswordAuthenticationToken("user", "test", Arrays.asList(authority));
-        var extendedUser = NullHelpers.notNull(transformer.extendFromAny(token));
+        var extendedUser = NullHelpers.notNull(transformer.extendFromAuthentication(token));
         assertAll(
                 () -> assertNotNull(extendedUser),
                 () -> assertEquals(UserRealm.MEMORY, extendedUser.getRealm())

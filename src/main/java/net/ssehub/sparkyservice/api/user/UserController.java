@@ -137,7 +137,7 @@ public class UserController {
             Authentication auth) throws AccessViolationException, MissingDataException {
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role =  UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
-        User authenticatedUser = userService.getDefaultTransformer().extendFromAny(auth.getPrincipal());
+        User authenticatedUser = userService.getDefaultTransformer().extendFromAuthentication(auth);
         if (authenticatedUser != null && username.equals(authenticatedUser.getUserName()) || role == UserRole.ADMIN) {
             var user = userService.findUserByNameAndRealm(username, realm);
             return user.asDto();

@@ -101,13 +101,11 @@ public class HeavyUserTransformerImpl implements UserTransformer {
     }
 
     @Override
-    public @Nonnull User extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
+    public @Nonnull User extendFromAnyPrincipal(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
         if (principal instanceof SparkysAuthPrincipal) {
             return extendFromSparkyPrincipal((SparkysAuthPrincipal) principal);
         } else if (principal instanceof UserDetails ){
             return extendFromUserDetails((UserDetails) principal);
-        } else if (principal instanceof Authentication) {
-            return extendFromAuthentication((Authentication) principal);
         }
         throw new MissingDataException("Principal implementation not known.");
     }
@@ -117,8 +115,14 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         if (auth != null) {
             var role = getRoleFromAuthority(auth.getAuthorities());
             try {
-                return extendFromAny(auth.getPrincipal());
-            } catch (MissingDataException e) {
+                return extendFromAnyPrincipal(auth.getPrincipal());
+            } catch (UserNotFoundException | MissingDataException e) {
+                if (auth.getPrincipal() instanceof SparkysAuthPrincipal) { // MEMORY USER
+                    var principal = (SparkysAuthPrincipal) auth.getPrincipal();
+                    log.warn("Returning object which is not in database: {}@{}", 
+                            principal.getName(), principal.getRealm());
+                    return new User(principal.getName(), null, principal.getRealm(), true, role);
+                }
                 if (auth.getPrincipal() instanceof String) {
                     @Nonnull String username = notNull((String) auth.getPrincipal());
                     return new User(username, null, UserRealm.MEMORY, true, role);
