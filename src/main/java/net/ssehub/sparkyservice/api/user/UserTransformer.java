@@ -3,6 +3,7 @@ package net.ssehub.sparkyservice.api.user;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
@@ -63,4 +64,6 @@ public interface UserTransformer {
      * @throws MissingDataException Is thrown if to less information are available for extended the DTO to a user
      */
     @Nonnull User extendFromUserDto(@Nullable UserDto user) throws MissingDataException;
+
+    @Nonnull User extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException;
 }

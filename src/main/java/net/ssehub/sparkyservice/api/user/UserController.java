@@ -72,33 +72,28 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
-    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth)
-            throws MissingDataException, AccessViolationException {
-        if (auth == null) {
-            throw new InternalError("Authentication not received");
+    public void editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth) 
+            throws AccessViolationException, UserNotFoundException, MissingDataException {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessViolationException("Not authenticated");
         }
-        @Nullable User authenticatedUser = null;
-        try {
-            authenticatedUser = transformer.extendFromAny(auth.getPrincipal());
-            if (authenticatedUser == null) {
-                log.warn("Unknown user type is logged in: " + auth.getPrincipal().toString());
-                throw new AccessViolationException("User not known.");
-            }
-            boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
-                    && authenticatedUser.getRealm().equals(userDto.realm);
-            if (authenticatedUser.getRole() == UserRole.ADMIN) {
-                User.adminUserDtoEdit(authenticatedUser, userDto);
-            } else if (selfEdit) {
-                User.defaultUserDtoEdit(authenticatedUser, userDto);
-                userService.storeUser(authenticatedUser);
-            } else {
-                log.warn("User " + authenticatedUser.getUserName() + " tries to modify data of " + userDto.username);
-                throw new AccessViolationException("Could not edit other users data");
-            }
-        } catch (UserNotFoundException e) {
-            log.info("User is logged  in but no data is in the database. Maybe database is down?");
-            throw new UserNotFoundException("Could not edit user, reason: " + e.getMessage() + ". Maybe our databse"
-                    + " is offline or the logged in user was deleted.");
+        var authenticatedUser = notNull( 
+                Optional.ofNullable(transformer.extendFromAuthentication(auth))
+                .orElseThrow(() -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
+        boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
+              && authenticatedUser.getRealm().equals(userDto.realm);
+        var role = (UserRole) auth.getAuthorities().toArray()[0];
+        if (role == UserRole.ADMIN) {
+            User.adminUserDtoEdit(authenticatedUser, userDto);
+            userService.storeUser(authenticatedUser);
+        } else if (selfEdit) {
+            User.defaultUserDtoEdit(authenticatedUser, userDto);
+            userService.storeUser(authenticatedUser);
+        } else {
+            log.info("User {}@{} tries to modify the data of other user without admin privileges", 
+                    authenticatedUser.getUserName(), authenticatedUser.getRealm());
+            log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
+            throw new AccessViolationException("Not allowed to modify other users data");
         }
     }
 

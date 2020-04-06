@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -91,28 +90,41 @@ public class HeavyUserTransformerImpl implements UserTransformer {
     }
 
     @Override
-    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
+    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) {
         if (principal != null) {
+            if (principal.getRealm() == UserRealm.MEMORY) {
+                throw new UserNotFoundException("Can't search in memory database");
+            }
             return userSerivce.findUserByNameAndRealm(principal.getName(), principal.getRealm());
         }
         throw new UserNotFoundException("Can't find user: null");
     }
 
     @Override
-    public @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
+    public @Nonnull User extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
         if (principal instanceof SparkysAuthPrincipal) {
             return extendFromSparkyPrincipal((SparkysAuthPrincipal) principal);
         } else if (principal instanceof UserDetails ){
             return extendFromUserDetails((UserDetails) principal);
-        } else if (principal instanceof UsernamePasswordAuthenticationToken) {
-            var auth = (Authentication) principal;
+        } else if (principal instanceof Authentication) {
+            return extendFromAuthentication((Authentication) principal);
+        }
+        throw new MissingDataException("Principal implementation not known.");
+    }
+
+    @Override
+    public @Nonnull User extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
+        if (auth != null) {
             var role = getRoleFromAuthority(auth.getAuthorities());
-            if (auth.getPrincipal() instanceof SparkysAuthPrincipal) {
-                var authPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
-                return new User(authPrincipal.getName(), null, authPrincipal.getRealm(), true, role);
-            } else if (auth.getPrincipal() instanceof String) {
-                @Nonnull String username = notNull((String) auth.getPrincipal());
-                return new User(username, null, UserRealm.MEMORY, true, role);
+            try {
+                return extendFromAny(auth.getPrincipal());
+            } catch (MissingDataException e) {
+                if (auth.getPrincipal() instanceof String) {
+                    @Nonnull String username = notNull((String) auth.getPrincipal());
+                    return new User(username, null, UserRealm.MEMORY, true, role);
+                } else {
+                    throw e;
+                }
             }
         }
         throw new MissingDataException("Principal implementation not known.");
