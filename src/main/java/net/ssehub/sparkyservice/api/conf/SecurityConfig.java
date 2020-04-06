@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
@@ -41,6 +42,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     
     @Value("${ldap.enabled}")
     private String ldapEnabled;
+
+    @Value("${ldap.domain}")
+    private String ldapFullDomain;
+
+    @Value("${ldap.ad}")
+    private String ldapAd;
 
     @Value("${recovery.enabled}")
     private String inMemoryEnabled;
@@ -92,13 +99,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         }
         auth.userDetailsService(storedUserDetailService);
         if (Boolean.parseBoolean(ldapEnabled)) {
-            auth.ldapAuthentication()
-            .contextSource()
-            .url(ldapUrls + ldapBaseDn)
-            .managerDn(ldapSecurityPrincipal)
-            .managerPassword(ldapPrincipalPassword)
-            .and()
-            .userDnPatterns(ldapUserDnPattern);
+            if ("true".equalsIgnoreCase(ldapAd)) {
+                ActiveDirectoryLdapAuthenticationProvider adProvider = 
+                        new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
+                adProvider.setConvertSubErrorCodesToExceptions(true);
+                adProvider.setUseAuthenticationRequestCredentials(true);
+                if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
+                    adProvider.setSearchFilter(ldapUserDnPattern);
+                }
+                auth.authenticationProvider(adProvider);
+                auth.eraseCredentials(false);
+            } else {
+                auth.ldapAuthentication()
+                .contextSource()
+                .url(ldapUrls + ldapBaseDn)
+                .managerDn(ldapSecurityPrincipal)
+                .managerPassword(ldapPrincipalPassword)
+                .and()
+                .userDnPatterns(ldapUserDnPattern);
+            }
         }
     }
     
