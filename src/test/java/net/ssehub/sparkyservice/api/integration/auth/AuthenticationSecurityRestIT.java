@@ -236,7 +236,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
      * @throws Exception
      */
     @IntegrationTest
-    public void jwtAuthMemoryUJser() throws Exception {
+    public void jwtAuthMemoryUser() throws Exception {
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var result = this.mvc
                 .perform(

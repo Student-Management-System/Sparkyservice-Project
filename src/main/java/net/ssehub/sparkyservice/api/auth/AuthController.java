@@ -82,7 +82,7 @@ public class AuthController {
             }
             throw new AccessViolationException("Not authenticated");
         }
-        var user = userService.getDefaultTransformer().extendFromAny(auth.getPrincipal());
+        var user = userService.getDefaultTransformer().extendFromAny(auth);
         var dto = new AuthenticationInfoDto();
         // dto.userDto = user.asDto();
         // dto.tokenDto = (TokenDto) auth.getCredentials();
