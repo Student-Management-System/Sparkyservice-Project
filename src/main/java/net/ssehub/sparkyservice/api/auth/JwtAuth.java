@@ -15,9 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,31 +54,32 @@ public class JwtAuth {
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 
-    public static @Nullable String createJwtFromAuthentication(Authentication authentication, ConfigurationValues jwtConf) {
-        if (authentication.getPrincipal() instanceof UserDetails) {
-            return createJwtToken((UserDetails) authentication, jwtConf);
-        } else {
-            return null;
-        }
+    public static String createJwtToken(String username,  List<UserRole> roles, ConfigurationValues jwtConf) {
+        return createJwtTokenWithRealm(username, roles, jwtConf, UserRealm.UNKNOWN);
     }
 
-    public static String createJwtToken(UserDetails user, ConfigurationValues jwtConf) {
-        return createJwtTokenWithRealm(user, jwtConf, UserRealm.UNKNOWN);
-    }
-
-    public static @Nonnull String createJwtTokenWithRealm(UserDetails user, ConfigurationValues jwtConf, 
-            UserRealm realm) {
-        var roles = user.getAuthorities()
-            .stream()
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList());
+    /**
+     * Creates a JWT Token.
+     * 
+     * @param username 
+     * @param authorities list of authorities is set 
+     * @param jwtConf 
+     * @param realm
+     * @return
+     */
+    public static @Nonnull String createJwtTokenWithRealm(String username, List<UserRole> roles, 
+            ConfigurationValues jwtConf, UserRealm realm) {
+//        var roles = authorities
+//            .stream()
+//            .map(GrantedAuthority::getAuthority)
+//            .collect(Collectors.toList());
         var signingKey = jwtConf.getJwtSecret().getBytes();
         var token = Jwts.builder()
             .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
             .setHeaderParam("typ", jwtConf.getJwtTokenType())
             .setIssuer(jwtConf.getJwtTokenIssuer())
             .setAudience(jwtConf.getJwtTokenAudience())
-            .setSubject(user.getUsername())
+            .setSubject(username)
             .setExpiration(new Date(System.currentTimeMillis() + 864000000))
             .claim("rol", roles)
             .claim("realm", realm)
@@ -89,6 +87,14 @@ public class JwtAuth {
         return notNull(token);
     }
 
+    /**
+     * Extracts information of a given token. The secret must be the same as the secret which was used to encode 
+     * the JWT token.
+     * 
+     * @param token JWT token as string
+     * @param jwtSecret Is used to decode the token - must be the same which was used for encoding
+     * @return Springs authentication token where {@link SparkysAuthPrincipal} is used as username
+     */
     public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
         var parsedToken = Jwts.parser()

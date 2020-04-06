@@ -1,19 +1,23 @@
 package net.ssehub.sparkyservice.api.auth;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
@@ -52,7 +56,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 if (!userService.isUserInDatabase(user)) {
                     userService.storeUser(user);
                 }
-                String token = JwtAuth.createJwtTokenWithRealm(details, confValues, user.getRealm());
+                List<UserRole> authorityList = Arrays.asList(user.getRole());
+                String token = JwtAuth.createJwtTokenWithRealm(user.getUserName(), authorityList, confValues, 
+                        user.getRealm());
                 response.addHeader(confValues.getJwtTokenHeader(), confValues.getJwtTokenPrefix() + " " + token);
             } catch (UserNotFoundException e) {
                 log.info("A user which is currently logged in, is not found in the database");

@@ -284,6 +284,26 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
            .andExpect(status().isOk());
     }
 
+    @IntegrationTest
+    public void jwtAuthLdapUserTest() throws Exception {
+        var result = this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                        .param("password", "password")
+                        .param("username", "gauss")
+                        .accept(MediaType.TEXT_PLAIN))
+                .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
+                    + "another problem.");
+        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        this.mvc
+            .perform(
+                get(ControllerPath.AUTHENTICATION_CHECK)
+                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
+                   .accept(MediaType.APPLICATION_JSON_VALUE))
+           .andExpect(status().isOk());
+    }
+
     /**
      * Tests an authentication attempt with in memory username as password where the data is send as http content
      * in JSON format. 
