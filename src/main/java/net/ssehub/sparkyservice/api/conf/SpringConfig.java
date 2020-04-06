@@ -4,6 +4,7 @@ import javax.validation.Validator;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -11,7 +12,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import net.ssehub.sparkyservice.api.user.LightUserTransformerImpl;
+import net.ssehub.sparkyservice.api.user.HeavyUserTransformerImpl;
 import net.ssehub.sparkyservice.api.user.UserTransformer;
 
 @Configuration
@@ -35,7 +36,8 @@ public class SpringConfig {
     }
 
     @Bean
-    public UserTransformer storedUserTransformer() {
-        return new LightUserTransformerImpl();
+    @Primary
+    public UserTransformer userTransformer() {
+        return new HeavyUserTransformerImpl();
     }
 }
