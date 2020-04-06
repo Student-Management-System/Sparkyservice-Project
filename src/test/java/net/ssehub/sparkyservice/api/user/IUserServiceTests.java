@@ -26,12 +26,7 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.IUserService;
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.UserRepository;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
-import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
  * Tests for {@link IUserService} implementation. This test class should use the same implementation bean which 
@@ -59,8 +54,8 @@ public class IUserServiceTests {
 
     @BeforeEach
     public void _setup() {
-        var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, true);
-        var user2 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, true);
+        var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
+        var user2 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
         user2.setRealm(UserRealm.MEMORY); // To simulate a working database, user with the same name should be in different realms
         user1.setId(1);
         user2.setId(2);

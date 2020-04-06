@@ -57,7 +57,7 @@ public class UserController {
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         final @Nonnull String username = notNull(newUserDto.username); // spring validation
         final @Nonnull String password = notNull(newUserDto.password); // spring validation
-        final var newUser = LocalUserDetails.newLocalUser(username, password, true);
+        final var newUser = LocalUserDetails.newLocalUser(username, password, newUserDto.role);
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
             // return newUser.toString();

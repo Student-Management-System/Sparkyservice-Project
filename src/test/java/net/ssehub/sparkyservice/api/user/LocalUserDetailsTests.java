@@ -3,15 +3,13 @@ package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;;
-
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 class LocalUserDetailsTests {
     
@@ -20,7 +18,7 @@ class LocalUserDetailsTests {
     @Test
     public void userDetailsFactoryPasswordTest() {
         final String password = "tst34";
-        var userDetails = LocalUserDetails.newLocalUser("test", password, false);
+        var userDetails = LocalUserDetails.newLocalUser("test", password, UserRole.DEFAULT);
 
         String passwordAlgo = notNull(userDetails.getPasswordEntity()).getHashAlgorithm();
         assertEquals(LocalUserDetails.DEFAULT_ALGO, passwordAlgo, 
@@ -32,13 +30,13 @@ class LocalUserDetailsTests {
     
     @Test
     public void userDetailsFactoryActiveTest() {
-        var userDetails = LocalUserDetails.newLocalUser("test", "", false);
-        assertFalse(userDetails.isActive());
+        var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
+        assertTrue(userDetails.isActive());
     }
     
     @Test
     public void userDetailsFactoryDefaultRealmTest() {
-        var userDetails = LocalUserDetails.newLocalUser("test", "", false);
+        var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
         assertEquals(LocalUserDetails.DEFAULT_REALM, userDetails.getRealm(), 
                 "The user is user details are not stored in the default realm.");
     }

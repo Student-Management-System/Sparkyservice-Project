@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 public class LocalUserPasswordEncodingTests {
       
@@ -33,7 +33,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void constructorPasswordHashTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match, "Encoded password does not match with bcrypted password");
     }
@@ -41,7 +41,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void manualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
         user.encodeAndSetPassword(passwordToCheck);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match);
@@ -50,7 +50,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void negativeManualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, true);
+        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
         user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 

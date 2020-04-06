@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,9 +32,11 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.IUserService;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -235,17 +236,42 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
      * @throws Exception
      */
     @IntegrationTest
-    @Disabled
-    /*
-     * Disabled because the user must be stored in the database in order to call the authentication check function.
-     */
-    public void authWithJwtTokenTest() throws Exception {
+    public void jwtAuthMemoryUJser() throws Exception {
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var result = this.mvc
                 .perform(
                      post(ConfigurationValues.AUTH_LOGIN_URL)
                         .param("password", inMemoryPassword)
                         .param("username", inMemoryUser)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
+        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        this.mvc
+            .perform(
+                get(ControllerPath.AUTHENTICATION_CHECK)
+                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
+                   .accept(MediaType.APPLICATION_JSON_VALUE))
+           .andExpect(status().isOk());
+    }
+
+    /**
+     * Tests an authentication attempt with a real JWT token and not with a mocked user.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void jwtAuthLocalUserTest() throws Exception {
+        var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
+        var result = this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                        .param("password", "password")
+                        .param("username", "testuser")
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication not successful");

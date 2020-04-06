@@ -52,9 +52,8 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
      * @param isActive decide if the user can log in or not
      * @return new instance of StoredUserDetails. 
      */
-    public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword,
-                                                                   boolean isActive) {
-        var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, isActive);
+    public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword, UserRole role) {
+        var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, true, role);
         newUser.encodeAndSetPassword(rawPassword);
         return newUser;
     }
@@ -70,8 +69,7 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
         String username = newUser.username;
         String password = newUser.password;
         if (username != null && password != null) {
-            var storedUser =  LocalUserDetails.newLocalUser(username, password, true);
-            storedUser.setRole(notNull(newUser.role));
+            var storedUser =  LocalUserDetails.newLocalUser(username, password, newUser.role);
             final var settings = newUser.personalSettings;
             if (settings != null) {                
                 PersonalSettings.applyPersonalSettingsDto(storedUser, settings);
@@ -97,8 +95,9 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
         log.debug("New LocalUserDetails created.");
     }
 
-    private LocalUserDetails(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive) {
-        super(userName, passwordEntity, realm, isActive, UserRole.DEFAULT);
+    private LocalUserDetails(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive, 
+            UserRole role) {
+        super(userName, passwordEntity, realm, isActive, role);
         log.debug("New LocalUserDetails created.");
     }
 
