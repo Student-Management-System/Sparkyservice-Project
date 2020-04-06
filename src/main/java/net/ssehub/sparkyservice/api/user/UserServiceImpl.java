@@ -80,9 +80,9 @@ public class UserServiceImpl implements IUserService {
         Optional<User> user = repository.findByuserNameAndRealm(username, realm);
         user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
         if (user.get().getRealm() == LocalUserDetails.DEFAULT_REALM) {
-            return user.map(LocalUserDetails::new).get();
+            return notNull(user.map(LocalUserDetails::new).get());
         } else {
-            return user.get();
+            return notNull(user.get());
         }
     }
 
@@ -93,7 +93,7 @@ public class UserServiceImpl implements IUserService {
     public @Nonnull LocalUserDetails findUserById(int id) throws UserNotFoundException {
         Optional<User> user = repository.findById(id);
         user.orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
-        return user.map(LocalUserDetails::new).get();
+        return notNull(user.map(LocalUserDetails::new).get());
     }
 
     /**
