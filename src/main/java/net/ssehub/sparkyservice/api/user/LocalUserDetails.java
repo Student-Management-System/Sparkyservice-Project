@@ -32,7 +32,7 @@ import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
  * @author Marcel
  */
 @ParametersAreNonnullByDefault
-public class LocalUserDetails extends User implements UserDetails, GrantedAuthority {
+public class LocalUserDetails extends User implements UserDetails {
 
     @Nonnull
     public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
@@ -136,7 +136,7 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Arrays.asList(this);
+        return Arrays.asList(getRole());
     }
 
     /**
@@ -195,10 +195,5 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
     @Override
     public boolean isEnabled() {
         return isActive;
-    }
-
-    @Override
-    public String getAuthority() {
-        return getRole().getAuthority();
     }
 }
