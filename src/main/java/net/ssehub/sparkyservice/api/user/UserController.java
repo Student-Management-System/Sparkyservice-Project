@@ -2,6 +2,8 @@ package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -57,10 +59,11 @@ public class UserController {
     public void addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         final @Nonnull String username = notNull(newUserDto.username); // spring validation
         final @Nonnull String password = notNull(newUserDto.password); // spring validation
-        final var newUser = LocalUserDetails.newLocalUser(username, password, newUserDto.role);
+        final @Nonnull var role = notNull(Optional.ofNullable(newUserDto.role).orElse(UserRole.DEFAULT));
+        final var newUser = LocalUserDetails.newLocalUser(username, password, role);
         if (!userService.isUserInDatabase(newUser)) {
             userService.storeUser(newUser);
-            // return newUser.toString();
+            log.info("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
         } else {
             log.info("No user added: Duplicate entry");
             throw new UserEditException("Can't add user: Already existing");

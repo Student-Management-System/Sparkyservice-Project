@@ -4,6 +4,7 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -69,7 +70,8 @@ public class LocalUserDetails extends User implements UserDetails, GrantedAuthor
         String username = newUser.username;
         String password = newUser.password;
         if (username != null && password != null) {
-            var storedUser =  LocalUserDetails.newLocalUser(username, password, newUser.role);
+            var role = Optional.ofNullable(newUser.role).orElse(UserRole.DEFAULT);
+            var storedUser =  LocalUserDetails.newLocalUser(username, password, notNull(role));
             final var settings = newUser.personalSettings;
             if (settings != null) {                
                 PersonalSettings.applyPersonalSettingsDto(storedUser, settings);
