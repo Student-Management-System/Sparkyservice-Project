@@ -45,6 +45,9 @@ public class UserServiceImpl implements IUserService {
             throw new IllegalArgumentException("Realm and username must not be blank."); 
         } else if (user.getRealm() != UserRealm.UNKNOWN) {
             repository.save(stUser);
+            log.debug("Stored user with {}@{} into database", stUser.getUserName(), stUser.getRealm());
+        } else {
+            log.debug("Dont safe user: {}@{}", stUser.getUserName(), stUser.getRealm());
         }
     }
 

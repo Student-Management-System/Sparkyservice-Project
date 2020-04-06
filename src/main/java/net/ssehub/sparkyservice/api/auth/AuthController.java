@@ -36,8 +36,8 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 @RestController
 public class AuthController {
     public class AuthenticationInfoDto {
-        public UserDto userDto;
-        public TokenDto tokenDto;
+        public UserDto user;
+        public TokenDto token;
     }
 
     @Autowired
@@ -61,9 +61,8 @@ public class AuthController {
     }
 
     /**
-     * Checks if the user is authenticated with a given JWT Token. If the token is
-     * valid, the controller is reachable otherwise it would be blocked through
-     * spring security and FORBIDDEN is returned.
+     * Checks if the user is authenticated with a given JWT Token. This controller is not protected through spring
+     * secrurity in order to provide better information about what went wrong. 
      * 
      * @param auth Injected through spring if the user is logged in - holds
      *             authentication information
@@ -73,8 +72,8 @@ public class AuthController {
      */
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
-    public UserDto isTokenValid(@Nullable Authentication auth, HttpServletRequest request)
-            throws AccessViolationException, MissingDataException, UserNotFoundException {
+    public AuthenticationInfoDto isTokenValid(@Nullable Authentication auth, HttpServletRequest request)
+            throws AccessViolationException, MissingDataException {
         if (auth == null) { // check what went wrong
             var jwtToken = request.getHeader(confValues.getJwtTokenHeader());
             if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(confValues.getJwtTokenPrefix())) {
@@ -84,9 +83,13 @@ public class AuthController {
         }
         var user = userService.getDefaultTransformer().extendFromAny(auth);
         var dto = new AuthenticationInfoDto();
-        // dto.userDto = user.asDto();
-        // dto.tokenDto = (TokenDto) auth.getCredentials();
-        return dto.userDto;
+        if (user != null) {
+            dto.user = user.asDto();
+            //dto.token = (TokenDto) auth.getCredentials();
+            return dto;
+        } else {
+            throw new AccessViolationException("Wrong authentication object");
+        }
     }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)

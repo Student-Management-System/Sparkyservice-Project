@@ -18,7 +18,7 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
 /**
  * Business logic for {@link User} and {@link LocalUserDetails}. This class is also used for a 
- * {@link UserDetailsService} authentication method through spring. It must provide a method for 
+ * {@link UserDetailsService} authentication method through spring.
  * 
  * @author Marcel
  */
