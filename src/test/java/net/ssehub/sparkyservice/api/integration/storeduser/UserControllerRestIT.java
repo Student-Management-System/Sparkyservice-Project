@@ -196,6 +196,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      */
     public void editOtherAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
+        // Should match with the data of the given json txt content:
+        var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
+        userService.storeUser(editUserLocal);
+        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)

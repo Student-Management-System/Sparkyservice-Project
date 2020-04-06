@@ -82,10 +82,16 @@ public class UserController {
                 .orElseThrow(() -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
         boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
               && authenticatedUser.getRealm().equals(userDto.realm);
-        var role = (UserRole) auth.getAuthorities().toArray()[0];
-        if (role == UserRole.ADMIN) {
-            User.adminUserDtoEdit(authenticatedUser, userDto);
-            userService.storeUser(authenticatedUser);
+        var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
+        if (UserRole.ADMIN.getEnum(authority.getAuthority()) == UserRole.ADMIN) {
+            if (selfEdit) {
+                User.adminUserDtoEdit(authenticatedUser, userDto);
+                userService.storeUser(authenticatedUser);
+            } else {
+                var databaseUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+                User.adminUserDtoEdit(databaseUser, userDto);
+                userService.storeUser(databaseUser);
+            }
         } else if (selfEdit) {
             User.defaultUserDtoEdit(authenticatedUser, userDto);
             userService.storeUser(authenticatedUser);
@@ -158,6 +164,7 @@ public class UserController {
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({ UserNotFoundException.class, UserEditException.class })
     public String handleException(Exception ex) {
+        log.debug("Exception in UserController", ex);
         if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
             return "There was a problem with the user data.";
         } else {
