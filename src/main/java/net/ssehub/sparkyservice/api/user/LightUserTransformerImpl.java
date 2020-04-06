@@ -71,8 +71,11 @@ public final class LightUserTransformerImpl implements UserTransformer {
     }
 
     /**
-     * Cast user details to stored user and identifies the realm through the
-     * implementation. <br>
+     * Tries to cast a given instance of {@link UserDetails} to a {@link User}
+     * object. This is done without database interactions and is more resource
+     * friendly than {@link #extendFromUserDetails(UserDetails)} but may can't
+     * complete the challenge if some really essential information are missing
+     * (typically identifier).<br>
      * Supported implementations: <br>
      * <ul>
      * <li>{@link LocalUserDetails}</li>
@@ -87,7 +90,6 @@ public final class LightUserTransformerImpl implements UserTransformer {
      * @throws Thrown if the provided information are too less in order to create an
      *                object and the user is not found in the database
      */
-    @Override
     public @Nonnull User castFromUserDetails(@Nullable UserDetails details) throws MissingDataException {
         User storeUser = null;
         if (details instanceof LdapUserDetails) {
@@ -106,7 +108,7 @@ public final class LightUserTransformerImpl implements UserTransformer {
             var role = getRoleFromAuthority(details.getAuthorities());
             String username = Optional.ofNullable(details.getUsername()).orElse("");
             String password = Optional.ofNullable(springUser.getPassword()).orElse("");
-            storeUser = new User(notNull(username), new Password(password), UserRealm.MEMORY, details.isEnabled(),
+            storeUser = new User(notNull(username), new Password(notNull(password)), UserRealm.MEMORY, details.isEnabled(),
                     role);
         } else if (details != null) {
             var role = getRoleFromAuthority(details.getAuthorities());

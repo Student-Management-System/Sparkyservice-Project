@@ -29,22 +29,40 @@ public interface UserTransformer {
     @Nonnull User extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException;
 
     /**
-     * Tries to cast a given instance of {@link UserDetails} to a {@link User}
-     * object. This is done without database interactions and is more resource
-     * friendly than {@link #extendFromUserDetails(UserDetails)} but may can't
-     * complete the challenge if some really essential information are missing
-     * (typically identifier).
+     * Use the information from the given principal object in order to return a full user object. 
+     * If there are not enough information in the application cache, this object may comes directly from the database. 
      * 
-     * @param details holds user information
-     * @return user object which may be incomplete but never null
-     * @throws MissingDataException If to less information are provided to create a
-     *                              StoredUser object
+     * @param principal
+     * @return User which belongs to the given principal
+     * @throws UserNotFoundException If the user is not found in this application (database or cache)
      */
-    @Nonnull User castFromUserDetails(@Nullable UserDetails details) throws MissingDataException;
-
     @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
 
+    /**
+     * Tries to extend the given object to a user object. Many database operations could be possible. 
+     * <br>
+     * This operation is only possible if this object is one of the following supported implementations:
+     * 
+     * <ul><li> {@link SparkysAuthPrincipal}
+     * </li>li> {@link UserDetails}
+     * </li><li> {@link UserDto}
+     * </ul>
+     * 
+     * @param principal object which is converted or extended to a user object
+     * @return extend User  - may be null in case of unsupported principal
+     * @throws MissingDataException If the principal object is a supported implementation but does not hold enough 
+     *                              information.
+     * @throws UserNotFoundException will be removed in the future // TODO @Marcel
+     */
     @Nullable User extendFromAny(@Nullable Object principal) throws MissingDataException, UserNotFoundException;
 
+    /**
+     * Tries to extend the information of the given data transfer object in order to create a user. 
+     * 
+     * @param user DTO object which should be casted or extended to a {@link User} object
+     * @return User
+     * @throws MissingDataException Is thrown if to less information are available for extended the DTO to a user
+     * @throws UserNotFoundException will be removed in the future // TODO @Marcel
+     */
     @Nonnull User extendFromUserDto(@Nullable UserDto user) throws MissingDataException, UserNotFoundException;
 }
