@@ -41,13 +41,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private String ldapUserDnPattern;
     
     @Value("${ldap.enabled}")
-    private String ldapEnabled;
+    private boolean ldapEnabled;
 
     @Value("${ldap.domain}")
     private String ldapFullDomain;
 
     @Value("${ldap.ad}")
-    private String ldapAd;
+    private boolean ldapAd;
 
     @Value("${recovery.enabled}")
     private String inMemoryEnabled;
@@ -98,8 +98,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .roles(UserRole.ADMIN.name());
         }
         auth.userDetailsService(storedUserDetailService);
-        if (Boolean.parseBoolean(ldapEnabled)) {
-            if ("true".equalsIgnoreCase(ldapAd)) {
+        if (ldapEnabled) {
+            if (ldapAd) {
                 ActiveDirectoryLdapAuthenticationProvider adProvider = 
                         new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
                 adProvider.setConvertSubErrorCodesToExceptions(true);
