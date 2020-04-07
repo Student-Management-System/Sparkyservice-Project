@@ -81,27 +81,21 @@ public class UserController {
         boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
               && authenticatedUser.getRealm().equals(userDto.realm);
         var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
+        User editTargetUser = null;
         if (UserRole.ADMIN.getEnum(authority.getAuthority()) == UserRole.ADMIN) {
-            if (selfEdit) {
-                User.adminUserDtoEdit(authenticatedUser, userDto);
-                userService.storeUser(authenticatedUser);
-                return authenticatedUser.asDto();
-            } else {
-                var databaseUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
-                User.adminUserDtoEdit(databaseUser, userDto);
-                userService.storeUser(databaseUser);
-                return authenticatedUser.asDto();
-            }
+            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            User.adminUserDtoEdit(editTargetUser, userDto);
         } else if (selfEdit) {
-            User.defaultUserDtoEdit(authenticatedUser, userDto);
-            userService.storeUser(authenticatedUser);
-            return authenticatedUser.asDto();
+            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            User.defaultUserDtoEdit(editTargetUser, userDto);
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges", 
                     authenticatedUser.getUserName(), authenticatedUser.getRealm());
             log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
             throw new AccessViolationException("Not allowed to modify other users data");
         }
+        userService.storeUser(editTargetUser);
+        return editTargetUser.asDto();
     }
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })

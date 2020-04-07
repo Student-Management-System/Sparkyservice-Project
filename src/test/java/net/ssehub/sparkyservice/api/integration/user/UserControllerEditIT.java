@@ -220,4 +220,32 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
             .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Mocking user not working");
     }
+
+    @IntegrationTest
+    @WithUserDetails(value = "testuser", userDetailsServiceBeanName="adminUserService")
+    public void adminEditSelfTest() throws Exception {
+        /*
+         * Username of the mocked userdetails should match with the name of the json content file.
+         */
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
+        var authenticatedUser = userService.findUserByNameAndRealm("testuser", UserRealm.LOCAL);
+        authenticatedUser.getProfileConfiguration().setEmail_address("old@test");
+        int userId = authenticatedUser.getId();
+        userService.storeUser(authenticatedUser);
+        
+        MvcResult result = this.mvc
+            .perform(patch(ControllerPath.USERS_PATCH)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(content)
+                    .accept(MediaType.APPLICATION_JSON))
+            .andReturn();
+        assumeTrue(result.getResponse().getStatus() == 200);
+        String dtoArrayString = result.getResponse().getContentAsString();
+        var returnedDto = new ObjectMapper().readValue(dtoArrayString, UserDto.class);
+        var editedUser = userService.findUserById(userId);
+        assertAll(
+                () -> assertEquals("test@test", editedUser.getProfileConfiguration().getEmail_address()),
+                () -> assertDtoEquals(editedUser.asDto(), returnedDto)
+            );
+    }
 }
