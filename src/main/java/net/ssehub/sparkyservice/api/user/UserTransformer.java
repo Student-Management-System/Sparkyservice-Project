@@ -40,16 +40,11 @@ public interface UserTransformer {
     @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
 
     /**
-     * Tries to extend the given object to a user object. Many database operations could be possible. 
+     * Tries to extend the given principal object to a user object. Many database operations could be possible. 
      * <br>
-     * This operation is only possible if this object is one of the following supported implementations:
      * 
-     * <ul><li> {@link SparkysAuthPrincipal}
-     * </li>li> {@link UserDetails}
-     * </li><li> {@link UserDto}
-     * </ul>
-     * 
-     * @param principal object which is converted or extended to a user object
+     * @param principal object which is converted or extended to a user object - typically provided by springs
+     *                  {@link Authentication#getPrincipal()}
      * @return extend User  - may be null in case of unsupported principal
      * @throws MissingDataException If the principal object is a supported implementation but does not hold enough 
      *                              information.

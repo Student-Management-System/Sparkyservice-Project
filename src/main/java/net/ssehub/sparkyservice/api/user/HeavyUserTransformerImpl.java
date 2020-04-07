@@ -89,8 +89,14 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws UserNotFoundException Thrown if the user tries to search in {@link UserRealm#MEMORY} realm or 
+     *                               the desired user is not in the database
+     */
     @Override
-    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) {
+    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
         if (principal != null) {
             if (principal.getRealm() == UserRealm.MEMORY) {
                 throw new UserNotFoundException("Can't search in memory database");
@@ -100,6 +106,15 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         throw new UserNotFoundException("Can't find user: null");
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * This operation is only possible if this object is one of the following supported implementations:
+     * 
+     * <ul><li> {@link SparkysAuthPrincipal}
+     * </li><li> {@link UserDetails}
+     * </ul>
+     */
     @Override
     public @Nonnull User extendFromAnyPrincipal(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
         if (principal instanceof SparkysAuthPrincipal) {
