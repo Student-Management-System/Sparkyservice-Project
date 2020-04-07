@@ -81,7 +81,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("")
                     .accept(MediaType.TEXT_PLAIN))
-             .andExpect(status().isForbidden());
+             .andExpect(status().isBadRequest());
     }
 
     /**

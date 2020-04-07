@@ -73,7 +73,7 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     @Secured({UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN})
     public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth) 
             throws AccessViolationException, UserNotFoundException, MissingDataException {

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
@@ -83,7 +84,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(content)
                     .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+            .andExpect(status().isCreated());
     }
 
     /**
@@ -106,8 +107,8 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
         
         assertAll(
-                () -> assertEquals(200, result.getResponse().getStatus(), "Wrong response status: Expected OK as "
-                        + "response for adding a new user"),
+                () -> assertEquals(201, result.getResponse().getStatus(), "Wrong response status: "
+                        + "Expected CREATED as response for adding a new user"),
                 () -> assertNotNull(userService.findUserById(1), "Status was OK, but no user was saved to database")
             );
     }
@@ -177,7 +178,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
         assertFalse(userService.isUserInDatabase(user));
     }
 
