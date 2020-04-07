@@ -99,7 +99,7 @@ public class UserController {
     }
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    @GetMapping(ControllerPath.USERS_PREFIX)
+    @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsers() {
         var list = userService.findAllUsers();

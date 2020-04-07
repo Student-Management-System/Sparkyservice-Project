@@ -202,24 +202,33 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         assertDtoEquals(user.asDto(), returnedUserDto);
     }
 
+    /**
+     * Tests if the getAll controller functions returns the correct amount of users in the database. 
+     * (Does not check the content of the list).
+     * <br><br>
+     * To avoid an additional user object in the database, we don't mock the user with user 
+     * {@link TestUserConfiguration#adminDetailsService()}.
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
-    @Disabled
+    @WithMockUser(username="admin", roles = "ADMIN")
     public void functionGetAllTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         userService.storeUser(user);
         assumeTrue(userService.isUserInDatabase(user));
-        user.setUserName("testuser2");
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        var user2 = new User("testuser2", null, UserRealm.LDAP, true, UserRole.DEFAULT);
+        userService.storeUser(user2);
+        assumeTrue(userService.isUserInDatabase(user2));
         
         MvcResult result = this.mvc
-                .perform(get(ControllerPath.USERS_GET_SINGLE, UserRealm.LDAP, "testuser")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .perform(get(ControllerPath.USERS_GET_ALL)
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
-        
         assumeTrue(result.getResponse().getStatus() == 200);
+        
         String dtoArrayString = result.getResponse().getContentAsString();
-        assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoArrayString, UserDto[].class));        
+        var dtoArray = new ObjectMapper().readValue(dtoArrayString, UserDto[].class);
+        assertEquals(2, dtoArray.length);
     }
 }

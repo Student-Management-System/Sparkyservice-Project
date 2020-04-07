@@ -46,6 +46,7 @@ public class UserServiceImpl implements IUserService {
         } else if (user.getRealm() != UserRealm.UNKNOWN && user.getRealm() != UserRealm.MEMORY) {
             log.debug("Try to store user {}@{} into database", stUser.getUserName(), stUser.getRealm());
             repository.save(stUser);
+            log.debug("...stored");
         } else {
             log.debug("Dont safe user: {}@{}", stUser.getUserName(), stUser.getRealm());
         }
