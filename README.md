@@ -18,7 +18,7 @@ Tomcat8 Server and all other dependencies.
 1. Create custom `application-release.properties` (you can find an example in our wiki)
 2. Run the application: 
 
-	java -cp sparkyservice-api-0.1.0-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
+	java -cp sparkyservice.jar:application-release.properties org.springframework.boot.loader.JarLauncher
 
 Planned deployments:
 
