@@ -73,11 +73,9 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
-    public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nullable Authentication auth) 
+    @Secured({UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN})
+    public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth) 
             throws AccessViolationException, UserNotFoundException, MissingDataException {
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new AccessViolationException("Not authenticated");
-        }
         var authenticatedUser = notNull( 
                 Optional.ofNullable(transformer.extendFromAuthentication(auth))
                 .orElseThrow(() -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
