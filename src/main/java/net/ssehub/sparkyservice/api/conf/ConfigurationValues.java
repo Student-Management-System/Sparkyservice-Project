@@ -26,10 +26,10 @@ public class ConfigurationValues {
     @Value("${jwt.token.type}")
     private String jwtTokenType;
     
-    @Value("${jwt.token.issuer}")
+    @Value("${jwt.token.issuer:}")
     private String jwtTokenIssuer;
     
-    @Value("${jwt.token.audience}")
+    @Value("${jwt.token.audience:}")
     private String jwtTokenAudience;
     
     public @Nonnull String getJwtSecret() {

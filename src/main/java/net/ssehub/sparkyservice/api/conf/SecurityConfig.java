@@ -25,37 +25,37 @@ import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    @Value("${ldap.urls}")
+    @Value("${ldap.urls:}")
     private String ldapUrls;
     
-    @Value("${ldap.base.dn}")
+    @Value("${ldap.base.dn:}")
     private String ldapBaseDn;
     
-    @Value("${ldap.username}")
+    @Value("${ldap.username:}")
     private String ldapSecurityPrincipal;
     
-    @Value("${ldap.password}")
+    @Value("${ldap.password:}")
     private String ldapPrincipalPassword;
     
-    @Value("${ldap.user.dn.pattern}")
+    @Value("${ldap.user.dn.pattern:}")
     private String ldapUserDnPattern;
     
-    @Value("${ldap.enabled}")
+    @Value("${ldap.enabled:false}")
     private boolean ldapEnabled;
 
-    @Value("${ldap.domain}")
+    @Value("${ldap.domain:}")
     private String ldapFullDomain;
 
-    @Value("${ldap.ad}")
+    @Value("${ldap.ad:false}")
     private boolean ldapAd;
 
-    @Value("${recovery.enabled}")
+    @Value("${recovery.enabled:false}")
     private String inMemoryEnabled;
     
-    @Value("${recovery.password}")
+    @Value("${recovery.password:}")
     private String inMemoryPassword;
     
-    @Value("${recovery.user}")
+    @Value("${recovery.user:user}")
     private String inMemoryUser;
     
     @Autowired
