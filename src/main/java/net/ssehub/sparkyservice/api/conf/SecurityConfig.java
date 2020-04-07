@@ -73,6 +73,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .csrf().disable()
             .authorizeRequests()
             /*
+             * Any other path except own api allowed. They are probably supervised by Zuul.
+             */
+            .antMatchers("/**").permitAll()
+            /*
              * Secure own application: 
              */
             .antMatchers(ControllerPath.SWAGGER).permitAll()
@@ -80,10 +84,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
-            /*
-             * Anything other path which is probably supervised by Zuul.
-             */
-            .anyRequest().permitAll()
             .and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues, storedUserDetailService))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), confValues))
