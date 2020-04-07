@@ -22,7 +22,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
-import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
@@ -33,7 +32,7 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 @ExtendWith(SpringExtension.class) 
-@ContextConfiguration(classes= {UnitTestDataConfiguration.class, SpringConfig.class})
+@ContextConfiguration(classes= {UnitTestDataConfiguration.class})
 public class UserTransformerTest {
     class TestPrincipal implements SparkysAuthPrincipal {
         @Override
