@@ -11,10 +11,18 @@ Spring Boot provides an embedded Tomcat8 server by default:
 
 It will listen on `*:8080`. 
 
-Currently we aren't provide any other method. Planned things:
+### Standalone
+We provide a jar with on our [Jenkins](https://jenkins-2.sse.uni-hildesheim.de/view/Teaching/job/Teaching_Sparkyservice-Project) which holds an embedded
+Tomcat8 Server and all other dependencies. 
 
-- Provide an executable jar with all dependencies in it to run it on any system with java installed
-- (Maybe we stop using the embedded Tomcat and switch to war-packaging)
+1. Create custom `application-release.properties` (you can find an example in our wiki)
+2. Run the application: 
+
+	java -cp sparkyservice-api-0.1.0-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
+
+Planned deployments:
+
+- Provide an additional war in order to deploy the project to an existing Tomcat server
 
 # Testing
 Our integration tests are running with docker. Through this `docker` is a pre-request for executing them. They are 
