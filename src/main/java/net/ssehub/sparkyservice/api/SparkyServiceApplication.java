@@ -1,9 +1,6 @@
 package net.ssehub.sparkyservice.api;
 
 import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
-import org.springframework.context.annotation.Bean;
-
-import net.ssehub.sparkyservice.api.conf.SimpleFilter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

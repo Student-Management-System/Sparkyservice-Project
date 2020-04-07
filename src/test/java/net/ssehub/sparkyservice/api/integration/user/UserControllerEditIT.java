@@ -3,7 +3,6 @@ package net.ssehub.sparkyservice.api.integration.user;
 import static net.ssehub.sparkyservice.api.testconf.SparkyAssertions.assertDtoEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;

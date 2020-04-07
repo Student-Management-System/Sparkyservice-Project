@@ -12,13 +12,17 @@ public class SparkysPostgresqlContainer extends PostgreSQLContainer<SparkysPostg
     
     public static SparkysPostgresqlContainer getInstance() {
         if (container == null) {
-            container = new SparkysPostgresqlContainer()
+            container = extracted()
                     .withDatabaseName("testdb")
                     .withPassword("testdb")
                     .withUsername("testdb")
                     .withStartupTimeoutSeconds(10);
         }
         return container;
+    }
+
+    private static SparkysPostgresqlContainer extracted() {
+        return new SparkysPostgresqlContainer();
     }
     
     @Override
