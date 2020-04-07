@@ -79,7 +79,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
-            .anyRequest().authenticated()
+            .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
+            /*
+             * Anything other path which is probably supervised by Zuul.
+             */
+            .anyRequest().permitAll()
             .and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues, storedUserDetailService))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), confValues))

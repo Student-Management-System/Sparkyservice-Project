@@ -40,4 +40,9 @@ public class SpringConfig {
     public UserTransformer userTransformer() {
         return new HeavyUserTransformerImpl();
     }
+
+    @Bean
+    public SimpleFilter simpleFilter() {
+      return new SimpleFilter();
+    }
 }
