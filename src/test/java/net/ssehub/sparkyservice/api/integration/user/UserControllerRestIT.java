@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.integration.storeduser;
+package net.ssehub.sparkyservice.api.integration.user;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertAll;

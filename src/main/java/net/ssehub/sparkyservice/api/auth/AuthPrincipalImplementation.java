@@ -9,15 +9,6 @@ class AuthPrincipalImplementation implements SparkysAuthPrincipal {
     private @Nonnull UserRealm realm;
 
     private @Nonnull String name;
-
-    public AuthPrincipalImplementation(@Nullable UserRealm realm, @Nullable String name) {
-        super();
-        if (realm == null || name == null) {
-            throw new IllegalArgumentException("Arguments must have a value");
-        } 
-        this.realm = realm;
-        this.name = name;
-    }
     
     public AuthPrincipalImplementation(@Nullable String realmString, @Nullable String name) {
         if (realmString == null || name == null) {

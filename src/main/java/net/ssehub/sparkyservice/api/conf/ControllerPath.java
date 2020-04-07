@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.conf;
 
-public class ControllerPath {
+public final class ControllerPath {
     public static final String GLOBAL_PREFIX = "/api/v0";
 
     public static final String SWAGGER = "swagger-ui.html";
