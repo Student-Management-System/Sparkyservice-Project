@@ -5,7 +5,6 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
