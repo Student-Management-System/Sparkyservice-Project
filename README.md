@@ -1,6 +1,7 @@
-# Sparkyservice-Api
+# Sparkyservice-Api [![Build Status](https://jenkins-2.sse.uni-hildesheim.de/buildStatus/icon?job=Teaching_Sparkyservice-Project&style=flat-square)](https://jenkins-2.sse.uni-hildesheim.de/view/Teaching/job/Teaching_Sparkyservice-Project/)
 
 Sparkyservice-Api provides a REST API developed with Spring Boot. 
+
 
 # Build & Run
 Spring Boot provides an embedded Tomcat8 server by default: 
