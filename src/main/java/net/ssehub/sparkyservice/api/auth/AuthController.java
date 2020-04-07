@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
@@ -44,7 +44,7 @@ public class AuthController {
     private IUserService userService;
 
     @Autowired
-    private ConfigurationValues confValues;
+    private JwtSettings jwtConf;
 
     /**
      * This method does nothing. The method header is important to let swagger list
@@ -75,9 +75,9 @@ public class AuthController {
     public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request)
             throws AccessViolationException, MissingDataException {
         if (auth == null) { // check what went wrong
-            var jwtToken = request.getHeader(confValues.getJwtTokenHeader());
-            if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(confValues.getJwtTokenPrefix())) {
-                JwtAuth.readJwtToken(jwtToken, confValues.getJwtSecret()); // should throw something
+            var jwtToken = request.getHeader(jwtConf.getHeader());
+            if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
+                JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
             }
             throw new AccessViolationException("Not authenticated");
         }
@@ -96,8 +96,8 @@ public class AuthController {
      */
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
     public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException, AccessViolationException {
-        if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(confValues.getJwtTokenPrefix())) {
-            var auth = JwtAuth.readJwtToken(jwtToken, confValues.getJwtSecret()); // should throw something
+        if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
+            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
             if (auth != null) {
                 var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
                 var dto = new AuthenticationInfoDto();

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.IUserService;
@@ -23,17 +24,17 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
-    private final ConfigurationValues confValues;
+    private final JwtSettings jwtConf;
     private final IUserService userService;
 
     private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, ConfigurationValues jwtConf,
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf,
                                    IUserService userSerivce) {
         this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
-        this.confValues = jwtConf;
+        this.jwtConf = jwtConf;
     }
 
     @Override
@@ -56,9 +57,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                     userService.storeUser(user);
                 }
                 List<UserRole> authorityList = Arrays.asList(user.getRole());
-                String token = JwtAuth.createJwtTokenWithRealm(user.getUserName(), authorityList, confValues, 
+                String token = JwtAuth.createJwtTokenWithRealm(user.getUserName(), authorityList, jwtConf, 
                         user.getRealm());
-                response.addHeader(confValues.getJwtTokenHeader(), confValues.getJwtTokenPrefix() + " " + token);
+                response.addHeader(jwtConf.getHeader(), jwtConf.getPrefix() + " " + token);
             } catch (UserNotFoundException e) {
                 log.info("A user which is currently logged in, is not found in the database");
             }

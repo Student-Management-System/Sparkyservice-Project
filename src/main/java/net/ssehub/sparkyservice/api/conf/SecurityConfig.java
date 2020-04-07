@@ -18,6 +18,7 @@ import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAu
 
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 
@@ -59,7 +60,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private String inMemoryUser;
     
     @Autowired
-    private ConfigurationValues confValues;
+    private JwtSettings jwtSettings;
     
     @Autowired
     private UserServiceImpl storedUserDetailService;
@@ -76,7 +77,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
              * Any other path except own api are allowed by other micro services. 
              * They are probably supervised by Zuul.
              */
-            .antMatchers("/**").hasAnyRole(UserRole.SERVICE.name(), UserRole.ADMIN.name())
+            //.antMatchers("/**").hasAnyRole(UserRole.SERVICE.name(), UserRole.ADMIN.name())
             /*
              * Secure own application: 
              */
@@ -86,8 +87,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
             .and()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(), confValues, storedUserDetailService))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), confValues))
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storedUserDetailService))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtSettings))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 

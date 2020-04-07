@@ -20,14 +20,14 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
-    private final ConfigurationValues confValues;
+    private final JwtSettings confValues;
     
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, ConfigurationValues jwtConf) {
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf) {
         super(authenticationManager);
         confValues = jwtConf;
     }
@@ -46,10 +46,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private @Nullable UsernamePasswordAuthenticationToken getAuthentication(@Nullable HttpServletRequest request) {
         if (request != null) {
-            var token = request.getHeader(confValues.getJwtTokenHeader());            
-            if (!StringUtils.isEmpty(token) && token.startsWith(confValues.getJwtTokenPrefix())) {
+            var token = request.getHeader(confValues.getHeader());            
+            if (!StringUtils.isEmpty(token) && token.startsWith(confValues.getPrefix())) {
                 try {
-                    return JwtAuth.readJwtToken(token, confValues.getJwtSecret());
+                    return JwtAuth.readJwtToken(token, confValues.getSecret());
                 } catch (ExpiredJwtException exception) {
                     log.warn("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
                 } catch (UnsupportedJwtException exception) {

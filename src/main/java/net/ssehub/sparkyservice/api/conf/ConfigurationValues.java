@@ -4,22 +4,17 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
-/**
- * Singleton class for configuration values loaded from spring properties.
- * @author marcel
- */
 @Component
 public class ConfigurationValues {
+    public static final String AUTH_LOGIN_URL = ControllerPath.AUTHENTICATION_AUTH;
 
     @Configuration
     @ConfigurationProperties(prefix = "zuul")
-    public class ZuulRoutes {
+    public static class ZuulRoutes {
         private Map<String, String> routes;
 
         public Map<String, String> getRoutes() {
@@ -33,16 +28,56 @@ public class ConfigurationValues {
 
     @Configuration
     @ConfigurationProperties(prefix = "jwt")
-    public class JwtSettings {
+    public static class JwtSettings {
         private String secret;
-        private String tokenHeader;
-        private String tokenType;
-        private String tokenIssuer;
-        private String tokenPrefix;
-        private String tokenAudience;
+        private String header;
+        private String type;
+        private String issuer;
+        private String prefix;
+        private String audience;
 
-        public @Nonnull String getJwtSecret() {
-            final String jwtSecret2 = jwtSecret;
+        public String getHeader() {
+            return header;
+        }
+
+        public void setHeader(String tokenHeader) {
+            this.header = tokenHeader;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String tokenType) {
+            this.type = tokenType;
+        }
+
+        public String getIssuer() {
+            return issuer;
+        }
+
+        public void setIssuer(String tokenIssuer) {
+            this.issuer = tokenIssuer;
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+        public void setPrefix(String tokenPrefix) {
+            this.prefix = tokenPrefix;
+        }
+
+        public String getAudience() {
+            return audience;
+        }
+
+        public void setAudience(String tokenAudience) {
+            this.audience = tokenAudience;
+        }
+
+        public @Nonnull String getSecret() {
+            final String jwtSecret2 = secret;
             if (jwtSecret2 != null) {
                 return jwtSecret2;
             } else {
@@ -50,84 +85,9 @@ public class ConfigurationValues {
             }
         }
 
-        public String getJwtTokenHeader() {
-            return jwtTokenHeader;
+        public void setSecret(String secret) {
+            this.secret = secret;
         }
-
-        public String getJwtTokenPrefix() {
-            return jwtTokenPrefix;
-        }
-
-        public String getJwtTokenType() {
-            return jwtTokenType;
-        }
-
-        public String getJwtTokenIssuer() {
-            return jwtTokenIssuer;
-        }
-
-        public String getJwtTokenAudience() {
-            return jwtTokenAudience;
-        }        
-    }
-    public static final String AUTH_LOGIN_URL = ControllerPath.AUTHENTICATION_AUTH;
-    
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-    
-    @Value("${jwt.token.header}")
-    private String jwtTokenHeader;
-    
-    @Value("${jwt.token.prefix}")
-    private String jwtTokenPrefix;
-
-    @Value("${jwt.token.type}")
-    private String jwtTokenType;
-    
-    @Value("${jwt.token.issuer:}")
-    private String jwtTokenIssuer;
-    
-    @Value("${jwt.token.audience:}")
-    private String jwtTokenAudience;
-
-    @Autowired
-    private ZuulRoutes zuulRoutes;
-
-    public @Nonnull String getJwtSecret() {
-        final String jwtSecret2 = jwtSecret;
-        if (jwtSecret2 != null) {
-            return jwtSecret2;
-        } else {
-            throw new RuntimeException("Spring did not receive the JWT Secret!");
-        }
-    }
-
-    public String getJwtTokenHeader() {
-        return jwtTokenHeader;
-    }
-
-    public String getJwtTokenPrefix() {
-        return jwtTokenPrefix;
-    }
-
-    public String getJwtTokenType() {
-        return jwtTokenType;
-    }
-
-    public String getJwtTokenIssuer() {
-        return jwtTokenIssuer;
-    }
-
-    public String getJwtTokenAudience() {
-        return jwtTokenAudience;
-    }
-
-    public Map<String, String> getZuulRoutes() {
-        return zuulRoutes.getRoutes();
-    }
-
-    public void setZuulRoutes(ZuulRoutes routes) {
-        this.zuulRoutes = routes;
     }
 
 }

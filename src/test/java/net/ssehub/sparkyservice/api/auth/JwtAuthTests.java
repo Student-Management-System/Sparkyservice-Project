@@ -21,13 +21,13 @@ import org.springframework.security.core.GrantedAuthority;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
 public class JwtAuthTests {
-    private final ConfigurationValues confValues = new ConfigurationValues();
+    private final JwtSettings confValues = new JwtSettings();
 
     private static final String USERNAME = "TESTUSER";
     private static final List<UserRole> authority = Arrays.asList(UserRole.ADMIN);
@@ -36,16 +36,16 @@ public class JwtAuthTests {
     public void setUpConfValues() {
         var secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         String secretString = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        ReflectionTestUtils.setField(confValues, "jwtSecret", secretString);
-        ReflectionTestUtils.setField(confValues, "jwtTokenType", "Bearer");
-        ReflectionTestUtils.setField(confValues, "jwtTokenIssuer", "TestUnit");
-        ReflectionTestUtils.setField(confValues, "jwtTokenAudience", "Y");
+        ReflectionTestUtils.setField(confValues, "secret", secretString);
+        ReflectionTestUtils.setField(confValues, "type", "Bearer");
+        ReflectionTestUtils.setField(confValues, "issuer", "TestUnit");
+        ReflectionTestUtils.setField(confValues, "audience", "Y");
     }
 
     @Test
     public void tokenUserDetailsTest() {
         String token = JwtAuth.createJwtToken(USERNAME, authority, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getJwtSecret());
+        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
         assertNotNull(authTokenNull);
     }
 
@@ -60,7 +60,7 @@ public class JwtAuthTests {
         user.setUserName(USERNAME);
         user.setRole(UserRole.ADMIN);
         String token = JwtAuth.createJwtTokenWithRealm(USERNAME, authority, confValues, user.getRealm());
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getJwtSecret());
+        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
         
         assertNotNull(authTokenNull);
         var authToken = notNull(authTokenNull);
@@ -76,7 +76,7 @@ public class JwtAuthTests {
     @Test
     public void tokenPrincipalTest() {
         String token = JwtAuth.createJwtToken(USERNAME, authority, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getJwtSecret());
+        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
         assumeTrue(authTokenNull != null);
         var authToken = notNull(authTokenNull);
 
@@ -90,7 +90,7 @@ public class JwtAuthTests {
     @Test
     public void tokenRoleTest() {
         String token = JwtAuth.createJwtToken(USERNAME, authority, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getJwtSecret());
+        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
         assumeTrue(authTokenNull != null);
         var authToken = notNull(authTokenNull);
 

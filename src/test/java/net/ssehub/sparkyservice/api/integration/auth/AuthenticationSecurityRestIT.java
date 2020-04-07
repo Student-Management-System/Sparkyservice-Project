@@ -58,10 +58,10 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @Value("${recovery.user}")
     private String inMemoryUser;
 
-    @Value("${jwt.token.header}")
+    @Value("${jwt.header}")
     private String jwtTokenHeader;
 
-    @Value("${jwt.token.prefix}")
+    @Value("${jwt.prefix}")
     private String jwtTokenPrefix;
 
     private MockMvc mvc;

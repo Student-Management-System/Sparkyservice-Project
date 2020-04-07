@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
+import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
@@ -56,7 +56,7 @@ public class JwtAuth {
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 
-    public static @Nonnull String createJwtToken(String username,  List<UserRole> roles, ConfigurationValues jwtConf) {
+    public static @Nonnull String createJwtToken(String username,  List<UserRole> roles, JwtSettings jwtConf) {
         return createJwtTokenWithRealm(username, roles, jwtConf, UserRealm.UNKNOWN);
     }
 
@@ -70,17 +70,17 @@ public class JwtAuth {
      * @return
      */
     public static @Nonnull String createJwtTokenWithRealm(@Nullable String username, @Nullable List<UserRole> roles, 
-            ConfigurationValues jwtConf, UserRealm realm) {
+            JwtSettings jwtConf, UserRealm realm) {
 //        var roles = authorities
 //            .stream()
 //            .map(GrantedAuthority::getAuthority)
 //            .collect(Collectors.toList());
-        var signingKey = jwtConf.getJwtSecret().getBytes();
+        var signingKey = jwtConf.getSecret().getBytes();
         var token = Jwts.builder()
             .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
-            .setHeaderParam("typ", jwtConf.getJwtTokenType())
-            .setIssuer(jwtConf.getJwtTokenIssuer())
-            .setAudience(jwtConf.getJwtTokenAudience())
+            .setHeaderParam("typ", jwtConf.getType())
+            .setIssuer(jwtConf.getIssuer())
+            .setAudience(jwtConf.getAudience())
             .setSubject(username)
             .setExpiration(new Date(System.currentTimeMillis() + 864000000))
             .claim("rol", roles)
