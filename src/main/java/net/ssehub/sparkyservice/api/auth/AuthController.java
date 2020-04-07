@@ -84,7 +84,9 @@ public class AuthController {
         var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = user.asDto();
-        //dto.token = (TokenDto) auth.getCredentials();
+        if (auth.getCredentials() instanceof TokenDto) {
+            dto.token = (TokenDto) auth.getCredentials();
+        }
         return dto;
     }
 

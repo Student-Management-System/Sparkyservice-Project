@@ -208,7 +208,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                      post(ConfigurationValues.AUTH_LOGIN_URL)
                         .param("password", "password")
                         .param("username", "gauss")
-                        .accept(MediaType.TEXT_PLAIN))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");

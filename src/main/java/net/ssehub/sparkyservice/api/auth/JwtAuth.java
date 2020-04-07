@@ -27,6 +27,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
+import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 
 public class JwtAuth {
     private JwtAuth() {}
@@ -111,7 +112,10 @@ public class JwtAuth {
         var realm = (String) parsedToken.getBody().get("realm");
         if (!StringUtils.isEmpty(username)) {
             SparkysAuthPrincipal principal = new AuthPrincipalImplementation(realm, username);
-            return new UsernamePasswordAuthenticationToken(principal, expirationDateAsString(expiration), authorities);
+            var tokenDto = new TokenDto();
+            tokenDto.expiration = expirationDateAsString(expiration);
+            tokenDto.token = token;
+            return new UsernamePasswordAuthenticationToken(principal, tokenDto, authorities);
         } else {
             return null;
         }
