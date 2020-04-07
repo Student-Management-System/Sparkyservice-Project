@@ -16,4 +16,6 @@ public final class ControllerPath {
 
     public static final String AUTHENTICATION_AUTH = GLOBAL_PREFIX + "/authenticate";
     public static final String AUTHENTICATION_CHECK = AUTHENTICATION_AUTH + "/check";
+    public static final String AUTHENTICATION_VERIFY = AUTHENTICATION_AUTH + "/verify";
+       
 }

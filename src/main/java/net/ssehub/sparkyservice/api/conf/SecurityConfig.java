@@ -72,8 +72,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
+            /*
+             * Secure own application: 
+             */
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
+            .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .anyRequest().authenticated()
             .and()

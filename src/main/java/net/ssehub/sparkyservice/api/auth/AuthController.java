@@ -72,7 +72,7 @@ public class AuthController {
      */
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
-    public AuthenticationInfoDto isTokenValid(@Nullable Authentication auth, HttpServletRequest request)
+    public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request)
             throws AccessViolationException, MissingDataException {
         if (auth == null) { // check what went wrong
             var jwtToken = request.getHeader(confValues.getJwtTokenHeader());
@@ -88,6 +88,25 @@ public class AuthController {
             dto.token = (TokenDto) auth.getCredentials();
         }
         return dto;
+    }
+
+    /*
+     * Only supports jwtTokens which was created through the projects own authentication filter. Mocking users
+     * with spring during integration tests are not supported here. 
+     */
+    @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
+    public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException, AccessViolationException {
+        if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(confValues.getJwtTokenPrefix())) {
+            var auth = JwtAuth.readJwtToken(jwtToken, confValues.getJwtSecret()); // should throw something
+            if (auth != null) {
+                var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
+                var dto = new AuthenticationInfoDto();
+                dto.user = user.asDto();
+                dto.token = (TokenDto) auth.getCredentials();
+                return dto;
+            }
+        }
+        throw new AccessViolationException("Not authenticated");
     }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)

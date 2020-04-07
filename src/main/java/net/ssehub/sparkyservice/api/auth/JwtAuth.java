@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -90,11 +91,16 @@ public class JwtAuth {
 
     /**
      * Extracts information of a given token. The secret must be the same as the secret which was used to encode 
-     * the JWT token.
+     * the JWT token. <br>
+     * The returned authentication contains:<br>
+     * <ul><li> {@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}
+     * </li><li> {@link Authentication#getCredentials()} => {@link TokenDto}
+     * </li><li> {@link Authentication#getAuthorities()} => (single) {@link UserRole}
+     * </li></ul>
      * 
      * @param token JWT token as string
      * @param jwtSecret Is used to decode the token - must be the same which was used for encoding
-     * @return Springs authentication token where {@link SparkysAuthPrincipal} is used as username
+     * @return Springs authentication token
      */
     public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) {
         var signingKey = jwtSecret.getBytes();

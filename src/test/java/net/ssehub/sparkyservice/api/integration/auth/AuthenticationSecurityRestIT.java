@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
@@ -37,6 +39,7 @@ import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -287,12 +290,12 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @IntegrationTest
     public void jwtAuthLdapUserTest() throws Exception {
         var result = this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .param("password", "password")
-                        .param("username", "gauss")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
+            .perform(
+                 post(ConfigurationValues.AUTH_LOGIN_URL)
+                    .param("password", "password")
+                    .param("username", "gauss")
+                    .accept(MediaType.APPLICATION_JSON))
+            .andReturn();
         assertTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
         var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
@@ -321,5 +324,37 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                      .content(jsonCredentials)
                      .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * Testing the {@link ControllerPath#AUTHENTICATION_VERIFY} controller. 
+     * <br>
+     * Caution: We can't mock a user here. We need to make a real authentication and use the returned JWT token.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void jwtVerifyTest() throws Exception {
+        assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
+        var dto = new CredentialsDto();
+        dto.password = inMemoryPassword;
+        dto.username = inMemoryUser;
+        ObjectMapper mapper = new ObjectMapper();
+        String credentials = mapper.writeValueAsString(dto);
+        var authResult = this.mvc
+            .perform(
+                 post(ConfigurationValues.AUTH_LOGIN_URL)
+                    .content(credentials)
+                    .accept(MediaType.APPLICATION_JSON))
+            .andReturn();
+        assumeTrue(authResult.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
+        
+        var tokenHeader = authResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        this.mvc
+            .perform(
+                get(ControllerPath.AUTHENTICATION_VERIFY)
+                   .param("jwtToken", tokenHeader)
+                   .accept(MediaType.APPLICATION_JSON_VALUE))
+           .andExpect(status().isOk());
     }
 }
