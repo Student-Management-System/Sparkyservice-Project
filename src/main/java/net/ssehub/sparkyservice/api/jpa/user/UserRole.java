@@ -5,12 +5,22 @@ import javax.annotation.Nullable;
 
 import org.springframework.security.core.GrantedAuthority;
 
-/**
- *
- * @author Marcel
- */
 public enum UserRole implements GrantedAuthority {
-    DEFAULT(FullName.DEFAULT), ADMIN(FullName.ADMIN);
+    
+    /**
+     * Default user group. All authenticated user will probably hold this role if they have no other. 
+     */
+    DEFAULT(FullName.DEFAULT), 
+    
+    /**
+     * Full permission to all services provided by this project.
+     */
+    ADMIN(FullName.ADMIN), 
+    
+    /**
+     * Permission to access all routed paths in order to reach protected micro services. 
+     */
+    SERVICE(FullName.SERVICE);
 
     private @Nonnull final String authority;
 
@@ -59,5 +69,6 @@ public enum UserRole implements GrantedAuthority {
     public class FullName {
         public static final String ADMIN = "ROLE_ADMIN";
         public static final String DEFAULT = "ROLE_DEFAULT";
+        public static final String SERVICE = "ROLE_SERVICE";
     }
 }

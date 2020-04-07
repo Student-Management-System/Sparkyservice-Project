@@ -73,9 +73,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .csrf().disable()
             .authorizeRequests()
             /*
-             * Any other path except own api allowed. They are probably supervised by Zuul.
+             * Any other path except own api are allowed by other micro services. 
+             * They are probably supervised by Zuul.
              */
-            .antMatchers("/**").permitAll()
+            .antMatchers("/**").hasAnyRole(UserRole.SERVICE.name(), UserRole.ADMIN.name())
             /*
              * Secure own application: 
              */

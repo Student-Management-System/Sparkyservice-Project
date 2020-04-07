@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.conf;
 
 import javax.validation.Validator;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -12,11 +13,15 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.user.HeavyUserTransformerImpl;
 import net.ssehub.sparkyservice.api.user.UserTransformer;
 
 @Configuration
 public class SpringConfig {
+
+    @Autowired
+    private ConfigurationValues conf;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,7 +47,9 @@ public class SpringConfig {
     }
 
     @Bean
-    public SimpleFilter simpleFilter() {
-      return new SimpleFilter();
+    public ZuulAuthorizationFilter simpleFilter() {
+      var filter = new ZuulAuthorizationFilter();
+      filter.setConf(conf);
+      return filter;
     }
 }
