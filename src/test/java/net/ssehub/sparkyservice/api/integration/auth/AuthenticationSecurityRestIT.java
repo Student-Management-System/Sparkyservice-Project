@@ -245,7 +245,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                         .param("username", inMemoryUser)
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
-        assumeTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
+        assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
         var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
         this.mvc
             .perform(
@@ -274,7 +274,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                         .param("username", "testuser")
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
-        assumeTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
+        assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
         var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
         this.mvc
             .perform(
@@ -291,9 +291,9 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                      post(ConfigurationValues.AUTH_LOGIN_URL)
                         .param("password", "password")
                         .param("username", "gauss")
-                        .accept(MediaType.TEXT_PLAIN))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
-        assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
+        assertTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
         var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
         this.mvc
