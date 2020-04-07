@@ -53,7 +53,8 @@ public class UserController {
     private UserTransformer transformer;
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    @PutMapping(ControllerPath.USERS_PREFIX)
+    @PutMapping(ControllerPath.USERS_PUT)
+    @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
         final @Nonnull String username = notNull(newUserDto.username); // spring validation
@@ -72,6 +73,7 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
+    @ResponseStatus(HttpStatus.CREATED)
     @Secured({UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN})
     public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth) 
             throws AccessViolationException, UserNotFoundException, MissingDataException {
@@ -139,6 +141,7 @@ public class UserController {
 
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
     @DeleteMapping(ControllerPath.USERS_DELETE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Secured(UserRole.FullName.ADMIN)
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) { 
         userService.deleteUser(username, realm);
@@ -150,14 +153,14 @@ public class UserController {
         return handleException(ex);
     }
 
-    @ResponseStatus(code = HttpStatus.NOT_MODIFIED)
-    @ExceptionHandler(MissingDataException.class)
+    @ResponseStatus(code = HttpStatus.CONFLICT)
+    @ExceptionHandler(UserEditException.class)
     public String handleUserNotFound(MissingDataException ex) {
         return handleException(ex);
     }
 
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({ UserNotFoundException.class, UserEditException.class })
+    @ExceptionHandler({ UserNotFoundException.class, MissingDataException.class })
     public String handleException(Exception ex) {
         log.debug("Exception in UserController", ex);
         if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
