@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.conf;
 
+import javax.annotation.Nonnull;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -30,8 +32,13 @@ public class ConfigurationValues {
     @Value("${jwt.token.audience}")
     private String jwtTokenAudience;
     
-    public String getJwtSecret() {
-        return jwtSecret;
+    public @Nonnull String getJwtSecret() {
+        final String jwtSecret2 = jwtSecret;
+        if (jwtSecret2 != null) {
+            return jwtSecret2;
+        } else {
+            throw new RuntimeException("Spring did not receive the JWT Secret!");
+        }
     }
 
     public String getJwtTokenHeader() {

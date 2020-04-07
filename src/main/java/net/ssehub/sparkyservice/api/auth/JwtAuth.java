@@ -34,7 +34,7 @@ public class JwtAuth {
     private JwtAuth() {}
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
-    public static UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
+    public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         boolean passwordAvailable = password != null && !password.isBlank();
@@ -56,7 +56,7 @@ public class JwtAuth {
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 
-    public static String createJwtToken(String username,  List<UserRole> roles, ConfigurationValues jwtConf) {
+    public static @Nonnull String createJwtToken(String username,  List<UserRole> roles, ConfigurationValues jwtConf) {
         return createJwtTokenWithRealm(username, roles, jwtConf, UserRealm.UNKNOWN);
     }
 
@@ -69,7 +69,7 @@ public class JwtAuth {
      * @param realm
      * @return
      */
-    public static @Nonnull String createJwtTokenWithRealm(String username, List<UserRole> roles, 
+    public static @Nonnull String createJwtTokenWithRealm(@Nullable String username, @Nullable List<UserRole> roles, 
             ConfigurationValues jwtConf, UserRealm realm) {
 //        var roles = authorities
 //            .stream()
@@ -102,7 +102,8 @@ public class JwtAuth {
      * @param jwtSecret Is used to decode the token - must be the same which was used for encoding
      * @return Springs authentication token
      */
-    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) {
+    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token, 
+            @Nonnull String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
         var parsedToken = Jwts.parser()
             .setSigningKey(signingKey)
@@ -127,9 +128,9 @@ public class JwtAuth {
         }
     }
     
-    private static String expirationDateAsString(Date expDate) {
+    private static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
         String pattern = "MM/dd/yyyy HH:mm:ss";
         DateFormat df = new SimpleDateFormat(pattern);
-        return df.format(expDate);
+        return notNull(df.format(expDate));
     }
 }
