@@ -203,24 +203,6 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
             );
     }
 
-    /**
-     * Tests if an admin can edit the data of other users.
-     * 
-     * @throws Exception
-     */
-    @IntegrationTest
-    @WithUserDetails(value = "testuser", userDetailsServiceBeanName="defaultUserService")
-    public void editUserAdminSuccessTest() throws Exception {
-        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
-        MvcResult result = this.mvc
-            .perform(patch(ControllerPath.USERS_PATCH)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(content)
-            .accept(MediaType.TEXT_PLAIN))
-            .andReturn();
-        assumeTrue(result.getResponse().getStatus() == 200, "Mocking user not working");
-    }
-
     @IntegrationTest
     @WithUserDetails(value = "testuser", userDetailsServiceBeanName="adminUserService")
     public void adminEditSelfTest() throws Exception {
