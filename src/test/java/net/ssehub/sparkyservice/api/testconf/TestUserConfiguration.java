@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.testconf;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -35,6 +36,9 @@ public class TestUserConfiguration {
     static class TestUserDetailsService implements UserDetailsService {
         UserRole role;
 
+        @Autowired
+        private IUserService service;
+
         public TestUserDetailsService(UserRole role) {
             this.role = role;
         }
@@ -43,6 +47,7 @@ public class TestUserConfiguration {
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
             var basicUser = LocalUserDetails.newLocalUser(NullHelpers.notNull(username), "abcdefgh", 
                     NullHelpers.notNull(role));
+            service.storeUser(basicUser);
             return basicUser;
         }
     }
