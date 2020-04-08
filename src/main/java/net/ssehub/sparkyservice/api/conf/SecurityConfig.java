@@ -84,6 +84,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
+            .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
             .and()

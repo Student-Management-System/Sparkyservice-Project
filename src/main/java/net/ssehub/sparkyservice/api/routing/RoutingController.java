@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 @RestController
@@ -23,7 +24,9 @@ public class RoutingController {
     @GetMapping(value = "{path}")
     @Secured(UserRole.FullName.SERVICE)
     @ResponseStatus(code = HttpStatus.NOT_IMPLEMENTED)
-    public void route(@PathVariable("path") String path) {
-        
-    }
+    public void route(@PathVariable("path") String path) {}
+
+    @GetMapping(value = ControllerPath.HEARTBEAT)
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void isAlive() {}
 }
