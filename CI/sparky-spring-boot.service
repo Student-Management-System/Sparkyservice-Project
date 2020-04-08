@@ -3,7 +3,7 @@ Description=Sparky Service
 
 [Service]
 WorkingDirectory=/home/elscha/Sparky
-ExecStart=/usr/bin/java -cp sparkyservice-api-0.1.0-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
+ExecStart=/usr/bin/java -cp sparkyservice-api-0.2.2-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
 Type=simple
 Restart=on-failure
 RestartSec=10
