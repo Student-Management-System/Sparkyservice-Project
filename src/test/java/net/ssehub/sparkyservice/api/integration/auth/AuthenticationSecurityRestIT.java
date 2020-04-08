@@ -249,7 +249,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
-        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
@@ -278,7 +278,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
-        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
@@ -298,7 +298,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is"
                     + "another problem.");
-        var tokenHeader = result.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
@@ -349,7 +349,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .andReturn();
         assumeTrue(authResult.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
         
-        var tokenHeader = authResult.getResponse().getHeader(HttpHeaders.AUTHORIZATION);
+        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_VERIFY)
