@@ -43,7 +43,7 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application-test.properties")
+@TestPropertySource("classpath:test.properties")
 public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase {
 
     @Autowired
@@ -132,19 +132,19 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
      * (currently realized with {@link JwtAuthenticationFilter}). <br>
      * Real authentication test with a given password and username. Tests if return status code is 200 (OK). <br><br>
      * 
-     * In order to run this tests, the credentials must have set in application-test.properties.
+     * In order to run this tests, the credentials must have set in test.properties.
      * 
      * @throws Exception
      */
     @IntegrationTest
     public void inMemoryAuthenticationTest() throws Exception {
-        assumeTrue(inMemoryEnabled != null, "Could not load application-test.properties");
+        assumeTrue(inMemoryEnabled != null, "Could not load test.properties");
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "InMemory authentication must "
-                + "be enabled in application-test.properties");
+                + "be enabled in test.properties");
         assumeFalse(inMemoryPassword == null || inMemoryPassword.isBlank(), "Recovery password must be set in "
-                + "application-test.properties");
+                + "test.properties");
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
-                + " application-test.properties");
+                + " test.properties");
         this.mvc
             .perform(
                  post(ConfigurationValues.AUTH_LOGIN_URL)
@@ -165,13 +165,13 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
      */
     @IntegrationTest
     public void jwtAuthenticationTest() throws Exception {
-        assumeTrue(inMemoryEnabled != null, "Could not load application-test.properties");
+        assumeTrue(inMemoryEnabled != null, "Could not load test.properties");
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "InMemory authentication must "
-                + "be enabled in application-test.properties");
+                + "be enabled in test.properties");
         assumeFalse(inMemoryPassword == null || inMemoryPassword.isBlank(), "Recovery password must be set in "
-                + "application-test.properties");
+                + "test.properties");
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
-                + " application-test.properties");
+                + " test.properties");
         
         var result = this.mvc
             .perform(
@@ -183,7 +183,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                 + "another problem.");
         assumeTrue(jwtTokenHeader != null && jwtTokenPrefix != null, "You must set jwt.token.header and jwt.token.prefix in "
-                + "application-test.properties in oder to run this test.");
+                + "test.properties in oder to run this test.");
         String partialHeader = result.getResponse().getHeader(jwtTokenHeader);
         assertAll(
                () -> assertNotNull(partialHeader, "No jwt token was returned during authentication"),

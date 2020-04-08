@@ -47,7 +47,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes= {TestUserConfiguration.class})
-@TestPropertySource("classpath:application-test.properties")
+@TestPropertySource("classpath:test.properties")
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 //@ContextConfiguration(classes= {UnitTestDataConfiguration.class, SecurityConfig.class})
 public class UserControllerRestIT extends AbstractContainerTestDatabase {
