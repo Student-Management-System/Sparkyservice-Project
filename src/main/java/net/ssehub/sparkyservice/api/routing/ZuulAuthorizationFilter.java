@@ -41,7 +41,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
 
     @Override
     public int filterOrder() {
-        return 10;
+        return 999;
     }
 
     @Override
@@ -49,7 +49,8 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         RequestContext ctx = RequestContext.getCurrentContext();
         boolean ctxValid = ctx.get("proxy") != null && ctx.get("proxy") instanceof String;
         if (!ctxValid) {
-            ctx.setSendZuulResponse(false);
+            log.warn("No proxy attempt but filter is executed. Deny access");
+            blockRequest(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ctxValid;
     }
@@ -77,6 +78,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
             log.info("{} is not allowed to access {}", username, proxyPath);
             return blockRequest(HttpStatus.FORBIDDEN);
         }
+        log.debug("Granted access {} to {}", username, proxyPath);
         return null;
     }
 
@@ -99,8 +101,10 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         default:
             break;
         }
-        ctx.getResponse().setHeader("Content-Type", "text/plain;charset=UTF-8");
+        //ctx.unset();
+        ctx.removeRouteHost();
         ctx.setSendZuulResponse(false);
+        ctx.getResponse().setHeader("Content-Type", "text/plain;charset=UTF-8");
         ctx.setResponseStatusCode(returnStatus.value());
         return null;
     }
