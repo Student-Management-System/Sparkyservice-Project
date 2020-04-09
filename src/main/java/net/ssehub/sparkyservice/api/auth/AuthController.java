@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
@@ -42,6 +43,7 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
  * @author Marcel
  */
 @RestController
+@Tag(name = "auth-controller", description = "Controller for realm authentication with JWT")
 public class AuthController {
     public class AuthenticationInfoDto {
         public UserDto user;
@@ -65,6 +67,8 @@ public class AuthController {
      * @param username Username of the user
      * @param password Password of the user
      */
+    @Operation(summary = "Authentication / Login", 
+            description = "Authenticates the user and sets a JWT into the auhtorization header")
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH)
     public AuthenticationInfoDto authenticate(@Nonnull @NotNull @Valid CredentialsDto credentials) {
         throw new UnsupportedOperationException();
@@ -81,10 +85,12 @@ public class AuthController {
      * @throws UserNotFoundException
      * @throws MissingDataException
      */
-    @Operation(description = "Authenticates the user and sets a JWT into the auhtorization header",
+    @Operation(description = "Checks the authentication state of the users authorization header and returns all "
+            + " user informations which belongs to the user",
             security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
-    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Authentication status is good"),
+    @ApiResponses(value = { 
+            @ApiResponse(responseCode = "200", description = "Authentication status is good"),
             @ApiResponse(responseCode = "403", description = "Not authenticated",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorDto.class))),

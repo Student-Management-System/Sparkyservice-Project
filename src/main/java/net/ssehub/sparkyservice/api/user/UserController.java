@@ -32,6 +32,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.User;
@@ -49,6 +50,7 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
  * @author Marcel
  */
 @RestController
+@Tag(name = "user-controller", description = "Controller for user managment")
 public class UserController {
 
     private Logger log = LoggerFactory.getLogger(UserController.class);
@@ -62,7 +64,7 @@ public class UserController {
     @Autowired
     private UserTransformer transformer;
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(summary = "Adds a new local user", security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.USERS_PUT)
     @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
@@ -81,8 +83,9 @@ public class UserController {
         }
     }
 
-    @Operation(description = "Edit and return the new user", security = { @SecurityRequirement(name = "bearer-key") })
-    @PatchMapping(ControllerPath.USERS_PATCH)
+    @Operation(summary = "Edits users (in any realm)", description = "Edit and return the new user", 
+            security = { @SecurityRequirement(name = "bearer-key") })
+    @PatchMapping(value = ControllerPath.USERS_PATCH, consumes = { "application/json" })
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses(value = { 
             @ApiResponse(responseCode = "200", description = "User edit was successful", 
@@ -119,7 +122,7 @@ public class UserController {
         return editTargetUser.asDto();
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(summary = "Gets all users from all realms", security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsers() {
@@ -131,7 +134,7 @@ public class UserController {
         return dtoArray;
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(summary = "Gets all users from a single realm", security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}")
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
@@ -143,7 +146,7 @@ public class UserController {
         return dtoArray;
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(summary = "Gets a unique user", security = { @SecurityRequirement(name = "bearer-key") })
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Return user"),
             @ApiResponse(responseCode = "403", description = "User is not authorized"),
             @ApiResponse(responseCode = "401", description = "User is not authenticated "),
@@ -162,10 +165,14 @@ public class UserController {
         }
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(summary = "Deletes a user", security = { @SecurityRequirement(name = "bearer-key") })
     @DeleteMapping(ControllerPath.USERS_DELETE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Secured(UserRole.FullName.ADMIN)
+    @ApiResponses(value = { @ApiResponse(responseCode = "204", description = "User deleted"),
+            @ApiResponse(responseCode = "403", description = "User is not authorized"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated "),
+            @ApiResponse(responseCode = "404", description = "The desired user was not found") })
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
         userService.deleteUser(username, realm);
     }
