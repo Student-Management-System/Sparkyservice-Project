@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
@@ -124,7 +126,10 @@ public class UserController {
         return dtoArray;
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(security = { @SecurityRequirement(name = "bearer-key")})
+    @ApiResponses(value = { @ApiResponse(responseCode = "2XX", description = "forwarded to the target"),
+            @ApiResponse(responseCode = "403", description = "User is not authorized to access path"),
+            @ApiResponse(responseCode = "401", description = "This path is protected. User needs to authenticate ") })
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}/{username}")
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
             Authentication auth) throws AccessViolationException, MissingDataException {

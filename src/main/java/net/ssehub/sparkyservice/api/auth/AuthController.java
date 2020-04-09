@@ -2,12 +2,14 @@ package net.ssehub.sparkyservice.api.auth;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.ldap.AuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,16 +19,22 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
+import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.util.HttpTimestamp;
 
 /**
  * Controller for authentication
@@ -40,6 +48,8 @@ public class AuthController {
         public TokenDto token;
     }
 
+    @Autowired
+    private ServletContext servletContext;
     @Autowired
     private IUserService userService;
 
@@ -61,8 +71,9 @@ public class AuthController {
     }
 
     /**
-     * Checks if the user is authenticated with a given JWT Token. This controller is not protected through spring
-     * secrurity in order to provide better information about what went wrong. 
+     * Checks if the user is authenticated with a given JWT Token. This controller
+     * is not protected through spring secrurity in order to provide better
+     * information about what went wrong.
      * 
      * @param auth Injected through spring if the user is logged in - holds
      *             authentication information
@@ -70,16 +81,24 @@ public class AuthController {
      * @throws UserNotFoundException
      * @throws MissingDataException
      */
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(description = "Authenticates the user and sets a JWT into the auhtorization header",
+            security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
-    public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request)
-            throws AccessViolationException, MissingDataException {
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Authentication status is good"),
+            @ApiResponse(responseCode = "403", description = "Not authenticated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDto.class))) })
+    public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
+            HttpServletRequest request) throws AccessViolationException, MissingDataException {
         if (auth == null) { // check what went wrong
             var jwtToken = request.getHeader(jwtConf.getHeader());
             if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
                 JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
             }
-            throw new AccessViolationException("Not authenticated");
+            throw new AuthenticationException();
         }
         var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
         var dto = new AuthenticationInfoDto();
@@ -91,11 +110,14 @@ public class AuthController {
     }
 
     /*
-     * Only supports jwtTokens which was created through the projects own authentication filter. Mocking users
-     * with spring during integration tests are not supported here. 
+     * Only supports jwtTokens which was created through the projects own
+     * authentication filter. Mocking users with spring during integration tests are
+     * not supported here.
      */
+    @Operation(description = "Prints the validity status of a given token",
+            security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
-    public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException, AccessViolationException {
+    public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException {
         if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
             var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
             if (auth != null) {
@@ -106,22 +128,28 @@ public class AuthController {
                 return dto;
             }
         }
-        throw new AccessViolationException("Not authenticated");
+        throw new AuthenticationException();
     }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler({ AccessViolationException.class, MissingDataException.class, UserNotFoundException.class })
-    public String handleUserEditException(AccessViolationException ex) {
+    public ErrorDto handleUserEditException(AccessViolationException ex) {
         return handleException(ex);
     }
 
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler({ Exception.class })
-    public String handleException(Exception ex) {
+    @ExceptionHandler({ Exception.class, AuthenticationException.class })
+    public ErrorDto handleException(Exception ex) {
+        var dto = new ErrorDto();
         if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
-            return "There was a problem with the user data.";
+            dto.messge = "There was a problem with the user data.";
         } else {
-            return ex.getMessage();
+            dto.messge = ex.getMessage();
         }
+        dto.error = HttpStatus.UNAUTHORIZED.name();
+        dto.status = HttpStatus.UNAUTHORIZED.value();
+        dto.timestamp = new HttpTimestamp().toString();
+        dto.path = servletContext.getContextPath();
+        return dto;
     }
 }

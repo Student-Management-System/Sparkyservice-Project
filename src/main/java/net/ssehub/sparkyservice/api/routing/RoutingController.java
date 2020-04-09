@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
@@ -24,9 +26,14 @@ public class RoutingController {
     @GetMapping(value = "{path}")
     @Secured(UserRole.FullName.SERVICE)
     @ResponseStatus(code = HttpStatus.NOT_IMPLEMENTED)
+    @ApiResponses(value = { @ApiResponse(responseCode = "2XX", description = "forwarded to the target"),
+            @ApiResponse(responseCode = "403", description = "User is not authorized to access path"),
+            @ApiResponse(responseCode = "401", description = "This path is protected. User needs to authenticate ") })
     public void route(@PathVariable("path") String path) {}
 
+    @Operation(description = "Checks if the and API is reachable under /api/v0")
     @GetMapping(value = ControllerPath.HEARTBEAT)
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    @ApiResponse(responseCode = "204", description = "Status is up - No content to send")
     public void isAlive() {}
 }
