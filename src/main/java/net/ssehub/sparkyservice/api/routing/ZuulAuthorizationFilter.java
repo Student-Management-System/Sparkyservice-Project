@@ -22,6 +22,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
+import net.ssehub.sparkyservice.api.util.HttpTimestamp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +97,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     private Object blockRequest(HttpStatus returnStatus) {
         RequestContext ctx = RequestContext.getCurrentContext();
         var errorDto = new ErrorDto();
-        errorDto.timestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+        errorDto.timestamp = new HttpTimestamp().toString();
         switch (returnStatus) {
         case FORBIDDEN:
             errorDto.messge = "API Key not authorized";
