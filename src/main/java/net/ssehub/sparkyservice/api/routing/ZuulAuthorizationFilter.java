@@ -10,8 +10,6 @@ import com.netflix.zuul.context.RequestContext;
 
 import io.jsonwebtoken.io.IOException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.zuul.ZuulFilter;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
@@ -19,13 +17,12 @@ import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
-import net.ssehub.sparkyservice.api.util.HttpTimestamp;
+import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
+import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 
 public class ZuulAuthorizationFilter extends ZuulFilter {
@@ -70,7 +67,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         log.debug(String.format("%s request to %s", request.getMethod(), request.getRequestURL().toString()));
         String proxyPath = (String) ctx.get("proxy");
         Map<String, String> routesConfig = zuulRoutes.getRoutes();
-        String users[] = routesConfig.get(proxyPath + ".protectedBy").split(",");
+        String users[] = NullHelpers.notNull(routesConfig.get(proxyPath + ".protectedBy").split(","));
         String header = ctx.getRequest().getHeader(jwtConf.getHeader());
         String username = getFullUserNameWithRealm(header);
         if (!isUsernameAllowed(users, username)) {
@@ -91,30 +88,18 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * status.
      * 
      * @param returnStatus The status to set
+     * @return always null
      */
-    private Object blockRequest(HttpStatus returnStatus) {
+    private @Nullable Object blockRequest(@Nonnull HttpStatus returnStatus) {
         RequestContext ctx = RequestContext.getCurrentContext();
-        var errorDto = new ErrorDto();
-        errorDto.timestamp = new HttpTimestamp().toString();
-        switch (returnStatus) {
-        case FORBIDDEN:
-            errorDto.messge = "API Key not authorized";
-            break;
-        case UNAUTHORIZED:
-            errorDto.messge = "Not authenticated. Use authentication controller";
-            ctx.getResponse().setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer realm=\"TODO\"");
-        default:
-            break;
+        String message = null;
+        if (returnStatus == HttpStatus.UNAUTHORIZED) {
+            message = "API key not authorized for this location";
         }
-        // ctx.unset();
-        errorDto.status = returnStatus.value();
-        errorDto.error = returnStatus.name();
-        try {
-            ctx.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
-            ctx.setResponseBody(new ObjectMapper().writeValueAsString(errorDto));
-        } catch (JsonProcessingException e) {
-            // nothing, no message...
-        }
+        String errorJson = new ErrorDtoBuilder().newError(message, returnStatus, ctx.getRequest().getContextPath())
+                .buildAsJson();
+        ctx.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
+        ctx.setResponseBody(errorJson);
         ctx.removeRouteHost();
         ctx.setSendZuulResponse(false);
         ctx.setResponseStatusCode(returnStatus.value());
@@ -147,13 +132,13 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     }
 
     /**
-     * Checks if the current username is on the permitted list. 
+     * Checks if the current username is on the permitted list.
      * 
      * @param allowedUsers List of username or just "none"
-     * @param currentUser 
+     * @param currentUser
      * @return true if the current user is configured to pass the zuul path
      */
-    private boolean isUsernameAllowed(String[] allowedUsers, String currentUser) {
+    private boolean isUsernameAllowed(@Nonnull String[] allowedUsers, @Nonnull String currentUser) {
         boolean userAllowed = Arrays.stream(allowedUsers).anyMatch(currentUser::equalsIgnoreCase);
         if (!userAllowed) {
             return allowedUsers[0].equalsIgnoreCase("none");

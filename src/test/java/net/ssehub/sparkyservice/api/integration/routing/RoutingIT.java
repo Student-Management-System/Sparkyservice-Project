@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
@@ -42,9 +41,6 @@ public class RoutingIT {
 
     @Autowired
     private JwtSettings jwtConf; 
-
-    @Autowired
-    private ZuulRoutes routes; 
 
     @Autowired
     private MockMvc mvc;

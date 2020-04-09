@@ -34,7 +34,7 @@ import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
-import net.ssehub.sparkyservice.api.util.HttpTimestamp;
+import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
  * Controller for authentication
@@ -134,22 +134,21 @@ public class AuthController {
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler({ AccessViolationException.class, MissingDataException.class, UserNotFoundException.class })
     public ErrorDto handleUserEditException(AccessViolationException ex) {
-        return handleException(ex);
+        return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
     }
 
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler({ Exception.class, AuthenticationException.class })
-    public ErrorDto handleException(Exception ex) {
-        var dto = new ErrorDto();
-        if (ex.getMessage() == null || ex.getMessage().isEmpty()) {
-            dto.messge = "There was a problem with the user data.";
-        } else {
-            dto.messge = ex.getMessage();
-        }
-        dto.error = HttpStatus.UNAUTHORIZED.name();
-        dto.status = HttpStatus.UNAUTHORIZED.value();
-        dto.timestamp = new HttpTimestamp().toString();
-        dto.path = servletContext.getContextPath();
-        return dto;
+    @ExceptionHandler({ AuthenticationException.class })
+    public ErrorDto handleAuthenticationException(AuthenticationException ex) {
+        return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
+    }
+
+    /*
+     * Avoid showing the user internal error messages
+     */
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler({ Exception.class })
+    public ErrorDto handleException(Exception  ex) {
+        return new ErrorDtoBuilder().newUnauthorizedError(null, servletContext.getContextPath()).build();
     }
 }
