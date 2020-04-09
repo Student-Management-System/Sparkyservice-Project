@@ -1,6 +1,8 @@
 package net.ssehub.sparkyservice.api.routing;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -10,6 +12,8 @@ import com.netflix.zuul.context.RequestContext;
 
 import io.jsonwebtoken.io.IOException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.zuul.ZuulFilter;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
@@ -17,6 +21,7 @@ import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,8 +74,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         String users[] = routesConfig.get(proxyPath + ".protectedBy").split(",");
         String header = ctx.getRequest().getHeader(jwtConf.getHeader());
         String username = getFullUserNameWithRealm(header);
-        boolean userAllowed = Arrays.stream(users).anyMatch(username::equalsIgnoreCase);
-        if (!userAllowed) {
+        if (!isUsernameAllowed(users, username)) {
             if (header == null) {
                 log.info("Denied access to {}", proxyPath);
                 return blockRequest(HttpStatus.UNAUTHORIZED);
@@ -91,20 +95,29 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      */
     private Object blockRequest(HttpStatus returnStatus) {
         RequestContext ctx = RequestContext.getCurrentContext();
+        var errorDto = new ErrorDto();
+        errorDto.timestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
         switch (returnStatus) {
         case FORBIDDEN:
-            ctx.setResponseBody("API key not authorized");
+            errorDto.messge = "API Key not authorized";
             break;
         case UNAUTHORIZED:
-            ctx.setResponseBody("Not authenticated. Use authentication controller");
+            errorDto.messge = "Not authenticated. Use authentication controller";
             ctx.getResponse().setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer realm=\"TODO\"");
         default:
             break;
         }
-        //ctx.unset();
+        // ctx.unset();
+        errorDto.status = returnStatus.value();
+        errorDto.error = returnStatus.name();
+        try {
+            ctx.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
+            ctx.setResponseBody(new ObjectMapper().writeValueAsString(errorDto));
+        } catch (JsonProcessingException e) {
+            // nothing, no message...
+        }
         ctx.removeRouteHost();
         ctx.setSendZuulResponse(false);
-        ctx.getResponse().setHeader("Content-Type", "text/plain;charset=UTF-8");
         ctx.setResponseStatusCode(returnStatus.value());
         return null;
     }
@@ -132,5 +145,20 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
             }
         }
         return "none";
+    }
+
+    /**
+     * Checks if the current username is on the permitted list. 
+     * 
+     * @param allowedUsers List of username or just "none"
+     * @param currentUser 
+     * @return true if the current user is configured to pass the zuul path
+     */
+    private boolean isUsernameAllowed(String[] allowedUsers, String currentUser) {
+        boolean userAllowed = Arrays.stream(allowedUsers).anyMatch(currentUser::equalsIgnoreCase);
+        if (!userAllowed) {
+            return allowedUsers[0].equalsIgnoreCase("none");
+        }
+        return userAllowed;
     }
 }
