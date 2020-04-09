@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -79,11 +81,21 @@ public class UserController {
         }
     }
 
-    @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @Operation(description = "Edit and return the new user", security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(ControllerPath.USERS_PATCH)
     @ResponseStatus(HttpStatus.OK)
+    @ApiResponses(value = { 
+            @ApiResponse(responseCode = "200", description = "User edit was successful", 
+                content = @Content(schema = @Schema(implementation = UserDto.class))),
+            @ApiResponse(responseCode = "403", description = "Current user is not authorized to edit this user", 
+                content = @Content),
+            @ApiResponse(responseCode = "401", description = "Current user is not authenticated", 
+                content = @Content),
+            @ApiResponse(responseCode = "404", description = "The edit target was not found", 
+                content = @Content),
+        })
     @Secured({ UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN })
-    public UserDto editLocalUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
+    public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws AccessViolationException, UserNotFoundException, MissingDataException {
         var authenticatedUser = notNull(Optional.ofNullable(transformer.extendFromAuthentication(auth)).orElseThrow(
                 () -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
@@ -160,20 +172,27 @@ public class UserController {
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessViolationException.class)
-    public ErrorDto handleUserEditException(AccessViolationException ex) {
-        return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.CONFLICT, servletContext.getContextPath())
+    public ErrorDto handleAccessViolationException(AccessViolationException ex) {
+        return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.FORBIDDEN, servletContext.getContextPath())
                 .build();
+    }
+
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    @ExceptionHandler(value = UserNotFoundException.class)
+    public ErrorDto handleUserNotFoundException(Exception e) {
+        return new ErrorDtoBuilder().newError("User target not found", 
+                HttpStatus.NOT_FOUND, servletContext.getContextPath()).build();
     }
 
     @ResponseStatus(code = HttpStatus.CONFLICT)
     @ExceptionHandler(UserEditException.class)
-    public ErrorDto handleUserNotFound(MissingDataException ex) {
+    public ErrorDto handleUserEditException(UserEditException ex) {
         return new ErrorDtoBuilder().newError(null, HttpStatus.CONFLICT, servletContext.getContextPath()).build();
     }
 
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({Exception.class})
-    public ErrorDto handleException(Exception ex, HttpStatus status) {
+    public ErrorDto handleException(Exception ex) {
         log.info("Exception in user controller: {}", ex.getCause());
         log.debug("" +  ex.getStackTrace());
         return new ErrorDtoBuilder().newError(ex.getClass().getName(), HttpStatus.INTERNAL_SERVER_ERROR,

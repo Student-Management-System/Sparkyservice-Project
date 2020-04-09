@@ -174,6 +174,23 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     }
 
     /**
+     * Admin tries to edit a non existent user. Should fail with 404.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    @WithMockUser(username="admin", roles = "ADMIN")
+    public void editNotFoundUser() throws Exception {
+        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
+        this.mvc
+            .perform(patch(ControllerPath.USERS_PATCH)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(content)
+                    .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNotFound());
+    }
+
+    /**
      * An in memory user is authenticated and tries to change data of a stored ldap user via 
      * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication)
      * 
