@@ -70,6 +70,13 @@ public class AuthController {
     @Operation(summary = "Authentication / Login", 
             description = "Authenticates the user and sets a JWT into the authorization header")
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH)
+    @ApiResponses(value = { 
+            @ApiResponse(responseCode = "200", description = "Authentication success"),
+            
+            @ApiResponse(responseCode = "403", description = "Authentication failed", 
+                content = @Content(mediaType = "application/json", 
+                schema = @Schema(implementation = ErrorDto.class)))
+    })
     public AuthenticationInfoDto authenticate(@Nonnull @NotNull @Valid CredentialsDto credentials) {
         throw new UnsupportedOperationException();
     }

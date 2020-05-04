@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.auth;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,14 +12,19 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.ssehub.sparkyservice.api.auth.AuthController.AuthenticationInfoDto;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.IUserService;
+import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -60,6 +66,23 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 String token = JwtAuth.createJwtTokenWithRealm(user.getUserName(), authorityList, jwtConf, 
                         user.getRealm());
                 response.addHeader(jwtConf.getHeader(), jwtConf.getPrefix() + " " + token);
+                try {
+                    var dto = new AuthenticationInfoDto();
+                    dto.user = user.asDto();
+                    dto.token = new TokenDto();
+                    dto.token.token = token;
+                    response.setContentType("application/json; charset=UTF-8"); 
+                    String bodyDtoString = new ObjectMapper().writeValueAsString(dto);
+                    response.getWriter().write(bodyDtoString);
+                    response.getWriter().flush();
+                } catch (IOException e) {
+
+                } finally {
+                    try {
+                        response.getWriter().close();
+                    } catch (IOException e) {
+                    }
+                }
             } catch (UserNotFoundException e) {
                 log.info("A user which is currently logged in, is not found in the database");
             }
