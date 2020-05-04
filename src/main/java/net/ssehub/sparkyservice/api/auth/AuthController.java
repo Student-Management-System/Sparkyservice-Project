@@ -45,7 +45,7 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 @RestController
 @Tag(name = "auth-controller", description = "Controller for realm authentication with JWT")
 public class AuthController {
-    public class AuthenticationInfoDto {
+    public static class AuthenticationInfoDto {
         public UserDto user;
         public TokenDto token;
     }
@@ -68,7 +68,7 @@ public class AuthController {
      * @param password Password of the user
      */
     @Operation(summary = "Authentication / Login", 
-            description = "Authenticates the user and sets a JWT into the auhtorization header")
+            description = "Authenticates the user and sets a JWT into the authorization header")
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH)
     public AuthenticationInfoDto authenticate(@Nonnull @NotNull @Valid CredentialsDto credentials) {
         throw new UnsupportedOperationException();
@@ -76,7 +76,7 @@ public class AuthController {
 
     /**
      * Checks if the user is authenticated with a given JWT Token. This controller
-     * is not protected through spring secrurity in order to provide better
+     * is not protected through spring security in order to provide better
      * information about what went wrong.
      * 
      * @param auth Injected through spring if the user is logged in - holds

@@ -51,7 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private boolean ldapAd;
 
     @Value("${recovery.enabled:false}")
-    private String inMemoryEnabled;
+    private boolean inMemoryEnabled;
     
     @Value("${recovery.password:}")
     private String inMemoryPassword;
@@ -102,7 +102,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        if (inMemoryEnabled != null && Boolean.parseBoolean(inMemoryEnabled)) {
+        if (inMemoryEnabled) {
+            if (inMemoryPassword.isEmpty()) {
+                throw new Exception("Set recovery.password or disable the account");
+            }
             auth.inMemoryAuthentication()
             .withUser(inMemoryUser)
             .password(passwordEncoder.encode(inMemoryPassword))
