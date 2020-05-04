@@ -31,8 +31,10 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 
 public class JwtAuth {
-    private JwtAuth() {}
+    public static final int TOKEN_EXPIRE_TIME_MS = 86400000; // 24 hours 
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
+
+    private JwtAuth() {}
 
     public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
         String username = request.getParameter("username");
@@ -82,7 +84,7 @@ public class JwtAuth {
             .setIssuer(jwtConf.getIssuer())
             .setAudience(jwtConf.getAudience())
             .setSubject(username)
-            .setExpiration(new Date(System.currentTimeMillis() + 864000000))
+            .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS))
             .claim("rol", roles)
             .claim("realm", realm)
             .compact();
