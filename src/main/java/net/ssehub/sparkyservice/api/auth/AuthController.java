@@ -32,7 +32,6 @@ import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
@@ -45,10 +44,6 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 @RestController
 @Tag(name = "auth-controller", description = "Controller for realm authentication with JWT")
 public class AuthController {
-    public static class AuthenticationInfoDto {
-        public UserDto user;
-        public TokenDto token;
-    }
 
     @Autowired
     private ServletContext servletContext;

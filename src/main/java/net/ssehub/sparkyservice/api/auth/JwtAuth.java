@@ -30,24 +30,42 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 
+/**
+ * Helper class for working with JWT Tokens during Authentication.
+ * 
+ * @author marcel
+ */
 public class JwtAuth {
-    public static final int TOKEN_EXPIRE_TIME_MS = 86400000; // 24 hours 
+    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
+
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
-    private JwtAuth() {}
+    /**
+     * Disabled.
+     */
+    private JwtAuth() {
+    }
 
-    public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(HttpServletRequest request) {
+    /**
+     * Method reads the {@link CredentialsDto} from a given request and transform
+     * them into a AuthenticationToken.
+     * 
+     * @param request
+     * @return contains the username and password used for authentication
+     */
+    public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(
+            HttpServletRequest request) {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         boolean passwordAvailable = password != null && !password.isBlank();
-        LOG.debug("[HTTP Parameter] Username: " + username + " | Password available: " + passwordAvailable );
+        LOG.debug("[HTTP Parameter] Username: " + username + " | Password available: " + passwordAvailable);
         if (username == null && password == null) {
             try {
-                CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class); 
+                CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class);
                 username = cred.username;
                 password = cred.password;
                 boolean avail = password != null && !password.isBlank();
-                LOG.debug("[HTTP Body] Username: " + username + " | Password available: " + avail );
+                LOG.debug("[HTTP Body] Username: " + username + " | Password available: " + avail);
             } catch (MismatchedInputException e) {
                 LOG.debug("Credentials not avaiable in requests input stream");
                 // do nothing - is thrown on invalid values like null
@@ -58,65 +76,67 @@ public class JwtAuth {
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 
-    public static @Nonnull String createJwtToken(String username,  List<UserRole> roles, JwtSettings jwtConf) {
+    /**
+     * Encode given data as JWT token.
+     * 
+     * @param username - Identifies the user and is available in the token. Users
+     *                 realm will be {@link UserRealm#UNKNOWN}
+     * @param roles    - Permission roles of the user are available in the token
+     * @param jwtConf  - provides all necessary information for encoding
+     * @return plain encoded JWT token as string (without bearer keyword)
+     */
+    public static @Nonnull String createJwtToken(String username, List<UserRole> roles, JwtSettings jwtConf) {
         return createJwtTokenWithRealm(username, roles, jwtConf, UserRealm.UNKNOWN);
     }
 
     /**
-     * Creates a JWT Token.
+     * Encode given data as JWT token.
      * 
-     * @param username 
-     * @param authorities list of authorities is set 
-     * @param jwtConf 
-     * @param realm
-     * @return
+     * @param username - Identifies the user and is available in the token
+     * @param roles    - Permission roles of the user are available in the token
+     * @param jwtConf  - provides all necessary information for encoding
+     * @param realm    - the users realm which is necessary for identifying a user
+     *                 when using the JWT token
+     * @return plain encoded JWT token as string (without bearer keyword)
      */
-    public static @Nonnull String createJwtTokenWithRealm(@Nullable String username, @Nullable List<UserRole> roles, 
+    public static @Nonnull String createJwtTokenWithRealm(@Nullable String username, @Nullable List<UserRole> roles,
             JwtSettings jwtConf, UserRealm realm) {
 //        var roles = authorities
 //            .stream()
 //            .map(GrantedAuthority::getAuthority)
 //            .collect(Collectors.toList());
         var signingKey = jwtConf.getSecret().getBytes();
-        var token = Jwts.builder()
-            .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
-            .setHeaderParam("typ", jwtConf.getType())
-            .setIssuer(jwtConf.getIssuer())
-            .setAudience(jwtConf.getAudience())
-            .setSubject(username)
-            .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS))
-            .claim("rol", roles)
-            .claim("realm", realm)
-            .compact();
+        var token = Jwts.builder().signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
+                .setHeaderParam("typ", jwtConf.getType()).setIssuer(jwtConf.getIssuer())
+                .setAudience(jwtConf.getAudience()).setSubject(username)
+                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS)).claim("rol", roles)
+                .claim("realm", realm).compact();
         return notNull(token);
     }
 
     /**
-     * Extracts information of a given token. The secret must be the same as the secret which was used to encode 
-     * the JWT token. <br>
+     * Extracts information of a given token. The secret must be the same as the
+     * secret which was used to encode the JWT token. <br>
      * The returned authentication contains:<br>
-     * <ul><li> {@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}
-     * </li><li> {@link Authentication#getCredentials()} => {@link TokenDto}
-     * </li><li> {@link Authentication#getAuthorities()} => (single) {@link UserRole}
-     * </li></ul>
+     * <ul>
+     * <li>{@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}
+     * </li>
+     * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
+     * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
+     * </ul>
      * 
-     * @param token JWT token as string
-     * @param jwtSecret Is used to decode the token - must be the same which was used for encoding
+     * @param token     JWT token as string
+     * @param jwtSecret Is used to decode the token - must be the same which was
+     *                  used for encoding
      * @return Springs authentication token
      */
-    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token, 
+    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token,
             @Nonnull String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
-        var parsedToken = Jwts.parser()
-            .setSigningKey(signingKey)
-            .parseClaimsJws(token.replace("Bearer ", ""));
-        var username = parsedToken
-            .getBody()
-            .getSubject();
-        var authorities = ((List<?>) parsedToken.getBody()
-            .get("rol")).stream()
-            .map(authority -> UserRole.DEFAULT.getEnum((String) authority))
-            .collect(Collectors.toList());
+        var parsedToken = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token.replace("Bearer ", ""));
+        var username = parsedToken.getBody().getSubject();
+        var authorities = ((List<?>) parsedToken.getBody().get("rol")).stream()
+                .map(authority -> UserRole.DEFAULT.getEnum((String) authority)).collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
         var realm = (String) parsedToken.getBody().get("realm");
         if (!StringUtils.isEmpty(username)) {
@@ -129,7 +149,13 @@ public class JwtAuth {
             return null;
         }
     }
-    
+
+    /**
+     * Convertes a date to a string.
+     * 
+     * @param expDate Desired date
+     * @return the desired date as String
+     */
     private static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
         String pattern = "MM/dd/yyyy HH:mm:ss";
         DateFormat df = new SimpleDateFormat(pattern);
