@@ -37,7 +37,7 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
- * Controller for authentication
+ * Controller for authentication.
  * 
  * @author Marcel
  */
@@ -49,7 +49,6 @@ public class AuthController {
     private ServletContext servletContext;
     @Autowired
     private IUserService userService;
-
     @Autowired
     private JwtSettings jwtConf;
 
@@ -59,8 +58,8 @@ public class AuthController {
      * {@link JwtAuthenticationFilter} which listens on the same path than this
      * method.
      * 
-     * @param username Username of the user
-     * @param password Password of the user
+     * @param credentials - Contains username and password
+     * @return Information like JWT token when user was successfully authenticated
      */
     @Operation(summary = "Authentication / Login", 
             description = "Authenticates the user and sets a JWT into the authorization header")
@@ -81,9 +80,10 @@ public class AuthController {
      * is not protected through spring security in order to provide better
      * information about what went wrong.
      * 
-     * @param auth Injected through spring if the user is logged in - holds
+     * @param auth - Injected through spring if the user is logged in - holds
      *             authentication information
-     * @return user information which are stored in the jwt token
+     * @param request - Provided by Spring
+     * @return user information which are stored in the JWT token
      * @throws UserNotFoundException
      * @throws MissingDataException
      */
@@ -122,6 +122,15 @@ public class AuthController {
      * authentication filter. Mocking users with spring during integration tests are
      * not supported here.
      */
+    /**
+     * Checks if a given token is valid. Validity means a non expired token which contains all information
+     * which are necessary to proceed with it in the application. When the token is valid, it can be used as 
+     * authentication token for the whole application.
+     * 
+     * @param jwtToken - The token which should be verified
+     * @return The stored information in the token
+     * @throws MissingDataException - Is thrown when the data of the token is not complete
+     */
     @Operation(description = "Prints the validity status of a given token",
             security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
@@ -139,12 +148,26 @@ public class AuthController {
         throw new AuthenticationException();
     }
 
+    /**
+     * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
+     * on the thrown exception.
+     * 
+     * @param ex - Can be  AccessViolationException.class, MissingDataException.class, UserNotFoundException.class 
+     * @return Informational ErrorDto which is comparable with the  default Spring Error Text
+     */
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler({ AccessViolationException.class, MissingDataException.class, UserNotFoundException.class })
-    public ErrorDto handleUserEditException(AccessViolationException ex) {
+    public ErrorDto handleUserEditException(Exception ex) {
         return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
     }
 
+    /**
+     * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
+     * on the thrown exception.
+     * 
+     * @param ex - Can be AuthenticationException.class 
+     * @return Informational ErrorDto which is comparable with the  default Spring Error Text
+     */
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     @ExceptionHandler({ AuthenticationException.class })
     public ErrorDto handleAuthenticationException(AuthenticationException ex) {
@@ -152,11 +175,20 @@ public class AuthController {
     }
 
     /*
-     * Avoid showing the user internal error messages
+     * The catch all method avoids leaking internal error messages to the user. 
+     */
+    /**
+     * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
+     * on the thrown exception.
+     * This method catches any exception which is not already catched by another handler method. 
+     * 
+     * @param ex - Any excetpion.
+     * @return Informational ErrorDto which is comparable with the  default Spring Error Text
      */
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({ Exception.class })
     public ErrorDto handleException(Exception  ex) {
+        // TODO build log
         return new ErrorDtoBuilder().newUnauthorizedError(null, servletContext.getContextPath()).build();
     }
 }

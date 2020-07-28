@@ -25,7 +25,7 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 public interface IUserService extends UserDetailsService {
 
     /**
-     * Make a user persistent (in any kind of data storage).
+     * Safe user in a persistent way (most likely SQL).
      * 
      * @param <T> A class which must extends from {@link User} (which holds the JPA definitions).
      * @param user Is saved in a persistence way (must hold username and realm)
@@ -45,7 +45,7 @@ public interface IUserService extends UserDetailsService {
      * Searches a data storage for all users with a given username. 
      * 
      * @param username 
-     * @return
+     * @return A list of users which shares the same username in different realms
      * @throws UserNotFoundException
      */
     @Nonnull List<User> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
@@ -88,8 +88,19 @@ public interface IUserService extends UserDetailsService {
      */
     UserTransformer getDefaultTransformer();
 
+    /**
+     * Deletes the given user. 
+     * 
+     * @param user
+     */
     void deleteUser(User user);
 
+    /**
+     * Deletes a user specific user identified by his realm and username.
+     * 
+     * @param username
+     * @param realm
+     */
     @Secured(UserRole.FullName.ADMIN)
     void deleteUser(String username, UserRealm realm);
 
