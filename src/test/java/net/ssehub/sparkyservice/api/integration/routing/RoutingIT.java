@@ -21,6 +21,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 
 /**
@@ -86,7 +87,7 @@ public class RoutingIT {
         this.mvc
             .perform(
                 get(PROTECTED_ROUTE)
-                   .header(HttpHeaders.AUTHORIZATION, fullTokenHeader)
+                   .header(HttpHeaders.PROXY_AUTHORIZATION, fullTokenHeader)
                    .accept(MediaType.ALL))
            .andExpect(status().is2xxSuccessful());
     }
@@ -104,7 +105,7 @@ public class RoutingIT {
         this.mvc
             .perform(
                 get(PROTECTED_ROUTE)
-                   .header(jwtConf.getHeader(), fullTokenHeader)
+                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
            .andExpect(status().isForbidden());
     }
@@ -123,7 +124,7 @@ public class RoutingIT {
         this.mvc
             .perform(
                 get(PROTECTED_LIST_ROUTE)
-                   .header(jwtConf.getHeader(), fullTokenHeader)
+                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
            .andExpect(status().is2xxSuccessful());
         
@@ -132,7 +133,7 @@ public class RoutingIT {
         this.mvc
             .perform(
                 get(PROTECTED_LIST_ROUTE)
-                   .header(jwtConf.getHeader(), fullTokenHeader)
+                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
            .andExpect(status().is2xxSuccessful());
 
@@ -141,7 +142,7 @@ public class RoutingIT {
         this.mvc
             .perform(
                 get(PROTECTED_LIST_ROUTE)
-                   .header(jwtConf.getHeader(), fullTokenHeader)
+                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
            .andExpect(status().is4xxClientError());
     }

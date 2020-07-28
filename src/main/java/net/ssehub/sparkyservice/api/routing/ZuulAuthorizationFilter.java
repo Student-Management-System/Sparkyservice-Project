@@ -32,13 +32,14 @@ import org.springframework.http.HttpStatus;
  */
 public class ZuulAuthorizationFilter extends ZuulFilter {
 
+    public static final String PROXY_AUTH_HEADER = "Proxy-Authorization";
+    private static Logger log = LoggerFactory.getLogger(ZuulAuthorizationFilter.class);
+
     @Autowired
     private ZuulRoutes zuulRoutes;
-
     @Autowired
     private JwtSettings jwtConf;
 
-    private static Logger log = LoggerFactory.getLogger(ZuulAuthorizationFilter.class);
 
     @Override
     public String filterType() {
@@ -72,9 +73,9 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         log.debug(String.format("%s request to %s", request.getMethod(), request.getRequestURL().toString()));
         String proxyPath = (String) ctx.get("proxy");
         Map<String, String> routesConfig = zuulRoutes.getRoutes();
-        String users[] = NullHelpers.notNull(routesConfig.get(proxyPath + ".protectedBy").split(","));
-        String header = ctx.getRequest().getHeader(jwtConf.getHeader());
-        String username = getFullUserNameWithRealm(header);
+        String[] users = NullHelpers.notNull(routesConfig.get(proxyPath + ".protectedBy").split(","));
+        String header = ctx.getRequest().getHeader(PROXY_AUTH_HEADER);
+        String username = getAuthenticatedUser(header);
         if (!isUsernameAllowed(users, username)) {
             if (header == null) {
                 log.info("Denied access to {}", proxyPath);
@@ -119,7 +120,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      *                   is stored
      * @return Username with realm - or "none" when the user is not authenticated
      */
-    public @Nonnull String getFullUserNameWithRealm(@Nullable String authHeader) {
+    public @Nonnull String getAuthenticatedUser(@Nullable String authHeader) {
         if (authHeader != null) {
             try {
                 var authentication = JwtAuth.readJwtToken(authHeader, jwtConf.getSecret());
@@ -146,7 +147,8 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     private boolean isUsernameAllowed(@Nonnull String[] allowedUsers, @Nonnull String currentUser) {
         boolean userAllowed = Arrays.stream(allowedUsers).anyMatch(currentUser::equalsIgnoreCase);
         if (!userAllowed) {
-            return allowedUsers[0].equalsIgnoreCase("none");
+            userAllowed = allowedUsers[0].equalsIgnoreCase("none"); //when the config is set to "none" everyone is 
+                                                                    //allowed to access => return true
         }
         return userAllowed;
     }
