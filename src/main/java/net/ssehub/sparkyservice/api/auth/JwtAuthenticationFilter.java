@@ -109,14 +109,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param authDto Information which will be the return content
      */
     private void setResponseValue(@Nonnull HttpServletResponse response, @Nonnull AuthenticationInfoDto authDto) {
-        response.addHeader(jwtConf.getHeader(), jwtConf.getPrefix() + " " + authDto.token);
+        response.addHeader(jwtConf.getHeader(), jwtConf.getPrefix() + " " + authDto.token.token);
         response.setContentType("application/json; charset=UTF-8"); 
         try (var responseWriter = response.getWriter()) {
             String bodyDtoString = new ObjectMapper().writeValueAsString(authDto);
             responseWriter.write(bodyDtoString);
             responseWriter.flush();
         } catch (IOException e) {
-            log.warn("Invalid json format");
+            log.warn("Authentication Header not written: Invalid json format.");
         }
     }
 }

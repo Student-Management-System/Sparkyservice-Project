@@ -151,7 +151,7 @@ public class JwtAuth {
     }
 
     /**
-     * Convertes a date to a string.
+     * Converts a date to a string.
      * 
      * @param expDate Desired date
      * @return the desired date as String
