@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
+//CHECKSTYLE:OFF
 public class UserDto implements Serializable {
 
     private static final long serialVersionUID = 4775708076296820879L;
@@ -22,6 +23,8 @@ public class UserDto implements Serializable {
 
     @NotBlank
     public String username;
+
+    public String fullName;
 
     @NotNull
     public UserRealm realm;

@@ -23,10 +23,17 @@ import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 
+/**
+ * Represents a user with JPA annotations. Although contains static methods to modify a users values.
+ *
+ * @author marcel
+ */
+
 @Entity
 @Table(name = "user_stored", uniqueConstraints = { @UniqueConstraint(columnNames = { "userName", "realm" }) })
 @ParametersAreNonnullByDefault
 public class User {
+
     /**
      * Changes the values of the given user with values from the DTO. This happens recursive (it will
      * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
@@ -36,9 +43,9 @@ public class User {
      * {@link LocalUserDetails#DEFAULT_REALM}.
      * 
      * Those permissions are:
-     * </li><li> The old password must be provided in order to change it
+     * <ul><li> The old password must be provided in order to change it
      * </li><li> User can not modify roles: {@link User#setRole(Enum)}
-     * </ul>
+     * </li></ul>
      * 
      * @param databaseUser User which values should be changed
      * @param userDto Transfer object which holds the new data
@@ -61,6 +68,17 @@ public class User {
         editUserFromDto(databaseUser, userDto, true);
     }
 
+    /**
+     * Edit values of a given user with values from a DTO. Thes can be done in two modes: <br>
+     * <ul><li>admin mode: Will modify all fields without edit conditions (like the old password have to match) 
+     * </li><li> default (user) mode: The edit is done under certain restrictions: Password is only changed if 
+     * the old one is provided. 
+     * </li></ul>
+     * 
+     * @param databaseUser
+     * @param userDto
+     * @param adminMode
+     */
     private static void editUserFromDto(User databaseUser, UserDto userDto, boolean adminMode) {
         if (userDto.settings != null && userDto.username != null) {
             PersonalSettings.applyPersonalSettingsDto(databaseUser, notNull(userDto.settings));
@@ -73,8 +91,9 @@ public class User {
             } else if (changePassword) {
                 defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
             }
-            if (adminMode && userDto.role != null) {
-                databaseUser.setRole(notNull(userDto.role));
+            if (adminMode) {
+                databaseUser.setFullName(userDto.fullName);
+                databaseUser.setRole(userDto.role);
             }
         }
     }
@@ -83,7 +102,7 @@ public class User {
      * Try to apply a new password to the given user. The {@link ChangePasswordDto#oldPassword} must
      * match the one which is already stored in the database. Otherwise the password won't be changed.
      * 
-     * @param databaseUserDetails user who's password should be changed
+     * @param databaseUser user who's password should be changed
      * @param passwordDto contains old and new password (both values can be null)
      */
     public static void defaultApplyNewPasswordFromDto(@Nullable User databaseUser,
@@ -141,6 +160,7 @@ public class User {
         dto.role = user.getRole();
         dto.settings = user.getProfileConfiguration().asDto();
         dto.username = user.getUserName();
+        dto.fullName = user.fullName;
         return dto;
     }
 
@@ -154,6 +174,10 @@ public class User {
     @Nonnull
     @Column(nullable = false, length = 50)
     protected String userName;
+
+    @Nullable
+    @Column(length = 255)
+    protected String fullName;
 
     @Column
     protected boolean isActive;
@@ -202,6 +226,7 @@ public class User {
         this.userName = user.userName;
         this.isActive = user.isActive;
         this.passwordEntity = user.passwordEntity;
+        this.fullName = user.fullName;
         this.profileConfiguration = user.profileConfiguration;
     }
 
@@ -221,6 +246,23 @@ public class User {
      */
     public String getUserName() {
         return this.userName;
+    }
+
+    /**
+     * Full name of the user. Can be null and is may not be unique.
+     * @return First + Last Name of the user
+     */
+    @Nullable
+    public String getFullName() {
+        return fullName;
+    }
+
+    /**
+     * Setter for the full name of the user. Should contain first and last name.
+     * @param fullName string
+     */
+    public void setFullName(@Nullable String fullName) {
+        this.fullName = fullName;
     }
 
     /**
@@ -254,12 +296,14 @@ public class User {
     }
 
     /**
-     * Sets a single authority role to the user. Old role will be overridden.
+     * Sets a single authority role to the user. Old role will be overridden. Null values will be ignored
      * 
      * @param role Users permission role
      */
-    public void setRole(UserRole role) {
-        this.role = role;
+    public void setRole(@Nullable UserRole role) {
+        if (role != null) {
+            this.role = role;
+        }
     }
 
     /**
