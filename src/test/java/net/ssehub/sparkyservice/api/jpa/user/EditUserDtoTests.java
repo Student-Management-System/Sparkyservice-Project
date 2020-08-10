@@ -298,4 +298,28 @@ public class EditUserDtoTests {
                         "Email not correctly changed or transformed")
             );
     }
+
+    /**
+     * Tests if an admin can change the full name of a user.
+     */
+    @Test
+    public void defaultFullNameEdit() {
+        var dto = createExampleDto();
+        dto.fullName = "Test User";
+        User.defaultUserDtoEdit(user, dto);
+        user.setFullName("Marcel");
+        var userDto = user.asDto();
+        assertNotEquals(dto.fullName, userDto.fullName, "Normal user was able to change his full name.");
+    }
+    /**
+     * Tests if an admin can change the full name of a user.
+     */
+    @Test
+    public void adminFullNameEdit() {
+        var dto = createExampleDto();
+        dto.fullName = "Test User";
+        User.adminUserDtoEdit(user, dto);
+        var userDto = user.asDto();
+        assertEquals(dto.fullName, userDto.fullName, "Full name was not changed by admin edit");
+    }
 }
