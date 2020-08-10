@@ -198,7 +198,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
 
     /**
      * An in memory user is authenticated and tries to change data of a stored ldap user via 
-     * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication)
+     * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication).
      * 
      * @throws Exception
      */

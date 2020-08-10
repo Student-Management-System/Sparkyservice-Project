@@ -1,7 +1,5 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
-import java.io.UnsupportedEncodingException;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -13,6 +11,11 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+/**
+ * JPA class for passwords.
+ * 
+ * @author marcel
+ */
 @Entity
 @Table(name = "user_local_password")
 @ParametersAreNonnullByDefault
@@ -52,8 +55,8 @@ public class Password {
 
     /**
      * Takes a plain text password and hash it with the default password algorithm.
-     * @param plainTextPassword
-     * @throws UnsupportedEncodingException 
+     * 
+     * @param passwordString - A hashed password as string
      */
     public Password(String passwordString) {
         this.passwordString = passwordString;

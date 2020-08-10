@@ -1,10 +1,12 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.*;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.springframework.security.core.GrantedAuthority;
 
@@ -74,13 +76,14 @@ public enum UserRole implements GrantedAuthority {
      * @param value - A string which probably identifies
      * @return the string as enumCan't get an instance of UserRole of this string.
      */
-    public UserRole getEnum(String value) {
+    public @Nonnull UserRole getEnum(@Nullable String value) {
         var strategyList = new ArrayList<Predicate<UserRole>>();
         strategyList.add(e -> e.getRoleValue().equalsIgnoreCase(value));
         strategyList.add(e -> e.name().equalsIgnoreCase(value));
         
-        return EnumUtil.<UserRole>castFromArray(values(), strategyList).orElseThrow(
+        var returnValue = EnumUtil.<UserRole>castFromArray(values(), strategyList).orElseThrow(
             () -> new IllegalArgumentException("Can't get an instance of UserRole of this string."));
+        return notNull(returnValue);
     } 
 
     /**

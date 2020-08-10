@@ -234,7 +234,8 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     }
     
     /**
-     * Tests an authentication attempt with a real JWT token and not with a mocked user.
+     * Tests an authentication attempt with a real JWT token from a real user (not with a mocked user).
+     * Authentication should be successful.
      * 
      * @throws Exception
      */
@@ -249,7 +250,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
-        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
+        String tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)

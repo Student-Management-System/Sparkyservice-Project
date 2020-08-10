@@ -39,12 +39,15 @@ public class HeavyUserTransformerImpl implements UserTransformer {
     private IUserService userSerivce;
     private final Logger log = LoggerFactory.getLogger(HeavyUserTransformerImpl.class);
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @Nonnull User extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException {
         if (details instanceof LdapUserDetails) {
             try {
                 return userSerivce.findUserByNameAndRealm(details.getUsername(), UserRealm.LDAP);
-            } catch (UserNotFoundException e){
+            } catch (UserNotFoundException e) {
                 // probably the first time this user is authenticated?
                 return new User(notNull(details.getUsername()), null, UserRealm.LDAP, true, UserRole.DEFAULT);
             }
@@ -66,6 +69,9 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         throw new UserNotFoundException("");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public @Nonnull User createMemoryUser(org.springframework.security.core.userdetails.User memoryUser) {
         String username = Optional.ofNullable(memoryUser.getUsername()).orElse("");
         String password = Optional.ofNullable(memoryUser.getPassword()).orElse("");
@@ -96,7 +102,8 @@ public class HeavyUserTransformerImpl implements UserTransformer {
      *                               the desired user is not in the database
      */
     @Override
-    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
+    public @Nonnull User extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) 
+            throws UserNotFoundException {
         if (principal != null) {
             if (principal.getRealm() == UserRealm.MEMORY) {
                 throw new UserNotFoundException("Can't search in memory database");
@@ -116,7 +123,8 @@ public class HeavyUserTransformerImpl implements UserTransformer {
      * </ul>
      */
     @Override
-    public @Nonnull User extendFromAnyPrincipal(@Nullable Object principal) throws MissingDataException, UserNotFoundException {
+    public @Nonnull User extendFromAnyPrincipal(@Nullable Object principal) 
+            throws MissingDataException, UserNotFoundException {
         if (principal instanceof SparkysAuthPrincipal) {
             return extendFromSparkyPrincipal((SparkysAuthPrincipal) principal);
         } else if (principal instanceof UserDetails ){
@@ -125,6 +133,9 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         throw new MissingDataException("Principal implementation not known.");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @Nonnull User extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
         if (auth != null) {
@@ -149,6 +160,9 @@ public class HeavyUserTransformerImpl implements UserTransformer {
         throw new MissingDataException("Principal implementation not known.");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @Nonnull User extendFromUserDto(@Nullable UserDto userDto) throws MissingDataException, UserNotFoundException {
         if (userDto != null && userDto.username != null && userDto.realm != null) {

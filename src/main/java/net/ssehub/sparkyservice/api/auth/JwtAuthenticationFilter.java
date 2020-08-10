@@ -88,7 +88,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     }
 
     /**
-     * Builds an authentication DTO with the information provided by user object. 
+     * Builds an authentication DTO with the information provided by user object.
      * 
      * @param user - object which contains all necessary information.
      * @return AuthenticationDTO currently without {@link TokenDto#expiration}
