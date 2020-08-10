@@ -25,7 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.IUserService;
@@ -100,7 +99,7 @@ public class AuthController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorDto.class))) })
     public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
-            HttpServletRequest request) throws AccessViolationException, MissingDataException {
+            HttpServletRequest request) throws MissingDataException {
         if (auth == null) { // check what went wrong
             var jwtToken = request.getHeader(jwtConf.getHeader());
             if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
@@ -156,7 +155,7 @@ public class AuthController {
      * @return Informational ErrorDto which is comparable with the  default Spring Error Text
      */
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    @ExceptionHandler({ AccessViolationException.class, MissingDataException.class, UserNotFoundException.class })
+    @ExceptionHandler({ AuthenticationException.class, MissingDataException.class, UserNotFoundException.class })
     public ErrorDto handleUserEditException(Exception ex) {
         return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
     }

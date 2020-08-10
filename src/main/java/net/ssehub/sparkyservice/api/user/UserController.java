@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,7 +34,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import net.ssehub.sparkyservice.api.auth.exceptions.AccessViolationException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
@@ -99,7 +99,7 @@ public class UserController {
         })
     @Secured({ UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN })
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
-            throws AccessViolationException, UserNotFoundException, MissingDataException {
+            throws UserNotFoundException, MissingDataException {
         var authenticatedUser = notNull(Optional.ofNullable(transformer.extendFromAuthentication(auth)).orElseThrow(
                 () -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
         boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
@@ -116,7 +116,7 @@ public class UserController {
             log.info("User {}@{} tries to modify the data of other user without admin privileges",
                     authenticatedUser.getUserName(), authenticatedUser.getRealm());
             log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
-            throw new AccessViolationException("Not allowed to modify other users data");
+            throw new AccessDeniedException("Not allowed to modify other users data");
         }
         userService.storeUser(editTargetUser);
         return editTargetUser.asDto();
@@ -153,7 +153,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "The desired user or realm was not found") })
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}/{username}")
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
-            Authentication auth) throws AccessViolationException, MissingDataException {
+            Authentication auth) throws  MissingDataException {
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
         User authenticatedUser = userService.getDefaultTransformer().extendFromAuthentication(auth);
@@ -161,7 +161,7 @@ public class UserController {
             var user = userService.findUserByNameAndRealm(username, realm);
             return user.asDto();
         } else {
-            throw new AccessViolationException("Modifying this user is not allowed..");
+            throw new AccessDeniedException("Modifying this user is not allowed..");
         }
     }
 
@@ -178,8 +178,8 @@ public class UserController {
     }
 
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    @ExceptionHandler(AccessViolationException.class)
-    public ErrorDto handleAccessViolationException(AccessViolationException ex) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ErrorDto handleAccessViolationException(AccessDeniedException ex) {
         return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.FORBIDDEN, servletContext.getContextPath())
                 .build();
     }
