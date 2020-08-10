@@ -3,8 +3,6 @@ package net.ssehub.sparkyservice.api.integration.routing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Arrays;
-
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,10 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
 /**
  * For this test class, a set of routes was defined in the given properties file. 
@@ -81,8 +79,8 @@ public class RoutingIT {
      */
     @IntegrationTest
     public void authorizedProtectedRouteTest() throws Exception {
-        var roleList = Arrays.asList(UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtTokenWithRealm("user", roleList, jwtConf, UserRealm.MEMORY);
+        var user = LocalUserDetails.newLocalUser("user", "", UserRole.DEFAULT);
+        String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -99,8 +97,8 @@ public class RoutingIT {
      */
     @IntegrationTest
     public void authenticatedProtectedRouteTest() throws Exception {
-        var roleList = Arrays.asList(UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtTokenWithRealm("anyUser", roleList, jwtConf, UserRealm.MEMORY);
+        var user = LocalUserDetails.newLocalUser("anyUser", "", UserRole.DEFAULT);
+        String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -118,8 +116,10 @@ public class RoutingIT {
      */
     @IntegrationTest
     public void authorizedListProtectedRouteTest() throws Exception {
-        var roleList = Arrays.asList(UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtTokenWithRealm("user1", roleList, jwtConf, UserRealm.MEMORY);
+        var user1 = LocalUserDetails.newLocalUser("user1", "", UserRole.DEFAULT);
+        var user2 = LocalUserDetails.newLocalUser("user2", "", UserRole.DEFAULT);
+        var user3 = LocalUserDetails.newLocalUser("user3", "", UserRole.DEFAULT);
+        String jwtToken = JwtAuth.createJwtToken(user1, jwtConf);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -128,7 +128,7 @@ public class RoutingIT {
                    .accept(MediaType.ALL))
            .andExpect(status().is2xxSuccessful());
         
-        jwtToken = JwtAuth.createJwtTokenWithRealm("user2", roleList, jwtConf, UserRealm.MEMORY);
+        jwtToken = JwtAuth.createJwtToken(user2, jwtConf);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -137,7 +137,7 @@ public class RoutingIT {
                    .accept(MediaType.ALL))
            .andExpect(status().is2xxSuccessful());
 
-        jwtToken = JwtAuth.createJwtTokenWithRealm("user3", roleList, jwtConf, UserRealm.MEMORY);
+        jwtToken = JwtAuth.createJwtToken(user3, jwtConf);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(

@@ -1,8 +1,6 @@
 package net.ssehub.sparkyservice.api.auth;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.servlet.FilterChain;
@@ -22,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
@@ -94,11 +91,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @return AuthenticationDTO currently without {@link TokenDto#expiration}
      */
     private @Nonnull AuthenticationInfoDto buildAuthenticatioInfoFromUser(@Nonnull User user) {
-        List<UserRole> authorityList = Arrays.asList(user.getRole());
         var authDto = new AuthenticationInfoDto();
         authDto.user = user.asDto();
-        authDto.token.token = JwtAuth.createJwtTokenWithRealm(user.getUserName(), authorityList, jwtConf, 
-                user.getRealm());
+        authDto.token.token = JwtAuth.createJwtToken(user, jwtConf);
         return authDto;
     }
 

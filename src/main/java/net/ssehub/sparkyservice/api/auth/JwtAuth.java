@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,7 +26,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
@@ -77,40 +78,20 @@ public class JwtAuth {
     }
 
     /**
-     * Encode given data as JWT token.
+     * Creates a JWT token which is encodes user data like username, roles, realm and sets a custom expiration time.
      * 
-     * @param username - Identifies the user and is available in the token. Users
-     *                 realm will be {@link UserRealm#UNKNOWN}
-     * @param roles    - Permission roles of the user are available in the token
-     * @param jwtConf  - provides all necessary information for encoding
+     * @param user - Provides the data
+     * @param jwtConf - Essential settings like secrets and the used issuer and audience
      * @return plain encoded JWT token as string (without bearer keyword)
      */
-    public static @Nonnull String createJwtToken(String username, List<UserRole> roles, JwtSettings jwtConf) {
-        return createJwtTokenWithRealm(username, roles, jwtConf, UserRealm.UNKNOWN);
-    }
-
-    /**
-     * Encode given data as JWT token.
-     * 
-     * @param username - Identifies the user and is available in the token
-     * @param roles    - Permission roles of the user are available in the token
-     * @param jwtConf  - provides all necessary information for encoding
-     * @param realm    - the users realm which is necessary for identifying a user
-     *                 when using the JWT token
-     * @return plain encoded JWT token as string (without bearer keyword)
-     */
-    public static @Nonnull String createJwtTokenWithRealm(@Nullable String username, @Nullable List<UserRole> roles,
-            JwtSettings jwtConf, UserRealm realm) {
-//        var roles = authorities
-//            .stream()
-//            .map(GrantedAuthority::getAuthority)
-//            .collect(Collectors.toList());
+    public static @Nonnull String createJwtToken(User user, JwtSettings jwtConf) {
+        List<UserRole> roles = Stream.of(user.getRole()).map(e -> e).collect(Collectors.toList());
         var signingKey = jwtConf.getSecret().getBytes();
         var token = Jwts.builder().signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
                 .setHeaderParam("typ", jwtConf.getType()).setIssuer(jwtConf.getIssuer())
-                .setAudience(jwtConf.getAudience()).setSubject(username)
+                .setAudience(jwtConf.getAudience()).setSubject(user.getUserName())
                 .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS)).claim("rol", roles)
-                .claim("realm", realm).compact();
+                .claim("realm", user.getRealm()).compact();
         return notNull(token);
     }
 
