@@ -11,4 +11,5 @@ src/main/resources/application-release.properties
 .classpath
 .settings
 .project
+.metadata
 /app.log
