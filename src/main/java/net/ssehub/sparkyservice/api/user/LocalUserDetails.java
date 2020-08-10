@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -46,7 +47,7 @@ public class LocalUserDetails extends User implements UserDetails {
     /**
      * Creates a new user in the {@link LocalUserDetails#DEFAULT_REALM} and encodes the password. <br>
      * This type should only be used for users which aren't use any other authentication methods (realms) than 
-     * a {@link UserDetailsService}.
+     * a {@link UserDetailsService}. Default expiration time are 6 month.
      * 
      * @param userName used name of the user (unique per realm!)
      * @param rawPassword not encrypted password which will be encrypted with bcrypt
@@ -56,6 +57,7 @@ public class LocalUserDetails extends User implements UserDetails {
     public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword, UserRole role) {
         var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, true, role);
         newUser.encodeAndSetPassword(rawPassword);
+        newUser.expirationTime = LocalDate.now().plusMonths(6);
         return newUser;
     }
 
@@ -73,6 +75,9 @@ public class LocalUserDetails extends User implements UserDetails {
             var role = Optional.ofNullable(newUser.role).orElse(UserRole.DEFAULT);
             var storedUser =  LocalUserDetails.newLocalUser(username, password, notNull(role));
             final var settings = newUser.personalSettings;
+            if (newUser.expirationTime != null) {
+                storedUser.expirationTime = newUser.expirationTime;
+            }
             if (settings != null) {                
                 PersonalSettings.applyPersonalSettingsDto(storedUser, settings);
             }
@@ -177,9 +182,17 @@ public class LocalUserDetails extends User implements UserDetails {
         return userName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isAccountNonExpired() {
-        return isActive;
+        final LocalDate expirationTime2 = expirationTime;
+        if (expirationTime2 != null) {
+            return expirationTime2.isAfter(LocalDate.now());
+        } else {
+            return true;
+        }
     }
 
     @Override

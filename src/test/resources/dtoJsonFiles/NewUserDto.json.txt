@@ -6,5 +6,6 @@
     "wantsAi": true
   },
   "role": "DEFAULT",
-  "username": "string"
+  "username": "string",
+  "expirationTime": "2020-08-10"
 }

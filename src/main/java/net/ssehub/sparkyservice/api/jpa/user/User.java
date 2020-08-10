@@ -2,6 +2,9 @@ package net.ssehub.sparkyservice.api.jpa.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,7 +21,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
@@ -92,6 +94,7 @@ public class User {
                 defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
             }
             if (adminMode) {
+                databaseUser.setExpirationTime(userDto.expirationDate);
                 databaseUser.setFullName(userDto.fullName);
                 databaseUser.setRole(userDto.role);
             }
@@ -161,6 +164,7 @@ public class User {
         dto.settings = user.getProfileConfiguration().asDto();
         dto.username = user.getUserName();
         dto.fullName = user.fullName;
+        dto.expirationDate = user.expirationTime;
         return dto;
     }
 
@@ -200,6 +204,10 @@ public class User {
             CascadeType.ALL }, targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
     protected PersonalSettings profileConfiguration;
 
+    @Nullable
+    @Column
+    protected LocalDate expirationTime; //only used in LOCAL realm
+
     /**
      * Default constructor used by hibernate.
      */
@@ -228,6 +236,7 @@ public class User {
         this.passwordEntity = user.passwordEntity;
         this.fullName = user.fullName;
         this.profileConfiguration = user.profileConfiguration;
+        this.expirationTime = user.expirationTime;
     }
 
     public int getId() {
@@ -278,10 +287,23 @@ public class User {
         this.userName = userName;
     }
 
+    /**
+     * Indicator if the user is currently enabled. When set to false, the is user is not able to authenticate 
+     * himself anymore.
+     * 
+     * @return - Boolean if the user is enabled or not. 
+     */
     public boolean isActive() {
         return isActive;
     }
 
+    
+    /**
+     * Indicator if the user is currently enabled. When set to false, the is user is not able to authenticate 
+     * himself anymore.
+     * 
+     * @param isActive
+     */
     public void setActive(boolean isActive) {
         this.isActive = isActive;
     }
@@ -324,6 +346,14 @@ public class User {
             return conf;
         }
     }
+    
+    public Optional<LocalDate> getExpirationTime() {
+        return Optional.ofNullable(expirationTime);
+    }
+
+    public void setExpirationTime(@Nullable LocalDate expirationTime) {
+        this.expirationTime = expirationTime;
+    }
 
     public void setProfileConfiguration(@Nullable PersonalSettings profileConfiguration) {
         this.profileConfiguration = profileConfiguration;
@@ -339,19 +369,6 @@ public class User {
 
     public UserRole getRole() {
         return role;
-    }
-
-    /**
-     * Checks if the user is already stored in the database. When this is false and
-     * a store operation is invoked, the user will be created. Otherwise his data
-     * would be changed. This method does not perform any database action. To be
-     * sure that this user is or is not in the database consider using
-     * {@link UserServiceImpl#isUserInDatabase(User)}.
-     * 
-     * @return true if the user is already stored in the database, false otherwise.
-     */
-    public boolean isStored() {
-        return this.id != 0;
     }
 
     public UserDto asDto() {

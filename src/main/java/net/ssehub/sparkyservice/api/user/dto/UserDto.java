@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.user.dto;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -40,4 +41,6 @@ public class UserDto implements Serializable {
     public SettingsDto settings;
 
     public UserRole role;
+
+    public LocalDate expirationDate;
 }

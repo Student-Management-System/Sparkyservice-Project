@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.validation.Validation;
 
@@ -97,5 +100,15 @@ public class NewUserDtoTests {
     @Test
     public void transformNullUserValuesTest() {
         var userDto = new NewUserDto();
-        assertThrows(IllegalArgumentException.class, () -> LocalUserDetails.createNewUserFromDto(userDto));}
+        assertThrows(IllegalArgumentException.class, () -> LocalUserDetails.createNewUserFromDto(userDto));
+    }
+
+    @Test
+    public void defaultExpirationTest() {
+        var userDto = createExampleDto();
+        var localUser = LocalUserDetails.createNewUserFromDto(userDto);
+        Optional<LocalDate> expirationTime = localUser.getExpirationTime();
+        boolean sixMonthValidity = expirationTime.get().isEqual(LocalDate.now().plusMonths(6));
+        assertTrue(sixMonthValidity);
+    }
 }

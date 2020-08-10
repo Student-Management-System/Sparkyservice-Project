@@ -3,7 +3,10 @@ package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -39,5 +42,18 @@ class LocalUserDetailsTests {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
         assertEquals(LocalUserDetails.DEFAULT_REALM, userDetails.getRealm(), 
                 "The user is user details are not stored in the default realm.");
+    }
+
+    @Test
+    public void userExpirationDefaultTest() {
+        var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
+        assertTrue(userDetails.isAccountNonExpired(), "User shouldn't be expired by default");
+    }
+
+    @Test
+    public void userExpirationFunctionTest() {
+        var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
+        userDetails.setExpirationTime(LocalDate.now().minusDays(1)); // is expired
+        assertFalse(userDetails.isAccountNonExpired(), "User should be expired!");
     }
 }

@@ -1,6 +1,8 @@
 package net.ssehub.sparkyservice.api.user.dto;
 
 
+import java.time.LocalDate;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -8,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
+//CHECKSTYLE:OFF
 public class NewUserDto {
     @NotBlank
     public String username;
@@ -24,6 +27,8 @@ public class NewUserDto {
      */
     @Valid
     public SettingsDto personalSettings;
+
+    public LocalDate expirationTime;
 
     /**
      * Getter for Spring validation framework

@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,8 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +48,7 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:test.properties")
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase {
 
     @Autowired
@@ -197,7 +202,28 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
 
     @Autowired
     public IUserService userService; 
-    
+
+    /**
+     * Tests if an expired user is *not* able to authenticate.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void authenticationExpireTest() throws Exception {
+        var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
+        user.setExpirationTime(LocalDate.now().minusDays(1)); // user is expired
+        userService.storeUser(user);
+        assumeTrue(userService.isUserInDatabase(user));
+        
+        assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
+        this.mvc
+                .perform(
+                     post(ConfigurationValues.AUTH_LOGIN_URL)
+                        .param("password", "password")
+                        .param("username", "testuser")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
     /**
      * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 
      * the database.
