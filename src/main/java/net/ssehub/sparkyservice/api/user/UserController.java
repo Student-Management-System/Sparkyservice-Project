@@ -101,7 +101,7 @@ public class UserController {
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
         var authenticatedUser = notNull(Optional.ofNullable(transformer.extendFromAuthentication(auth)).orElseThrow(
-                () -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
+            () -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
         boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
                 && authenticatedUser.getRealm().equals(userDto.realm);
         var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
@@ -177,6 +177,11 @@ public class UserController {
         userService.deleteUser(username, realm);
     }
 
+    /**
+     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * @param 
+     * @return ErrorDTO with all collected information about the error
+     */
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessDeniedException.class)
     public ErrorDto handleAccessViolationException(AccessDeniedException ex) {
@@ -184,6 +189,11 @@ public class UserController {
                 .build();
     }
 
+    /**
+     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * @param 
+     * @return ErrorDTO with all collected information about the error
+     */
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = UserNotFoundException.class)
     public ErrorDto handleUserNotFoundException(Exception e) {
@@ -191,12 +201,22 @@ public class UserController {
                 HttpStatus.NOT_FOUND, servletContext.getContextPath()).build();
     }
 
+    /**
+     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * @param 
+     * @return ErrorDTO with all collected information about the error
+     */
     @ResponseStatus(code = HttpStatus.CONFLICT)
     @ExceptionHandler(UserEditException.class)
     public ErrorDto handleUserEditException(UserEditException ex) {
         return new ErrorDtoBuilder().newError(null, HttpStatus.CONFLICT, servletContext.getContextPath()).build();
     }
 
+    /**
+     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * @param 
+     * @return ErrorDTO with all collected information about the error
+     */
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({Exception.class})
     public ErrorDto handleException(Exception ex) {

@@ -2,6 +2,12 @@ package net.ssehub.sparkyservice.api.user.dto;
 
 import javax.validation.constraints.NotNull;
 
+//checkstyle: stop visibility modifier check
+/**
+ * DTO for settings of one user.
+ * 
+ * @author marcel
+ */
 public class SettingsDto {
     
     @NotNull // TODO Marcel: Test if necessary

@@ -35,8 +35,7 @@ import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 @ParametersAreNonnullByDefault
 public class LocalUserDetails extends User implements UserDetails {
 
-    @Nonnull
-    public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
+    public @Nonnull static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
     public static final String DEFAULT_ALGO = "BCRYPT";
     private static final long serialVersionUID = 1L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
@@ -44,51 +43,8 @@ public class LocalUserDetails extends User implements UserDetails {
     @Nonnull
     private final UserRealm realm = UserRealm.LOCAL;
 
-    /**
-     * Creates a new user in the {@link LocalUserDetails#DEFAULT_REALM} and encodes the password. <br>
-     * This type should only be used for users which aren't use any other authentication methods (realms) than 
-     * a {@link UserDetailsService}. Default expiration time are 6 month.
-     * 
-     * @param userName used name of the user (unique per realm!)
-     * @param rawPassword not encrypted password which will be encrypted with bcrypt
-     * @param isActive decide if the user can log in or not
-     * @return new instance of StoredUserDetails. 
-     */
-    public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword, UserRole role) {
-        var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, true, role);
-        newUser.encodeAndSetPassword(rawPassword);
-        newUser.expirationTime = LocalDate.now().plusMonths(6);
-        return newUser;
-    }
-
-
-    /**
-     * Performs a transformation from DTO object to a local user. 
-     * 
-     * @param newUser valid DTO (username and password required)
-     * @return user with the values of the DTO
-     */
-    public static LocalUserDetails createNewUserFromDto(NewUserDto newUser) {
-        String username = newUser.username;
-        String password = newUser.password;
-        if (username != null && password != null) {
-            var role = Optional.ofNullable(newUser.role).orElse(UserRole.DEFAULT);
-            var storedUser =  LocalUserDetails.newLocalUser(username, password, notNull(role));
-            final var settings = newUser.personalSettings;
-            if (newUser.expirationTime != null) {
-                storedUser.expirationTime = newUser.expirationTime;
-            }
-            if (settings != null) {                
-                PersonalSettings.applyPersonalSettingsDto(storedUser, settings);
-            }
-            return storedUser;
-        } else {
-            throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
-        }
-    }
-
     @Nullable
-    private PasswordEncoder encoder;
+    private  PasswordEncoder encoder;
 
     /**
      * Default constructor only used for testing purposes.
@@ -97,19 +53,72 @@ public class LocalUserDetails extends User implements UserDetails {
         super("", new Password(""), UserRealm.UNKNOWN, false, UserRole.DEFAULT);
     }
 
+    /**
+     * Creates a LocalUserDetails with fields from an existing one. (Clones a user).
+     * 
+     * @param userData - User which is cloned
+     */
     public LocalUserDetails(User userData) {
         super(userData);
         log.debug("New LocalUserDetails created.");
     }
 
+    /**
+     * Constructor whith necessary fields. 
+     * 
+     * @param userName
+     * @param passwordEntity
+     * @param realm
+     * @param isActive
+     * @param role
+     */
     private LocalUserDetails(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive, 
             UserRole role) {
         super(userName, passwordEntity, realm, isActive, role);
         log.debug("New LocalUserDetails created.");
     }
-
-    public @Nonnull User getTransactionObject() {
-        return new User(this.userName, this.passwordEntity, this.realm, this.isActive, this.role);
+    
+    /**
+     * Creates a new user in the {@link LocalUserDetails#DEFAULT_REALM} and encodes the password. <br>
+     * This type should only be used for users which aren't use any other authentication methods (realms) than 
+     * a {@link UserDetailsService}. Default expiration time are 6 month.
+     * 
+     * @param userName - Used name of the user (unique per realm!)
+     * @param rawPassword - Plain text password (will be hashed)
+     * @param role - The users permission role
+     * @return new instance of StoredUserDetails. 
+     */
+    public static @Nonnull LocalUserDetails newLocalUser(String userName, String rawPassword, UserRole role) {
+        var newUser = new LocalUserDetails(userName, null, DEFAULT_REALM, true, role);
+        newUser.encodeAndSetPassword(rawPassword);
+        newUser.expirationTime = LocalDate.now().plusMonths(6);
+        return newUser;
+    }
+    
+    
+    /**
+     * Performs a transformation from DTO object to a local user. 
+     * 
+     * @param newUser - Valid DTO (username and password required)
+     * @return User with the values of the DTO
+     */
+    public static LocalUserDetails createNewUserFromDto(NewUserDto newUser) {
+        String username = newUser.username;
+        String password = newUser.password;
+        if (username != null && password != null) {
+            UserRole role = Optional.ofNullable(newUser.role).orElse(UserRole.DEFAULT);
+            LocalUserDetails newLocalUser =  LocalUserDetails.newLocalUser(username, password, notNull(role));
+            final var settings = newUser.personalSettings;
+            if (newUser.expirationTime != null) {
+                newLocalUser.expirationTime = newUser.expirationTime;
+            }
+            if (settings != null) {                
+                PersonalSettings.applyPersonalSettingsDto(newLocalUser, settings);
+            }
+            return newLocalUser;
+        } else {
+            throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
+        }
     }
 
     /**
@@ -131,14 +140,22 @@ public class LocalUserDetails extends User implements UserDetails {
         return getPassword();
     }
 
+    /**
+     * Encodes a string to hashed password using the default algorithm. 
+     * 
+     * @param rawPassword - Plain password as string
+     * @return Encoded password
+     */
     private @Nonnull String encode(String rawPassword) {
         final String encodedPass = getEncoder().encode(rawPassword);
-        if (encodedPass == null) {
-            throw new RuntimeException("BCryptPasswordEncoder returned null as return value - this should not happen");
-        } 
-        return encodedPass;
+        final String nonNullPass = Optional.ofNullable(encodedPass).orElseThrow(
+            () -> new RuntimeException("BCryptPasswordEncoder returned null - this should not happen"));
+        return notNull(nonNullPass);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.asList(getRole());
@@ -146,21 +163,21 @@ public class LocalUserDetails extends User implements UserDetails {
 
     /**
      * Returns the hashed password of the user. If the user is not in the default realm, it will return an empty string
-     * return the stored password - never be null but may be empty if the user isn't in the default realm.
+     * 
+     * @return The stored password - never be null but may be empty if the user isn't in the default realm.
      */
     public @Nonnull String getPassword() {
-        final var passwordEntityLocal = passwordEntity;
-        if (passwordEntityLocal != null) {
-            return passwordEntityLocal.getPasswordString();
-        } else {
+        Password passwordEntityLocal = passwordEntity;
+        if (passwordEntityLocal == null) {
             if (realm == UserRealm.LOCAL) {
                 throw new RuntimeException("User has no password even though he is in the local realm. This "
                         + "shouldn't be happen.");
             } else {
                 log.warn("User is in local realm but doesn't have a password.");
-                return "";
+                passwordEntityLocal = new Password("", "PLAIN");
             }
         }
+        return passwordEntityLocal.getPasswordString();
     }
 
     /**
@@ -169,14 +186,16 @@ public class LocalUserDetails extends User implements UserDetails {
      */
     public @Nonnull PasswordEncoder getEncoder() {
         PasswordEncoder encoder2 = encoder;
-        if (encoder2 != null) {
-            return encoder2;
-        } else {
-            encoder = new BCryptPasswordEncoder();
-            return getEncoder();
+        if (encoder2 == null) {
+            encoder2 = new BCryptPasswordEncoder();
+            encoder = encoder2;
         }
+        return encoder2;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getUsername() {
         return userName;
@@ -187,24 +206,27 @@ public class LocalUserDetails extends User implements UserDetails {
      */
     @Override
     public boolean isAccountNonExpired() {
-        final LocalDate expirationTime2 = expirationTime;
-        if (expirationTime2 != null) {
-            return expirationTime2.isAfter(LocalDate.now());
-        } else {
-            return true;
-        }
+        return getExpirationTime().map(date -> date.isAfter(LocalDate.now())).orElse(true);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */    @Override
     public boolean isAccountNonLocked() {
         return isActive;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isCredentialsNonExpired() {
         return isActive;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEnabled() {
         return isActive;
