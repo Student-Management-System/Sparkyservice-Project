@@ -46,10 +46,16 @@ import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.UserController;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
+/**
+ * Test class for user edit via @link {@link UserController} with real JSON values.
+ * 
+ * @author marcel
+ */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes= {TestUserConfiguration.class})
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = {TestUserConfiguration.class})
 @TestPropertySource("classpath:test.properties")
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
+//checkstyle: stop exception type check
 public class UserControllerEditIT extends AbstractContainerTestDatabase {
 
     @Autowired
@@ -60,6 +66,9 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
 
     private MockMvc mvc;
 
+    /**
+     * Setup is run before each tests and initialize the web context for mocking.
+     */
     @BeforeEach
     public void setup() {
         mvc = MockMvcBuilders
@@ -93,7 +102,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest 
-    @WithUserDetails(value = "testuser", userDetailsServiceBeanName="defaultUserService")
+    @WithUserDetails(value = "testuser", userDetailsServiceBeanName = "defaultUserService")
     public void editUserSelfSuccessTest() throws Exception {
         /*
          * A user can only edit the same username + realm which match which the values of the 
@@ -119,7 +128,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
                * handler) and mark this test as failed. 
                * TODO @MARCEL fix it
                */
-    @WithUserDetails(value = "testuser123", userDetailsServiceBeanName="defaultUserService") // must NOT match with values from EditUserDto.json.txt
+    // Mocked user must NOT match with values from EditUserDto.json.txt
+    @WithUserDetails(value = "testuser123", userDetailsServiceBeanName = "defaultUserService")
     public void editOtherUsersNegativeTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         this.mvc
@@ -136,7 +146,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithUserDetails(value = "testadmin", userDetailsServiceBeanName="adminUserService")
+    @WithUserDetails(value = "testadmin", userDetailsServiceBeanName = "adminUserService")
     /*
      * Mocked username should not match with the one of the JSON file in order to test the "admin functionality".
      */
@@ -161,7 +171,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void editOtherInMemoryAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         // Should match with the data of the given json txt content:
@@ -185,7 +195,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void editNotFoundUser() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         this.mvc
@@ -203,7 +213,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void editLdapUserRolesTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoLdap.json.txt"));
         // Should match with the data of the given json txt content:
@@ -220,13 +230,18 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
             .andExpect(status().isOk());
         var editedUser = userService.findUserByNameAndRealm("testuserLdap", UserRealm.LDAP);
         assertAll(
-                () -> assertEquals(UserRole.ADMIN, editedUser.getRole()),
-                () -> assertFalse(editedUser.getProfileConfiguration().isEmail_receive())
-            );
+            () -> assertEquals(UserRole.ADMIN, editedUser.getRole()),
+            () -> assertFalse(editedUser.getProfileConfiguration().isEmail_receive())
+        );
     }
 
+    /**
+     * Tests with a mocked admin user if it can change his own data. 
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
-    @WithUserDetails(value = "testuser", userDetailsServiceBeanName="adminUserService")
+    @WithUserDetails(value = "testuser", userDetailsServiceBeanName = "adminUserService")
     public void adminEditSelfTest() throws Exception {
         /*
          * Username of the mocked userdetails should match with the name of the json content file.
@@ -248,8 +263,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         var returnedDto = new ObjectMapper().readValue(dtoArrayString, UserDto.class);
         var editedUser = userService.findUserById(userId);
         assertAll(
-                () -> assertEquals("test@test", editedUser.getProfileConfiguration().getEmail_address()),
-                () -> assertDtoEquals(editedUser.asDto(), returnedDto)
-            );
+            () -> assertEquals("test@test", editedUser.getProfileConfiguration().getEmail_address()),
+            () -> assertDtoEquals(editedUser.asDto(), returnedDto)
+        );
     }
 }

@@ -45,11 +45,17 @@ import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.UserController;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
+/**
+ * Test for {@link UserController} - permissions and add functions.
+ * 
+ * @author marcel
+ */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes= {TestUserConfiguration.class})
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = {TestUserConfiguration.class})
 @TestPropertySource("classpath:test.properties")
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 //@ContextConfiguration(classes= {UnitTestDataConfiguration.class, SecurityConfig.class})
+//checkstyle: stop exception type check
 public class UserControllerRestIT extends AbstractContainerTestDatabase {
 
     @Autowired
@@ -60,6 +66,9 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
 
     private MockMvc mvc;
 
+    /**
+     * Setup is run before each tests and initialize the web context for mocking.
+     */
     @BeforeEach
     public void setup() {
         mvc = MockMvcBuilders
@@ -74,7 +83,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void securityAddUserAdminAccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         this.mvc
@@ -93,7 +102,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void addUserAdminSuccessTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
         MvcResult result = this.mvc
@@ -105,12 +114,18 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
         
         assertAll(
-                () -> assertEquals(201, result.getResponse().getStatus(), "Wrong response status: "
-                        + "Expected CREATED as response for adding a new user"),
-                () -> assertNotNull(userService.findUserById(1), "Status was OK, but no user was saved to database")
-            );
+            () -> assertEquals(201, result.getResponse().getStatus(), "Wrong response status: "
+                    + "Expected CREATED as response for adding a new user"),
+            () -> assertNotNull(userService.findUserById(1), "Status was OK, but no user was saved to database")
+        );
     }
 
+    /**
+     * Security test for {@link UserController#addLocalUser(net.ssehub.sparkyservice.api.user.dto.NewUserDto)}. 
+     * Tests if the access is denied for non-admin users which tries to add a new local user. 
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
     @WithMockUser(username = "nonAdminUser", roles = "DEFAULT")
     public void securityAddUserNonAdminTest() throws Exception {
@@ -129,7 +144,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "DEFAULT")
+    @WithMockUser(username = "admin", roles = "DEFAULT")
     public void securityNonAdminDeleteTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         userService.storeUser(user);
@@ -139,7 +154,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.TEXT_PLAIN))
-        .andExpect(status().isForbidden()); 
+            .andExpect(status().isForbidden()); 
     }
 
     /**
@@ -155,7 +170,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.TEXT_PLAIN))
-        .andExpect(status().isForbidden()); 
+            .andExpect(status().isForbidden()); 
     }
 
     /**
@@ -166,7 +181,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionAdminDeleteTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         userService.storeUser(user);
@@ -176,12 +191,20 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNoContent());
+            .andExpect(status().isNoContent());
         assertFalse(userService.isUserInDatabase(user));
     }
 
+    /**
+     * Function test for 
+     * {@link UserController#getSingleUser(UserRealm, String, org.springframework.security.core.Authentication)}.
+     * Tries to get different single user via User controller as authenticated admin 
+     * (this tests the authorization feature too).
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetSingleUserTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         userService.storeUser(user);
@@ -211,7 +234,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @WithMockUser(username="admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetAllTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         userService.storeUser(user);

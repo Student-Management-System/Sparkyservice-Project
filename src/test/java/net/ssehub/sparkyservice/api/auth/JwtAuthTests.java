@@ -27,11 +27,16 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
+/**
+ * Tests for {@link JwtAuth} class. 
+ * 
+ * @author marcel
+ */
 public class JwtAuthTests {
-    private final JwtSettings confValues = new JwtSettings();
-
     private static final String USERNAME = "TESTUSER";
-    private static final @Nonnull UserRole authority = UserRole.ADMIN;
+    private static final @Nonnull UserRole AUTHORITY = UserRole.ADMIN;
+
+    private final JwtSettings confValues = new JwtSettings();
 
     @BeforeEach
     public void setUpConfValues() {
@@ -45,7 +50,7 @@ public class JwtAuthTests {
 
     @Test
     public void tokenUserDetailsTest() {
-        User user = LocalUserDetails.newLocalUser(USERNAME, "", authority);
+        User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
         UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
@@ -69,16 +74,17 @@ public class JwtAuthTests {
         var authToken = notNull(authTokenNull);
         var tokenAuthy = (GrantedAuthority) authToken.getAuthorities().toArray()[0];
         assertAll(
-                () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
-                () -> assertEquals(USERNAME, ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
-                () -> assertEquals(LocalUserDetails.DEFAULT_REALM, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm()),
-                () -> assertEquals(UserRole.FullName.ADMIN, tokenAuthy.getAuthority())
-            );
+            () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
+            () -> assertEquals(USERNAME, ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
+            () -> assertEquals(LocalUserDetails.DEFAULT_REALM, 
+                    ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm()),
+            () -> assertEquals(UserRole.FullName.ADMIN, tokenAuthy.getAuthority())
+        );
     }
 
     @Test
     public void tokenPrincipalTest() {
-        User user = LocalUserDetails.newLocalUser(USERNAME, "", authority);
+        User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
         UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
@@ -86,15 +92,15 @@ public class JwtAuthTests {
         var authToken = notNull(authTokenNull);
 
         assertAll(
-                () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
-                () -> assertEquals(USERNAME, ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
-                () -> assertEquals(UserRealm.UNKNOWN, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm())
-            );
+            () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
+            () -> assertEquals(USERNAME, ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
+            () -> assertEquals(UserRealm.UNKNOWN, ((SparkysAuthPrincipal) authToken.getPrincipal()).getRealm())
+        );
     }
 
     @Test
     public void tokenRoleTest() {
-        User user = LocalUserDetails.newLocalUser(USERNAME, "", authority);
+        User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
         UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());

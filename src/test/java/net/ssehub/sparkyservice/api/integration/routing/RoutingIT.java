@@ -28,10 +28,12 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
  * 
  * @author Marcel
  */
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"classpath:test-routing.properties"})
 @AutoConfigureMockMvc
+//checkstyle: stop exception type check
 public class RoutingIT {
 
     private static final String FREE_ROUTE = "/testroutefree";
@@ -87,7 +89,7 @@ public class RoutingIT {
                 get(PROTECTED_ROUTE)
                    .header(HttpHeaders.PROXY_AUTHORIZATION, fullTokenHeader)
                    .accept(MediaType.ALL))
-           .andExpect(status().is2xxSuccessful());
+            .andExpect(status().is2xxSuccessful());
     }
 
     /**
@@ -105,7 +107,7 @@ public class RoutingIT {
                 get(PROTECTED_ROUTE)
                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
-           .andExpect(status().isForbidden());
+            .andExpect(status().isForbidden());
     }
 
     /**
@@ -126,7 +128,7 @@ public class RoutingIT {
                 get(PROTECTED_LIST_ROUTE)
                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
-           .andExpect(status().is2xxSuccessful());
+            .andExpect(status().is2xxSuccessful());
         
         jwtToken = JwtAuth.createJwtToken(user2, jwtConf);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
@@ -135,7 +137,7 @@ public class RoutingIT {
                 get(PROTECTED_LIST_ROUTE)
                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
-           .andExpect(status().is2xxSuccessful());
+            .andExpect(status().is2xxSuccessful());
 
         jwtToken = JwtAuth.createJwtToken(user3, jwtConf);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
@@ -144,7 +146,7 @@ public class RoutingIT {
                 get(PROTECTED_LIST_ROUTE)
                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
-           .andExpect(status().is4xxClientError());
+            .andExpect(status().is4xxClientError());
     }
 
 }

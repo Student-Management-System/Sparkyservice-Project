@@ -45,32 +45,41 @@ import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
+/**
+ * Tests the whole authentication and authorization (with JWT tokens)
+ * mechanisms with all kind of users.
+ * 
+ * @author marcel
+ */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:test.properties")
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
+//checkstyle: stop exception type check
 public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase {
+
+    // checkstyle: stop visibility modifier check
+    @Autowired
+    public IUserService userService; 
+    // checkstyle: resume visibility modifier check
 
     @Autowired
     private WebApplicationContext context;
-
     @Value("${recovery.enabled}")
     private String inMemoryEnabled;
-
     @Value("${recovery.password}")
     private String inMemoryPassword;
-
     @Value("${recovery.user}")
     private String inMemoryUser;
-
     @Value("${jwt.header}")
     private String jwtTokenHeader;
-
     @Value("${jwt.prefix}")
     private String jwtTokenPrefix;
-
     private MockMvc mvc;
 
+    /**
+     * Setup is run before each tests and initialize the web context for mocking.
+     */
     @BeforeEach
     public void setup() {
         mvc = MockMvcBuilders
@@ -96,10 +105,10 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 .andReturn();
         int resultStatus = result.getResponse().getStatus();
         assertAll(
-                () -> assertNotEquals(404, resultStatus, "Authentication site was not found"),
-                () -> assertNotEquals(403, resultStatus, "Security confgiuration is wrong. A guest could not reach "
+            () -> assertNotEquals(404, resultStatus, "Authentication site was not found"),
+            () -> assertNotEquals(403, resultStatus, "Security confgiuration is wrong. A guest could not reach "
                         + "the authentication site")
-            );
+        );
     }
 
     /**
@@ -129,7 +138,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                    .param("password", "sasd")
                    .param("username", "user")
                    .accept(MediaType.TEXT_PLAIN))
-           .andExpect(status().isUnauthorized());
+            .andExpect(status().isUnauthorized());
     }
     
     /**
@@ -187,22 +196,19 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                 + "another problem.");
-        assumeTrue(jwtTokenHeader != null && jwtTokenPrefix != null, "You must set jwt.token.header and jwt.token.prefix in "
-                + "test.properties in oder to run this test.");
+        assumeTrue(jwtTokenHeader != null && jwtTokenPrefix != null, "You must set jwt.token.header and "
+                + "jwt.token.prefix in test.properties in oder to run this test.");
         String partialHeader = result.getResponse().getHeader(jwtTokenHeader);
         assertAll(
-               () -> assertNotNull(partialHeader, "No jwt token was returned during authentication"),
-               () -> assertTrue(partialHeader.startsWith(jwtTokenPrefix), "Tokenheader does not start with the desired "
-                       + "prefix."),
-               () -> assertFalse(partialHeader.endsWith(jwtTokenPrefix), "The token header was found but no content "
-                       + "which could be a JWT token")
-           );
+            () -> assertNotNull(partialHeader, "No jwt token was returned during authentication"),
+            () -> assertTrue(partialHeader.startsWith(jwtTokenPrefix), "Tokenheader does not start with the desired "
+                 + "prefix."),
+            () -> assertFalse(partialHeader.endsWith(jwtTokenPrefix), "The token header was found but no content "
+                 + "which could be a JWT token")
+        );
 
     }
-
-    @Autowired
-    public IUserService userService; 
-
+    
     /**
      * Tests if an expired user is *not* able to authenticate.
      * 
@@ -256,7 +262,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-           .andExpect(status().isForbidden());
+            .andExpect(status().isForbidden());
     }
     
     /**
@@ -282,7 +288,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .header(HttpHeaders.AUTHORIZATION, tokenHeader)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-           .andExpect(status().isOk());
+            .andExpect(status().isOk());
     }
 
     /**
@@ -311,9 +317,14 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .header(HttpHeaders.AUTHORIZATION, tokenHeader)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-           .andExpect(status().isOk());
+            .andExpect(status().isOk());
     }
 
+    /**
+     * Tests if an authentication is possible through a configured ldap. 
+     * 
+     * @throws Exception
+     */
     @IntegrationTest
     public void jwtAuthLdapUserTest() throws Exception {
         var result = this.mvc
@@ -331,7 +342,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .header(HttpHeaders.AUTHORIZATION, tokenHeader)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-           .andExpect(status().isOk());
+            .andExpect(status().isOk());
     }
 
     /**
@@ -382,6 +393,6 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 get(ControllerPath.AUTHENTICATION_VERIFY)
                    .param("jwtToken", tokenHeader)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-           .andExpect(status().isOk());
+            .andExpect(status().isOk());
     }
 }
