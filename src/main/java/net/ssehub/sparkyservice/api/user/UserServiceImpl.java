@@ -5,6 +5,9 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -19,9 +22,11 @@ import org.springframework.stereotype.Service;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.util.ListUtil;
 
 /**
- *
+ * Business logic for user database actions. 
+ * 
  * @author Marcel
  */
 @Service
@@ -34,6 +39,44 @@ public class UserServiceImpl implements IUserService {
     private UserTransformer transformer;
 
     private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    /**
+     * Checks if a user is present with the provided search actions with error handling. 
+     * 
+     * @param user - The user to search for
+     * @param userSearchAction - Methods to use for search
+     * @return <code>true</code> When the user was found by any provided action
+     */
+    @SafeVarargs
+    public static boolean checkForUser(final User user, final Function<User, User>... userSearchAction) {
+        List<Function<User, User>> actionList = Stream.of(userSearchAction).map(Function.identity())
+                .collect(Collectors.toList());
+        return actionList.stream().dropWhile(searchAction -> {
+            boolean found;
+            try {
+                found = Optional.ofNullable(user).map(searchAction).orElse(null) != null;
+            } catch (UserNotFoundException e) {
+                found = false;
+            }
+            return !found; //if not found, drop action and try next one
+        }).count() > 0;
+    }
+
+    /**
+     * Assigns the right type to the given user. 
+     * 
+     * @param user - User which 
+     * @return User with same values but the concrete implementation may has changed
+     */
+    public @Nonnull static User transformToLocalUser(@Nonnull User user) {
+        User returnUser;
+        if (user.getRealm().equals(LocalUserDetails.DEFAULT_REALM)) {
+            returnUser = new LocalUserDetails(user);
+        } else {
+            returnUser = user;
+        }
+        return returnUser;
+    }
 
     /**
      * {@inheritDoc}.
@@ -56,20 +99,13 @@ public class UserServiceImpl implements IUserService {
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull List<User> findUsersByUsername(@Nullable String username) throws UserNotFoundException {
+    public @Nonnull List<User> findUsersByUsername(@Nullable String username) {
         Optional<List<User>> usersByName = repository.findByuserName(username);
-        usersByName.orElseThrow(() -> new UserNotFoundException("No user with this name was found in database"));
-        usersByName.get().forEach(user -> new LocalUserDetails(notNull(user)));
-        var list = usersByName.get();
-        List<User> userList = new ArrayList<User>();
-        for (User transformUser : list) {
-            if (transformUser.getRealm().equals(LocalUserDetails.DEFAULT_REALM)) {
-                userList.add(new LocalUserDetails(transformUser));
-            } else {
-                userList.add(transformUser);
-            }
-        }
-        return userList;
+        List<User> userList = usersByName.orElseGet(ArrayList::new)
+            .stream()
+            .map(UserServiceImpl::transformToLocalUser)
+            .collect(Collectors.toList());
+        return notNull(userList);
     }
 
     /**
@@ -78,14 +114,11 @@ public class UserServiceImpl implements IUserService {
     @Override
     public @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
             throws UserNotFoundException {
-        Optional<User> user = repository.findByuserNameAndRealm(username, realm);
-        user.orElseThrow(() -> new UserNotFoundException("no user with this name in the given realm"));
-        if (user.get().getRealm() == LocalUserDetails.DEFAULT_REALM) {
-            return notNull(user.map(LocalUserDetails::new).get());
-        } else {
-            return notNull(user.get());
-        }
-    }
+        Optional<User> optUser = repository.findByuserNameAndRealm(username, realm);
+        User user =  optUser.map(UserServiceImpl::transformToLocalUser).orElseThrow(
+            () -> new UserNotFoundException("no user with this name in the given realm"));
+        return notNull(user);
+    } 
 
     /**
      * {@inheritDoc}.
@@ -93,8 +126,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public @Nonnull LocalUserDetails findUserById(int id) throws UserNotFoundException {
         Optional<User> user = repository.findById(id);
-        user.orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
-        return notNull(user.map(LocalUserDetails::new).get());
+        var localUser = user.map(LocalUserDetails::new)
+                .orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
+        return notNull(localUser);
     }
 
     /**
@@ -103,12 +137,12 @@ public class UserServiceImpl implements IUserService {
      */
     @Override
     public @Nonnull UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        try {
-            if (username == null) {
-                throw new UsernameNotFoundException("User with name \"null\" not found");
-            } 
-            final var storedUser = findUserByNameAndRealm(username, LocalUserDetails.DEFAULT_REALM);
-            return new LocalUserDetails(storedUser);
+        try {            
+            var userDetails = Optional.ofNullable(username)
+                .map(name -> findUserByNameAndRealm(name, LocalUserDetails.DEFAULT_REALM))
+                .map(LocalUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException("User with name \"null\" not found"));
+            return notNull(userDetails);
         } catch (UserNotFoundException e) {
             throw new UsernameNotFoundException(e.getMessage());
         }
@@ -118,20 +152,10 @@ public class UserServiceImpl implements IUserService {
      * {@inheritDoc}.
      */
     public boolean isUserInDatabase(@Nullable User user) {
-        if (user != null) {
-            try {
-                this.findUserById(user.getId());
-                return true;
-            } catch (UserNotFoundException e) {
-                try {
-                    this.findUserByNameAndRealm(user.getUserName(), user.getRealm());
-                    return true;
-                } catch (UserNotFoundException ex) {
-                    
-                }
-            }
-        }
-        return false;
+        return checkForUser(user, 
+            u -> this.findUserById(u.getId()), 
+            u -> this.findUserByNameAndRealm(u.getUserName(), u.getRealm())
+         );
     }
 
     @Override
@@ -141,26 +165,13 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public @Nonnull List<User> findAllUsers() {
-        var list = new ArrayList<User>();
         Iterable<User> optList = repository.findAll();
-        for (User user : optList) {
-            list.add(user);
-        }
-        return list;
+        return ListUtil.toList(optList);
     }
 
     @Override
     public void deleteUser(@Nullable User user) {
-        if (user == null) {
-            log.info("Can't delete null user");
-        } else {
-            if (user.getId() != 0) {
-                repository.deleteById(user.getId());
-            } else {
-                repository.delete(user);
-            }
-        }
-        
+        Optional.ofNullable(user).ifPresentOrElse(repository::delete, () -> log.info("Can't delete null user"));
     }
 
     @Override
@@ -177,14 +188,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     public List<User> findAllUsersInRealm(@Nullable UserRealm realm) {
         Iterable<User> optList = repository.findByRealm(realm);
-        if (optList instanceof List) {
-            return (List<User>) optList;
-        } else {
-            var list = new ArrayList<User>();
-            for (User user : optList) {
-                list.add(user);
-            }
-            return list;
-        }
+        return ListUtil.toList(optList);
     }
 }
