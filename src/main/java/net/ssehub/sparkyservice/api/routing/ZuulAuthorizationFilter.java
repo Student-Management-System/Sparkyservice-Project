@@ -1,29 +1,30 @@
 package net.ssehub.sparkyservice.api.routing;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
 import io.jsonwebtoken.io.IOException;
-
-import com.netflix.zuul.ZuulFilter;
-
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
-import net.ssehub.sparkyservice.api.util.NullHelpers;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 
 /**
  * Authorization filter for configured zuul routes with zero overhead (and no database operations). 
@@ -33,14 +34,16 @@ import org.springframework.http.HttpStatus;
 public class ZuulAuthorizationFilter extends ZuulFilter {
 
     public static final String PROXY_AUTH_HEADER = "Proxy-Authorization";
+    public static final String NO_ACL = "none";
     private static Logger log = LoggerFactory.getLogger(ZuulAuthorizationFilter.class);
-
+    
     @Autowired
     private ZuulRoutes zuulRoutes;
+    
     @Autowired
+    
     private JwtSettings jwtConf;
-
-
+    
     @Override
     public String filterType() {
         return "pre";
@@ -49,6 +52,30 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     @Override
     public int filterOrder() {
         return 999;
+    }
+    /**
+     * Creates a full identifier.
+     * <br>Style: <code>user@REALM</code>
+     * 
+     * @param auth - Typically extracted by an JWT token
+     * @return fullIdentName
+     */
+    private static @Nonnull String getFullIdentNameFromToken(UsernamePasswordAuthenticationToken auth) {
+        String name = auth.getName();
+        var spPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
+        UserRealm realm = spPrincipal.getRealm();
+        return name + "@" + realm.name();
+    }
+
+    /**
+     * Checks if the current username is on the permitted list.
+     * 
+     * @param allowedUsers List of username
+     * @param currentUser
+     * @return true if the current user is configured to pass the zuul path
+     */
+    private static boolean isUsernameAllowed(@Nonnull String[] allowedUsers, @Nonnull String currentUser) {
+        return Arrays.stream(allowedUsers).anyMatch(currentUser::equalsIgnoreCase);
     }
 
     @Override
@@ -71,36 +98,41 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         RequestContext ctx = RequestContext.getCurrentContext();
         HttpServletRequest request = ctx.getRequest();
         log.debug(String.format("%s request to %s", request.getMethod(), request.getRequestURL().toString()));
+        
         String proxyPath = (String) ctx.get("proxy");
-        Map<String, String> routesConfig = zuulRoutes.getRoutes();
-        String[] users = NullHelpers.notNull(routesConfig.get(proxyPath + ".protectedBy").split(","));
-        String header = ctx.getRequest().getHeader(PROXY_AUTH_HEADER);
-        String username = getAuthenticatedUser(header);
-        if (!isUsernameAllowed(users, username)) {
-            if (header == null) {
-                log.info("Denied access to {}", proxyPath);
-                return blockRequest(HttpStatus.UNAUTHORIZED);
-            }
-            log.info("{} is not allowed to access {}", username, proxyPath);
-            return blockRequest(HttpStatus.FORBIDDEN);
+        String[] aclList = zuulRoutes.getRoutes().get(proxyPath + ".protectedBy").split(",");
+        Optional<String> header = Optional.ofNullable(ctx.getRequest().getHeader(PROXY_AUTH_HEADER));
+        
+        /* 
+         * Will throw ArrayOutOfBounds when administrator didn't configure any ACL. If not wished, change it here
+         * when the config is set to "none" everyone is  allowed to access => return true
+         */
+        if (!aclList[0].equalsIgnoreCase(NO_ACL)) { // acl enabled
+            header.flatMap(this::getAuthenticatedUser)
+                .map(name -> isUsernameAllowed(aclList, notNull(name)))
+                .filter(allow -> allow.booleanValue())
+                .ifPresentOrElse((e) -> log.debug("Access granted to {}", proxyPath), () ->  {
+                    log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
+                    blockRequest(HttpStatus.FORBIDDEN);
+                });
         }
-        log.debug("Granted access {} to {}", username, proxyPath);
         return null;
     }
 
     /**
-     * Configure the zuul toolchain to not sending a response to the client which is
+     * Configure the zuul tool chain to not sending a response to the client which is
      * equivalent to blocking the request. While doing this, it sets a proper HTTP
      * status.
      * 
-     * @param returnStatus The status to set
-     * @return always null
+     * @param returnStatus - The HTTP status to set in the response
      */
-    private @Nullable Object blockRequest(@Nonnull HttpStatus returnStatus) {
+    private void blockRequest(@Nonnull HttpStatus returnStatus) {
         RequestContext ctx = RequestContext.getCurrentContext();
         String message = null;
-        if (returnStatus == HttpStatus.UNAUTHORIZED) {
+        if (returnStatus == HttpStatus.FORBIDDEN) {
             message = "API key not authorized for this location";
+        } else if (returnStatus == HttpStatus.UNAUTHORIZED) {
+            message = "Not authorized. Please use Proxy-Authorization header for authorization";
         }
         String errorJson = new ErrorDtoBuilder().newError(message, returnStatus, ctx.getRequest().getContextPath())
                 .buildAsJson();
@@ -109,47 +141,31 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         ctx.removeRouteHost();
         ctx.setSendZuulResponse(false);
         ctx.setResponseStatusCode(returnStatus.value());
-        return null;
     }
 
     /**
-     * Extracts a full username which can be used as full identifier. <br>
-     * Example Style: <code>user@REALM</code>
+     * Extracts a full username from a JWT token which can be used as full identifier. <br>
+     * Style: <code>user@REALM</code>
+     * <br><br>
+     * In order to do this, the given authHeader must be a valid token (with Bearer keyword).
      * 
      * @param authHeader Authorization header from the request where the JWT Token
      *                   is stored
-     * @return Username with realm - or "none" when the user is not authenticated
+     * @return Optional Username with. Optional is empty when no valid token was given
      */
-    public @Nonnull String getAuthenticatedUser(@Nullable String authHeader) {
-        if (authHeader != null) {
-            try {
-                var authentication = JwtAuth.readJwtToken(authHeader, jwtConf.getSecret());
-                if (authentication != null) {
-                    String name = authentication.getName();
-                    var spPrincipal = (SparkysAuthPrincipal) authentication.getPrincipal();
-                    UserRealm realm = spPrincipal.getRealm();
-                    return name + "@" + realm.name();
-                }
-            } catch (IOException e) {
-                log.debug("Exception thrown: {}", e.getMessage());
-            }
+    public @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
+        Optional<String> fullUserNameRealm;
+        try {
+            fullUserNameRealm = Optional.ofNullable(authHeader)
+            .flatMap(header -> JwtAuth.readJwtToken(notNull(header), jwtConf.getSecret()))
+            .map(ZuulAuthorizationFilter::getFullIdentNameFromToken);
+        } catch (IOException e) {
+            log.debug("Exception thrown (probably during JWT parsing): {}", e.getMessage());
+            fullUserNameRealm = Optional.empty();
         }
-        return "none";
-    }
-
-    /**
-     * Checks if the current username is on the permitted list.
-     * 
-     * @param allowedUsers List of username or just "none"
-     * @param currentUser
-     * @return true if the current user is configured to pass the zuul path
-     */
-    private boolean isUsernameAllowed(@Nonnull String[] allowedUsers, @Nonnull String currentUser) {
-        boolean userAllowed = Arrays.stream(allowedUsers).anyMatch(currentUser::equalsIgnoreCase);
-        if (!userAllowed) {
-            userAllowed = allowedUsers[0].equalsIgnoreCase("none"); //when the config is set to "none" everyone is 
-                                                                    //allowed to access => return true
+        if (fullUserNameRealm.isEmpty()) {
+            log.debug("No authorization header provided");
         }
-        return userAllowed;
+        return fullUserNameRealm;
     }
 }
