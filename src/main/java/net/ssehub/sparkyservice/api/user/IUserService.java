@@ -83,12 +83,6 @@ public interface IUserService extends UserDetailsService {
     @Nonnull UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
     /**
-     * The default transformer used by this service.
-     * @return 
-     */
-    UserTransformer getDefaultTransformer();
-
-    /**
      * Deletes the given user. 
      * 
      * @param user

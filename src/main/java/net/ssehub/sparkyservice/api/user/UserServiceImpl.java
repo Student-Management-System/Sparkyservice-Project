@@ -35,9 +35,6 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private UserRepository repository;
 
-    @Autowired
-    private UserTransformer transformer;
-
     private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     /**
@@ -156,11 +153,6 @@ public class UserServiceImpl implements IUserService {
             u -> this.findUserById(u.getId()), 
             u -> this.findUserByNameAndRealm(u.getUserName(), u.getRealm())
          );
-    }
-
-    @Override
-    public UserTransformer getDefaultTransformer() {
-        return transformer;
     }
 
     @Override
