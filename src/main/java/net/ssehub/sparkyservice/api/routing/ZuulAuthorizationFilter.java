@@ -4,6 +4,8 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -12,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
@@ -23,6 +26,7 @@ import net.ssehub.sparkyservice.api.auth.JwtAuth;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
+import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
@@ -43,7 +47,12 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     @Autowired
     
     private JwtSettings jwtConf;
-    
+
+    @Autowired
+    @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
+    private Set<String> lockedJwtToken;
+
+
     @Override
     public String filterType() {
         return "pre";
@@ -103,20 +112,58 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         String[] aclList = zuulRoutes.getRoutes().get(proxyPath + ".protectedBy").split(",");
         Optional<String> header = Optional.ofNullable(ctx.getRequest().getHeader(PROXY_AUTH_HEADER));
         
+        /*
+         * Wildcards are possible
+         */
+        Predicate<String> jwtNonLocked = currentJwt -> !lockedJwtToken.stream().anyMatch(currentJwt::contains);
+
         /* 
          * Will throw ArrayOutOfBounds when administrator didn't configure any ACL. If not wished, change it here
          * when the config is set to "none" everyone is  allowed to access => return true
          */
-        if (!aclList[0].equalsIgnoreCase(NO_ACL)) { // acl enabled
-            header.flatMap(this::getAuthenticatedUser)
+        boolean aclDisabled = aclList[0].equalsIgnoreCase(NO_ACL);
+        
+        if (!aclDisabled) {
+            header
+                .filter(jwtNonLocked)
+                .flatMap(this::getAuthenticatedUser)
                 .map(name -> isUsernameAllowed(aclList, notNull(name)))
                 .filter(allow -> allow.booleanValue())
-                .ifPresentOrElse((e) -> log.debug("Access granted to {}", proxyPath), () ->  {
-                    log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
-                    blockRequest(HttpStatus.FORBIDDEN);
-                });
+                .ifPresentOrElse(
+                    e -> log.debug("Access granted to {}", proxyPath), 
+                    () ->  {
+                        log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
+                        blockRequest(HttpStatus.FORBIDDEN);
+                    }
+                );
         }
         return null;
+    }
+
+    /**
+     * Extracts a full username from a JWT token which can be used as full identifier. <br>
+     * Style: <code>user@REALM</code>
+     * <br><br>
+     * In order to do this, the given authHeader must be a valid token (with Bearer keyword).
+     * 
+     * @param authHeader Authorization header from the request where the JWT Token
+     *                   is stored
+     * @return Optional Username with. Optional is empty when no valid token was given
+     */
+    public @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
+        Optional<String> fullUserNameRealm;
+        try {
+            fullUserNameRealm = Optional.ofNullable(authHeader)
+                    .flatMap(header -> JwtAuth.readJwtToken(notNull(header), jwtConf.getSecret()))
+                    .map(ZuulAuthorizationFilter::getFullIdentNameFromToken);
+        } catch (IOException e) {
+            log.debug("Exception thrown (probably during JWT parsing): {}", e.getMessage());
+            fullUserNameRealm = Optional.empty();
+        }
+        if (fullUserNameRealm.isEmpty()) {
+            log.debug("No authorization header provided");
+        }
+        return fullUserNameRealm;
     }
 
     /**
@@ -141,31 +188,5 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         ctx.removeRouteHost();
         ctx.setSendZuulResponse(false);
         ctx.setResponseStatusCode(returnStatus.value());
-    }
-
-    /**
-     * Extracts a full username from a JWT token which can be used as full identifier. <br>
-     * Style: <code>user@REALM</code>
-     * <br><br>
-     * In order to do this, the given authHeader must be a valid token (with Bearer keyword).
-     * 
-     * @param authHeader Authorization header from the request where the JWT Token
-     *                   is stored
-     * @return Optional Username with. Optional is empty when no valid token was given
-     */
-    public @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
-        Optional<String> fullUserNameRealm;
-        try {
-            fullUserNameRealm = Optional.ofNullable(authHeader)
-            .flatMap(header -> JwtAuth.readJwtToken(notNull(header), jwtConf.getSecret()))
-            .map(ZuulAuthorizationFilter::getFullIdentNameFromToken);
-        } catch (IOException e) {
-            log.debug("Exception thrown (probably during JWT parsing): {}", e.getMessage());
-            fullUserNameRealm = Optional.empty();
-        }
-        if (fullUserNameRealm.isEmpty()) {
-            log.debug("No authorization header provided");
-        }
-        return fullUserNameRealm;
     }
 }

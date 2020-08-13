@@ -30,7 +30,7 @@ public class PersonalSettings {
     @OneToOne
     @PrimaryKeyJoinColumn
     private User user; 
-    
+
     @Column
     private boolean email_receive = false;
 
@@ -39,6 +39,17 @@ public class PersonalSettings {
     
     @Column
     private boolean wantsAi = false;
+
+    @Column(name = "CONTENT", length = 512)
+    private String payload;
+
+    public int getConfigurationId() {
+        return configurationId;
+    }
+
+    public void setConfigurationId(int configurationId) {
+        this.configurationId = configurationId;
+    }
 
     public User getUser() {
         return user;
@@ -70,6 +81,14 @@ public class PersonalSettings {
     
     public void setWantsAi(boolean wantsAi) {
         this.wantsAi = wantsAi;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
+
+    public void setPayload(String payload) {
+        this.payload = payload;
     }
 
     public SettingsDto asDto() {

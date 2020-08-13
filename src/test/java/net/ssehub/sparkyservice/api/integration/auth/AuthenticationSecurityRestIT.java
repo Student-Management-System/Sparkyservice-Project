@@ -58,10 +58,8 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 //checkstyle: stop exception type check
 public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase {
 
-    // checkstyle: stop visibility modifier check
     @Autowired
-    public IUserService userService; 
-    // checkstyle: resume visibility modifier check
+    private IUserService userService; 
 
     @Autowired
     private WebApplicationContext context;

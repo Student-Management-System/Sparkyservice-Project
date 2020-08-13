@@ -97,6 +97,7 @@ public class User {
                 databaseUser.setExpirationTime(userDto.expirationDate);
                 databaseUser.setFullName(userDto.fullName);
                 databaseUser.setRole(userDto.role);
+                databaseUser.getProfileConfiguration().setPayload(userDto.settings.payload);
             }
         }
     }
