@@ -206,7 +206,7 @@ public class LocalUserDetails extends User implements UserDetails {
      */
     @Override
     public boolean isAccountNonExpired() {
-        return getExpirationTime().map(date -> date.isAfter(LocalDate.now())).orElse(true);
+        return getExpirationDate().map(date -> date.isAfter(LocalDate.now())).orElse(true);
     }
 
     /**

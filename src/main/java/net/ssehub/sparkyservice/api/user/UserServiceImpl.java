@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
-import net.ssehub.sparkyservice.api.util.ListUtil;
+import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
  * Business logic for user database actions. 
@@ -158,7 +158,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public @Nonnull List<User> findAllUsers() {
         Iterable<User> optList = repository.findAll();
-        return ListUtil.toList(optList);
+        return SparkyUtil.toList(optList);
     }
 
     @Override
@@ -180,6 +180,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     public List<User> findAllUsersInRealm(@Nullable UserRealm realm) {
         Iterable<User> optList = repository.findByRealm(realm);
-        return ListUtil.toList(optList);
+        return SparkyUtil.toList(optList);
     }
 }

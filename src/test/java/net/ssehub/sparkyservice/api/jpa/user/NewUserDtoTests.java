@@ -22,9 +22,16 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 
+/**
+ * Test class around {@link NewUserDto}. 
+ * 
+ * @author marcel
+ */
 public class NewUserDtoTests {
 
     /**
+     * Example DTO with all necessary fields for test purposes. 
+     * 
      * @return valid DTO object. 
      */
     @Test
@@ -65,8 +72,6 @@ public class NewUserDtoTests {
 
     /**
      * Test validation for {@link NewUserDto#password} with different input which aren't valid.
-     * 
-     * @param password the password input to check
      */
     @Test
     public void newUserRoleValidation() {
@@ -87,7 +92,7 @@ public class NewUserDtoTests {
         var userDto = createExampleDto();
         userDto.setPersonalSettings(new SettingsDto());
         LocalUserDetails details = LocalUserDetails.createNewUserFromDto(userDto);
-        assertAll( 
+        assertAll(
             () -> assertEquals(userDto.username, details.getUsername()),
             () -> assertEquals(userDto.role, details.getRole()),
             () -> assertNotNull(details.getPasswordEntity())
@@ -103,11 +108,14 @@ public class NewUserDtoTests {
         assertThrows(IllegalArgumentException.class, () -> LocalUserDetails.createNewUserFromDto(userDto));
     }
 
+    /**
+     * The default expiration should be set to 6 month of new created accounts.
+     */
     @Test
     public void defaultExpirationTest() {
         var userDto = createExampleDto();
         var localUser = LocalUserDetails.createNewUserFromDto(userDto);
-        Optional<LocalDate> expirationTime = localUser.getExpirationTime();
+        Optional<LocalDate> expirationTime = localUser.getExpirationDate();
         boolean sixMonthValidity = expirationTime.get().isEqual(LocalDate.now().plusMonths(6));
         assertTrue(sixMonthValidity);
     }

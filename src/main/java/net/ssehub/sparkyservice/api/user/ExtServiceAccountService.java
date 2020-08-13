@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.util.ListUtil;
+import net.ssehub.sparkyservice.api.util.SparkyUtil;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
@@ -31,7 +31,7 @@ public class ExtServiceAccountService {
     @Nonnull
     public List<User> findAllServices() {
         return NullHelpers.notNull(
-            ListUtil.toList(repository.findByRole(UserRole.SERVICE))
+            SparkyUtil.toList(repository.findByRole(UserRole.SERVICE))
         );
     }
 }

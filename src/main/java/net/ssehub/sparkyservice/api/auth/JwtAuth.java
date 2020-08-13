@@ -2,7 +2,6 @@ package net.ssehub.sparkyservice.api.auth;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -38,8 +37,6 @@ import net.ssehub.sparkyservice.api.user.dto.TokenDto;
  * @author marcel
  */
 public class JwtAuth {
-    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
-
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
     /**
@@ -91,7 +88,7 @@ public class JwtAuth {
         var token = Jwts.builder().signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
                 .setHeaderParam("typ", jwtConf.getType()).setIssuer(jwtConf.getIssuer())
                 .setAudience(jwtConf.getAudience()).setSubject(user.getUserName())
-                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS)).claim("rol", roles)
+                .setExpiration(User.getJwtExpirationDate(user)).claim("rol", roles)
                 .claim("realm", user.getRealm()).compact();
         return notNull(token);
     }
@@ -144,8 +141,11 @@ public class JwtAuth {
      * @return the desired date as String
      */
     private static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
-        String pattern = "MM/dd/yyyy HH:mm:ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        return notNull(df.format(expDate));
+        return notNull(
+            Optional.of("MM/dd/yyyy HH:mm:ss")
+                .map(SimpleDateFormat::new)
+                .map(dateFormat -> dateFormat.format(expDate))
+                .get()
+            );
     }
 }

@@ -4,6 +4,7 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,6 +25,7 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
+import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
  * Represents a user with JPA annotations. Although contains static methods to modify a users values.
@@ -35,6 +37,30 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 @Table(name = "user_stored", uniqueConstraints = { @UniqueConstraint(columnNames = { "userName", "realm" }) })
 @ParametersAreNonnullByDefault
 public class User {
+
+    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
+
+    /**
+     * Returns a date where a JWT token of user should expire. 
+     * 
+     * @param user
+     * @return Date where the validity of a JWT token should end for the given user
+     */
+    public @Nonnull static java.util.Date getJwtExpirationDate(User user) {
+        @Nonnull java.util.Date expirationDate;
+        @Nonnull Supplier<LocalDate> defaultServiceExpirationDate = () -> LocalDate.now().plusYears(10);
+        
+        if (user.getRole() == UserRole.SERVICE) {
+            expirationDate = notNull(
+                 user.getExpirationDate()
+                     .map(SparkyUtil::toJavaUtilDate)
+                     .orElseGet(() -> SparkyUtil.toJavaUtilDate(defaultServiceExpirationDate.get()))
+            );
+        } else {
+            expirationDate = new java.util.Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS);
+        }
+        return expirationDate;
+    }
 
     /**
      * Changes the values of the given user with values from the DTO. This happens recursive (it will
@@ -93,8 +119,8 @@ public class User {
             } else if (changePassword) {
                 defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
             }
-            if (adminMode) {
-                databaseUser.setExpirationTime(userDto.expirationDate);
+            if (adminMode) {    
+                databaseUser.setExpirationDate(userDto.expirationDate);
                 databaseUser.setFullName(userDto.fullName);
                 databaseUser.setRole(userDto.role);
                 databaseUser.getProfileConfiguration().setPayload(userDto.settings.payload);
@@ -240,10 +266,21 @@ public class User {
         this.expirationTime = user.expirationTime;
     }
 
+    /**
+     * Users database ID for unique identification of that entry. 
+     * 
+     * @return Primary key
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * Users database ID for unqiue identification of that entry. 
+     * Typically set through OR mapper.
+     * 
+     * @param id Primary key
+     */
     public void setId(int id) {
         this.id = id;
     }
@@ -348,11 +385,11 @@ public class User {
         }
     }
     
-    public Optional<LocalDate> getExpirationTime() {
+    public Optional<LocalDate> getExpirationDate() {
         return Optional.ofNullable(expirationTime);
     }
 
-    public void setExpirationTime(@Nullable LocalDate expirationTime) {
+    public void setExpirationDate(@Nullable LocalDate expirationTime) {
         this.expirationTime = expirationTime;
     }
 
