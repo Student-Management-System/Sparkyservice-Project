@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -111,24 +112,29 @@ public class JwtAuth {
      *                  used for encoding
      * @return Springs authentication token
      */
-    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token,
+    public static @Nonnull Optional<UsernamePasswordAuthenticationToken> readJwtToken(@Nonnull String token,
             @Nonnull String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
         var parsedToken = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token.replace("Bearer ", ""));
         var username = parsedToken.getBody().getSubject();
-        var authorities = ((List<?>) parsedToken.getBody().get("rol")).stream()
-                .map(authority -> UserRole.DEFAULT.getEnum((String) authority)).collect(Collectors.toList());
+        List<UserRole> authorities = ((List<?>) parsedToken.getBody().get("rol"))
+                .stream()
+                .map(role -> UserRole.DEFAULT.getEnum((String) role))
+                .collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
         var realm = (String) parsedToken.getBody().get("realm");
+        
+        @Nonnull Optional<UsernamePasswordAuthenticationToken> tokenObject = notNull(Optional.empty());
         if (!StringUtils.isEmpty(username)) {
             SparkysAuthPrincipal principal = new AuthPrincipalImplementation(realm, username);
             var tokenDto = new TokenDto();
             tokenDto.expiration = expirationDateAsString(expiration);
             tokenDto.token = token;
-            return new UsernamePasswordAuthenticationToken(principal, tokenDto, authorities);
-        } else {
-            return null;
+            tokenObject = notNull(
+                    Optional.of(new UsernamePasswordAuthenticationToken(principal, tokenDto, authorities))
+                );
         }
+        return tokenObject;
     }
 
     /**

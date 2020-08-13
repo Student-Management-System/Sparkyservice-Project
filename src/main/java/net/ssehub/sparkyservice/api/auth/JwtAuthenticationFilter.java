@@ -21,6 +21,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.IUserService;
+import net.ssehub.sparkyservice.api.user.UserTransformer;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
@@ -35,6 +36,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final JwtSettings jwtConf;
     private final IUserService userService;
     private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
+    private final UserTransformer transformator;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
@@ -43,13 +45,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param authenticationManager
      * @param jwtConf
      * @param userSerivce
+     * @param transformator
      */
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf,
-                                   IUserService userSerivce) {
+                                   IUserService userSerivce, UserTransformer transformator) {
         this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.jwtConf = jwtConf;
+        this.transformator = transformator;
     }
 
     /**
@@ -72,7 +76,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         if (principal instanceof UserDetails) {
             var details = (UserDetails) principal;
             try {
-                User user = userService.getDefaultTransformer().extendFromUserDetails(details);
+                User user = transformator.extendFromUserDetails(details);
                 if (!userService.isUserInDatabase(user)) {
                     userService.storeUser(user);
                 }
