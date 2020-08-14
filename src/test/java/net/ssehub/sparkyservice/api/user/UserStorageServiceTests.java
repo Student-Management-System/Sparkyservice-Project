@@ -34,13 +34,12 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 /**
  * Tests for {@link UserStorageService} implementation. This test class should use the same implementation bean which 
  * is normally used in the application to make the test useful. 
- * The repository will be mocked to be sure, only the correct objects are used. 
  *
  * @author Marcel
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes= {UnitTestDataConfiguration.class})
-public class IUserServiceTests {
+public class UserStorageServiceTests {
     
     @Autowired
     private UserStorageService userService;
@@ -181,6 +180,11 @@ public class IUserServiceTests {
     @Test
     public void nullKeepAliveDeleteTest() {
         assertDoesNotThrow(() -> userService.deleteUser(null));
+    }
+
+    @Test
+    public void addUserTest() {
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(Optional.ofNullable(null));
     }
 }
 

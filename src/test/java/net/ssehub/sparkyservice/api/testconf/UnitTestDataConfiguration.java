@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
-import net.ssehub.sparkyservice.api.user.IUserService;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
-import net.ssehub.sparkyservice.api.user.UserTransformer;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Spring configuration class which provides a set of beans which should be used
@@ -20,13 +20,13 @@ import net.ssehub.sparkyservice.api.user.UserTransformer;
 public class UnitTestDataConfiguration {
 
     @Bean
-    public IUserService iUserService() {
-        return new UserServiceImpl();
-    }
+    public UserStorageService userStorageService() {
+        return new UserStorageImpl();
+    } 
 
     @Bean
     @Primary
-    public UserTransformer userTransformer() {
+    public UserTransformerService userTransformer() {
         return new SpringConfig().userTransformer();
     }
 }

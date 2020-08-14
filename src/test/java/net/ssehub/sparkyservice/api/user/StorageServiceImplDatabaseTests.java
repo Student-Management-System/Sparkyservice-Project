@@ -29,7 +29,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 
 /**
  * Test class for storing information into a database with an in-memory database with {@link UserStorageImpl}.
- * The logic checks will be done in {@link IUserServiceTests} where the repositories are mocked and will 
+ * The logic checks will be done in {@link UserStorageServiceTests} where the repositories are mocked and will 
  * return correct objects. 
  * 
  * @author Marcel
