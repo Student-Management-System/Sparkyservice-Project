@@ -27,12 +27,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.user.UserTransformer;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
@@ -47,7 +47,7 @@ public class AuthController {
     @Autowired
     private ServletContext servletContext;
     @Autowired
-    private UserTransformer transformator;
+    private UserTransformerService transformator;
     @Autowired
     private JwtSettings jwtConf;
 

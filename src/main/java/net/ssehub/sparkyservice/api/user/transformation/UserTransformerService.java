@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.transformation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -9,10 +9,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 
-public interface UserTransformer {
+public interface UserTransformerService {
 
     /**
      * Converts a given {@link UserDetails} to {@link User}. May perform

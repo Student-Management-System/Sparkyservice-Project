@@ -20,11 +20,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
-import net.ssehub.sparkyservice.api.user.ExtServiceAccountService;
-import net.ssehub.sparkyservice.api.user.HeavyUserTransformerImpl;
-import net.ssehub.sparkyservice.api.user.IUserService;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
-import net.ssehub.sparkyservice.api.user.UserTransformer;
+import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.transformation.HeavyUserTransformerImpl;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Default configuration class for spring.
@@ -37,7 +37,7 @@ public class SpringConfig {
     public static final String LOCKED_JWT_BEAN = "lockedJwtToken";
 
     @Autowired
-    private ExtServiceAccountService extService;
+    private ServiceAccStorageService extService;
 
     /**
      * Defines the PasswordEncoder bean.
@@ -56,7 +56,7 @@ public class SpringConfig {
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        final var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
         return source;
     }
@@ -78,7 +78,7 @@ public class SpringConfig {
      */
     @Bean
     @Primary
-    public UserTransformer userTransformer() {
+    public UserTransformerService userTransformer() {
         return new HeavyUserTransformerImpl();
     }
 
@@ -102,14 +102,11 @@ public class SpringConfig {
      */
     @Bean(LOCKED_JWT_BEAN)
     public Set<String> lockedJwtToken() {
-        System.out.println("CALL LOCKED JWT");
-        List<User> serviceAccounts = extService.findAllServices();
+        List<User> serviceAccounts = extService.findAllServiceAccounts();
         try {
-            var test = serviceAccounts.stream()
+            return serviceAccounts.stream()
                     .map(a -> a.getProfileConfiguration().getPayload())
                     .collect(Collectors.toSet());
-            System.out.println(test.size());
-            return test;
         } catch (InvalidDataAccessResourceUsageException e) {
             throw new RuntimeException("Database is not available at startup (could not load disabled user");
         }
@@ -118,11 +115,11 @@ public class SpringConfig {
     /**
      * Defines the IUserService bean.
      * 
-     * @return Using {@link UserServiceImpl}
+     * @return Using {@link UserStorageImpl}
      */
     @Bean
     @Primary
-    public IUserService iUserService() {
-        return new UserServiceImpl();
+    public UserStorageService iUserService() {
+        return new UserStorageImpl();
     }
 }

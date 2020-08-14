@@ -23,8 +23,8 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
-import net.ssehub.sparkyservice.api.user.UserTransformer;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Springs security configuration loaded at startup.
@@ -72,7 +72,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtSettings jwtSettings;
     
     @Autowired
-    private UserServiceImpl dbUserService;
+    private UserStorageImpl dbUserService;
     
     @Autowired
     @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
@@ -82,7 +82,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserTransformer transformator;
+    private UserTransformerService transformator;
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {

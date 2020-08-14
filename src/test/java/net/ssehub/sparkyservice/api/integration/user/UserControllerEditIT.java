@@ -42,9 +42,9 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
-import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.UserController;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Test class for user edit via @link {@link UserController} with real JSON values.
@@ -62,7 +62,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     private WebApplicationContext context;
 
     @Autowired 
-    private IUserService userService; 
+    private UserStorageService userService; 
 
     private MockMvc mvc;
 
@@ -154,8 +154,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         // Should match with the data of the given json txt content:
         var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
-        userService.storeUser(editUserLocal);
-        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        userService.commit(editUserLocal);
+        assumeTrue(userService.isUserInStorage(editUserLocal));
         
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)
@@ -176,8 +176,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         // Should match with the data of the given json txt content:
         var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
-        userService.storeUser(editUserLocal);
-        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        userService.commit(editUserLocal);
+        assumeTrue(userService.isUserInStorage(editUserLocal));
         
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)
@@ -219,8 +219,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         // Should match with the data of the given json txt content:
         var editUserLocal = new User("testuserLdap", null, UserRealm.LDAP, true, UserRole.DEFAULT);
         editUserLocal.getProfileConfiguration().setEmail_receive(true);
-        userService.storeUser(editUserLocal);
-        assumeTrue(userService.isUserInDatabase(editUserLocal));
+        userService.commit(editUserLocal);
+        assumeTrue(userService.isUserInStorage(editUserLocal));
         
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)
@@ -250,7 +250,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         var authenticatedUser = userService.findUserByNameAndRealm("testuser", UserRealm.LOCAL);
         authenticatedUser.getProfileConfiguration().setEmail_address("old@test");
         int userId = authenticatedUser.getId();
-        userService.storeUser(authenticatedUser);
+        userService.commit(authenticatedUser);
         
         MvcResult result = this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)

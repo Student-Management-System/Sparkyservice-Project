@@ -12,7 +12,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 /**
- * JPA class for passwords.
+ * Immutable JPA class for passwords.
  * 
  * @author marcel
  */
@@ -33,7 +33,7 @@ public class Password {
 
     @Nonnull
     @Column
-    protected String hashAlgorithm;
+    protected final String hashAlgorithm;
     
     @OneToOne
     @Nullable
@@ -44,7 +44,7 @@ public class Password {
      */
     @Nonnull
     @Column(nullable = false)
-    private String passwordString;
+    private final String passwordString;
     
     /**
      * Default constructor needed by hibernate.
@@ -75,14 +75,11 @@ public class Password {
         return hashAlgorithm;
     }
 
-    public void setHashAlgorithm(String hashAlgorithm) {
-        this.hashAlgorithm = hashAlgorithm;
-    }
-
-    public void setPasswordString(String passwordHash) {
-        this.passwordString = passwordHash;
-    }
-
+    /**
+     * Password as string which is encoded with {@link #getHashAlgorithm}
+     * 
+     * @return Password as string
+     */
     public @Nonnull String getPasswordString() {
         return this.passwordString;
     }

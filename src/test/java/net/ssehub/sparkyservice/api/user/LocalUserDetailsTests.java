@@ -53,7 +53,7 @@ class LocalUserDetailsTests {
     @Test
     public void userExpirationFunctionTest() {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
-        userDetails.setExpirationTime(LocalDate.now().minusDays(1)); // is expired
+        userDetails.setExpirationDate(LocalDate.now().minusDays(1)); // is expired
         assertFalse(userDetails.isAccountNonExpired(), "User should be expired!");
     }
 }

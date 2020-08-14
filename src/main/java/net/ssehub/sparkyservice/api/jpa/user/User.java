@@ -1,10 +1,7 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,11 +18,8 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
-import net.ssehub.sparkyservice.api.util.SparkyUtil;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
 
 /**
  * Represents a user with JPA annotations. Although contains static methods to modify a users values.
@@ -37,163 +31,6 @@ import net.ssehub.sparkyservice.api.util.SparkyUtil;
 @Table(name = "user_stored", uniqueConstraints = { @UniqueConstraint(columnNames = { "userName", "realm" }) })
 @ParametersAreNonnullByDefault
 public class User {
-
-    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
-
-    /**
-     * Returns a date where a JWT token of user should expire. 
-     * 
-     * @param user
-     * @return Date where the validity of a JWT token should end for the given user
-     */
-    public @Nonnull static java.util.Date getJwtExpirationDate(User user) {
-        @Nonnull java.util.Date expirationDate;
-        @Nonnull Supplier<LocalDate> defaultServiceExpirationDate = () -> LocalDate.now().plusYears(10);
-        
-        if (user.getRole() == UserRole.SERVICE) {
-            expirationDate = notNull(
-                 user.getExpirationDate()
-                     .map(SparkyUtil::toJavaUtilDate)
-                     .orElseGet(() -> SparkyUtil.toJavaUtilDate(defaultServiceExpirationDate.get()))
-            );
-        } else {
-            expirationDate = new java.util.Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS);
-        }
-        return expirationDate;
-    }
-
-    /**
-     * Changes the values of the given user with values from the DTO. This happens recursive (it will
-     * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
-     * 
-     * This is done with "limit permissions". Which means some fields which should only be changed with higher 
-     * permissions won't be changed and are skipped. Changing the password is only supported if the user is in 
-     * {@link LocalUserDetails#DEFAULT_REALM}.
-     * 
-     * Those permissions are:
-     * <ul><li> The old password must be provided in order to change it
-     * </li><li> User can not modify roles: {@link User#setRole(Enum)}
-     * </li></ul>
-     * 
-     * @param databaseUser User which values should be changed
-     * @param userDto Transfer object which holds the new data
-     */
-    public static void defaultUserDtoEdit(User databaseUser, UserDto userDto ) {
-        editUserFromDto(databaseUser, userDto, false);
-    }
-
-    /**
-     * Changes the values of the given user with values from the DTO. This happens recursive (it will
-     * change {@link SettingsDto} and {@link ChangePasswordDto} as well). Does not support changing the realm.<br><br>
-     * 
-     * Any other data will be modified. Changing the password is only supported if the user is in 
-     * {@link LocalUserDetails#DEFAULT_REALM}.
-     * 
-     * @param databaseUser User which values should be changed
-     * @param userDto Holds the new data
-     */
-    public static void adminUserDtoEdit(User databaseUser, UserDto userDto) {
-        editUserFromDto(databaseUser, userDto, true);
-    }
-
-    /**
-     * Edit values of a given user with values from a DTO. Thes can be done in two modes: <br>
-     * <ul><li>admin mode: Will modify all fields without edit conditions (like the old password have to match) 
-     * </li><li> default (user) mode: The edit is done under certain restrictions: Password is only changed if 
-     * the old one is provided. 
-     * </li></ul>
-     * 
-     * @param databaseUser
-     * @param userDto
-     * @param adminMode
-     */
-    private static void editUserFromDto(User databaseUser, UserDto userDto, boolean adminMode) {
-        if (userDto.settings != null && userDto.username != null) {
-            PersonalSettings.applyPersonalSettingsDto(databaseUser, notNull(userDto.settings));
-            databaseUser.setUserName(notNull(userDto.username));
-            boolean changePassword = userDto.passwordDto != null 
-                    && databaseUser.getRealm() == LocalUserDetails.DEFAULT_REALM;
-            boolean adminPassChange = adminMode && changePassword && userDto.passwordDto.newPassword != null;
-            if (adminPassChange) {
-                adminApplyNewPasswordFromDto(databaseUser, userDto.passwordDto.newPassword);
-            } else if (changePassword) {
-                defaultApplyNewPasswordFromDto(databaseUser, userDto.passwordDto);
-            }
-            if (adminMode) {    
-                databaseUser.setExpirationDate(userDto.expirationDate);
-                databaseUser.setFullName(userDto.fullName);
-                databaseUser.setRole(userDto.role);
-                databaseUser.getProfileConfiguration().setPayload(userDto.settings.payload);
-            }
-        }
-    }
-
-    /**
-     * Try to apply a new password to the given user. The {@link ChangePasswordDto#oldPassword} must
-     * match the one which is already stored in the database. Otherwise the password won't be changed.
-     * 
-     * @param databaseUser user who's password should be changed
-     * @param passwordDto contains old and new password (both values can be null)
-     */
-    public static void defaultApplyNewPasswordFromDto(@Nullable User databaseUser,
-                                                      @Nullable UserDto.ChangePasswordDto passwordDto) {
-        if (passwordDto != null && databaseUser != null) {
-            @Nullable String newPassword = passwordDto.newPassword;
-            @Nullable String oldPassword = passwordDto.oldPassword;
-            if (newPassword != null && oldPassword != null) {
-                applyPasswordFromDto(databaseUser, newPassword, oldPassword, false);
-            }
-        }
-    }
-
-    /**
-     * Apply a new password to the given user. 
-     * 
-     * @param databaseUser User where the password should be changed
-     * @param newPassword New raw password
-     */
-    public static void adminApplyNewPasswordFromDto(@Nullable User databaseUser, @Nullable String newPassword) {
-        if (databaseUser != null && newPassword != null) {
-            applyPasswordFromDto(databaseUser, newPassword, "", true);
-        }
-    }
-
-    /**
-     * Changes the password of a given use with the given password DTO. <br>
-     * In case of an admin mode, only a new password must be provided in order to succeed.
-     * 
-     * @param databaseUser User to edit
-     * @param newPassword New raw password (necessary)
-     * @param oldPassword The old hashed password (only on non adminEdits necessary)
-     * @param adminEdit Decide if the old password must match with the new one
-     */
-    private static void applyPasswordFromDto(User databaseUser, String newPassword, String oldPassword, 
-            boolean adminEdit) {
-        if (!newPassword.isBlank()) {
-            LocalUserDetails localUser;
-            if (databaseUser instanceof LocalUserDetails) {
-                localUser = (LocalUserDetails) databaseUser;
-                if (adminEdit || localUser.getEncoder().matches(oldPassword, localUser.getPassword())) {
-                    localUser.encodeAndSetPassword(newPassword);
-                } 
-            } else if (databaseUser.getRealm() == UserRealm.LOCAL){
-                localUser = new LocalUserDetails(databaseUser);
-                localUser.encodeAndSetPassword(newPassword);
-                databaseUser.setPasswordEntity(localUser.getPasswordEntity()); // make pass by reference possible.
-            }
-        }
-    }
-
-    public static UserDto userAsDto(User user) {
-        var dto = new UserDto();
-        dto.realm = user.getRealm();
-        dto.role = user.getRole();
-        dto.settings = user.getProfileConfiguration().asDto();
-        dto.username = user.getUserName();
-        dto.fullName = user.fullName;
-        dto.expirationDate = user.expirationTime;
-        return dto;
-    }
 
     /**
      * Unique identifier (primary key) for local user.
@@ -346,6 +183,11 @@ public class User {
         this.isActive = isActive;
     }
 
+    /**
+     * Entity which contains information about the current password. Can be null if the user has no password.
+     * 
+     * @return PasswordEntity
+     */
     @Nullable
     public Password getPasswordEntity() {
         return passwordEntity;
@@ -409,7 +251,8 @@ public class User {
         return role;
     }
 
+    @Deprecated
     public UserDto asDto() {
-        return User.userAsDto(this);
+        return UserModificationServiceFactory.from(getRole()).userAsDto(this);
     }
 }

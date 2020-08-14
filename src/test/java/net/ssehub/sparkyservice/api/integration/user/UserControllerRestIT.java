@@ -41,9 +41,10 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
-import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.UserController;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Test for {@link UserController} - permissions and add functions.
@@ -62,7 +63,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     private WebApplicationContext context;
 
     @Autowired 
-    private IUserService userService; 
+    private UserStorageService userService; 
 
     private MockMvc mvc;
 
@@ -147,8 +148,8 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "DEFAULT")
     public void securityNonAdminDeleteTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         
         this.mvc
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
@@ -184,15 +185,15 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionAdminDeleteTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         
         this.mvc
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.LDAP, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
-        assertFalse(userService.isUserInDatabase(user));
+        assertFalse(userService.isUserInStorage(user));
     }
 
     /**
@@ -207,8 +208,8 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetSingleUserTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         
         MvcResult result = this.mvc
                 .perform(get(ControllerPath.USERS_GET_SINGLE, UserRealm.LDAP, "testuser")
@@ -221,7 +222,8 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoString, UserDto.class), 
                 "Some wrong values was returned from the controller. The content is not a valid json dto"); 
         var returnedUserDto =  new ObjectMapper().readValue(dtoString, UserDto.class);
-        assertDtoEquals(user.asDto(), returnedUserDto);
+        UserDto userDto = UserModificationServiceFactory.from(UserRole.ADMIN).userAsDto(user);
+        assertDtoEquals(userDto, returnedUserDto);
     }
 
     /**
@@ -237,11 +239,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetAllTest() throws Exception {
         var user = new User("testuser", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         var user2 = new User("testuser2", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        userService.storeUser(user2);
-        assumeTrue(userService.isUserInDatabase(user2));
+        userService.commit(user2);
+        assumeTrue(userService.isUserInStorage(user2));
         
         MvcResult result = this.mvc
                 .perform(get(ControllerPath.USERS_GET_ALL)

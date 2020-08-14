@@ -24,10 +24,11 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 
 /**
- * Test class for storing information into a database with an in-memory database with {@link UserServiceImpl}.
+ * Test class for storing information into a database with an in-memory database with {@link UserStorageImpl}.
  * The logic checks will be done in {@link IUserServiceTests} where the repositories are mocked and will 
  * return correct objects. 
  * 
@@ -41,18 +42,18 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 public class UserServiceImplDatabaseTests {
     
     @Autowired
-    private UserServiceImpl userService;
+    private UserStorageImpl userService;
     
     private static final String TEST_USER_NAME = "eatk234";
     
     @BeforeEach
     public void _storeUserToDB() {
-        var user = new LocalUserDetails();
+        @SuppressWarnings("deprecation") var user = new LocalUserDetails();
         user.setActive(true);
         user.setRealm(LocalUserDetails.DEFAULT_REALM);
         user.setUserName(TEST_USER_NAME);
         user.setRole(UserRole.DEFAULT);
-        userService.storeUser(user);
+        userService.commit(user);
     }
 
     /**
@@ -93,17 +94,17 @@ public class UserServiceImplDatabaseTests {
     public void changeRoleValueAndStoreTest() throws UserNotFoundException {
         User loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
         loadedUser.setRole(UserRole.ADMIN);
-        userService.storeUser(loadedUser);
+        userService.commit(loadedUser);
         loadedUser = userService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
         assertEquals(UserRole.ADMIN, loadedUser.getRole(), "The role was not changed inside the datbase.");
     }
     
     @Test
     public void dataDuplicateUserTest() {
-        var secondUser = new LocalUserDetails();
+        @SuppressWarnings("deprecation") var secondUser = new LocalUserDetails();
         secondUser.setUserName(TEST_USER_NAME);
         secondUser.setRealm(LocalUserDetails.DEFAULT_REALM);
-        assertThrows(DataIntegrityViolationException.class, () -> userService.storeUser(secondUser));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.commit(secondUser));
     }
     
     /**
@@ -119,11 +120,11 @@ public class UserServiceImplDatabaseTests {
     
     @Test
     public void findMultipleEntries() throws UserNotFoundException {
-        var user = new LocalUserDetails();
+        @SuppressWarnings("deprecation") var user = new LocalUserDetails();
         user.setActive(true);
         user.setRealm(UserRealm.LDAP);
         user.setUserName(TEST_USER_NAME);
-        userService.storeUser(user);
+        userService.commit(user);
         var users = userService.findUsersByUsername(TEST_USER_NAME);
         assertEquals(2, users.size());
     }

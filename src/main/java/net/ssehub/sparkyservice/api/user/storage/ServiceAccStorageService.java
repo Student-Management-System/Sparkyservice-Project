@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import net.ssehub.sparkyservice.api.util.NullHelpers;
  * @author marcel
  */
 @Service
-public class ExtServiceAccountService {
+public class ServiceAccStorageService {
 
     @Autowired
     private UserRepository repository;
@@ -29,7 +29,7 @@ public class ExtServiceAccountService {
      * @return List of service accounts
      */
     @Nonnull
-    public List<User> findAllServices() {
+    public List<User> findAllServiceAccounts() {
         return NullHelpers.notNull(
             SparkyUtil.toList(repository.findByRole(UserRole.SERVICE))
         );

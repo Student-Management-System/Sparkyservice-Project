@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.transformation;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -22,21 +22,22 @@ import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
- * Heavy in aspect of database transaction implementation of {@link UserTransformer}. 
+ * Heavy in aspect of database transaction implementation of {@link UserTransformerService}. 
  * This implementation tries to update all given information as much as possible from the database. 
  * 
  * @author Marcel
  */
 @Service
-public class HeavyUserTransformerImpl implements UserTransformer {
+public class HeavyUserTransformerImpl implements UserTransformerService {
 
     @Autowired
-    private IUserService userSerivce;
+    private UserStorageService userSerivce;
     private final Logger log = LoggerFactory.getLogger(HeavyUserTransformerImpl.class);
 
     /**

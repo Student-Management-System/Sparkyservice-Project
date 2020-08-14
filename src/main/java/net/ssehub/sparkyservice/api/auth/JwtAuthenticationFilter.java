@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.IUserService;
-import net.ssehub.sparkyservice.api.user.UserTransformer;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
@@ -34,9 +34,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private final AuthenticationManager authenticationManager;
     private final JwtSettings jwtConf;
-    private final IUserService userService;
+    private final UserStorageService userService;
     private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
-    private final UserTransformer transformator;
+    private final UserTransformerService transformator;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param transformator
      */
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf,
-                                   IUserService userSerivce, UserTransformer transformator) {
+                                   UserStorageService userSerivce, UserTransformerService transformator) {
         this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
@@ -77,8 +77,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             var details = (UserDetails) principal;
             try {
                 User user = transformator.extendFromUserDetails(details);
-                if (!userService.isUserInDatabase(user)) {
-                    userService.storeUser(user);
+                if (!userService.isUserInStorage(user)) {
+                    userService.commit(user);
                 }
                 AuthenticationInfoDto authDto = buildAuthenticatioInfoFromUser(user);
                 setResponseValue(NullHelpers.notNull(response), authDto);

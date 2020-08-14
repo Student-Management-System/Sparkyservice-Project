@@ -34,9 +34,9 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
-import net.ssehub.sparkyservice.api.user.ExtServiceAccountService;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.UserRepository;
+import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
+import net.ssehub.sparkyservice.api.user.storage.UserRepository;
 
 /**
  * Tests if locked users can't authorize. The locked user list is only loaded during spring boots startup, so a list of
@@ -98,12 +98,12 @@ public class LockedAccountsAuthorizeIT {
         @Bean
         @Primary
         @Order(Ordered.HIGHEST_PRECEDENCE)
-        public ExtServiceAccountService earlyService() {
+        public ServiceAccStorageService earlyService() {
             System.out.println("CALL EXT");
             var set = new HashSet<User>();
             set.add(testUser);
             when(mockedRepository.findByRole(UserRole.SERVICE)).thenReturn(set);
-            return new ExtServiceAccountService();
+            return new ServiceAccStorageService();
         }
 
         /**

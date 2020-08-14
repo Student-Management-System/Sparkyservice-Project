@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 // public for testing purposes
 @Repository
-public interface UserRepository extends CrudRepository<User, Integer>{
+public interface UserRepository extends CrudRepository<User, Integer> {
     Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
     Optional<List<User>> findByuserName(String username);
     Iterable<User> findAll();

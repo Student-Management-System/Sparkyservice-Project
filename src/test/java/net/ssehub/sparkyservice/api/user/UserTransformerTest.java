@@ -27,8 +27,10 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserRepository;
+import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 @ExtendWith(SpringExtension.class) 
@@ -47,7 +49,7 @@ public class UserTransformerTest {
     }
 
     @Autowired
-    private UserTransformer transformer;
+    private UserTransformerService transformer;
 
     /**
      * Maybe the used transformer implementation have to do database operations. For that case, each 

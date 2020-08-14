@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -21,7 +21,8 @@ import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
@@ -30,12 +31,12 @@ import net.ssehub.sparkyservice.api.util.SparkyUtil;
  * @author Marcel
  */
 @Service
-public class UserServiceImpl implements IUserService {
+public class UserStorageImpl implements UserStorageService {
 
     @Autowired
     private UserRepository repository;
 
-    private final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+    private final Logger log = LoggerFactory.getLogger(UserStorageImpl.class);
 
     /**
      * Checks if a user is present with the provided search actions with error handling. 
@@ -65,7 +66,7 @@ public class UserServiceImpl implements IUserService {
      * @param user - User which 
      * @return User with same values but the concrete implementation may has changed
      */
-    public @Nonnull static User transformToLocalUser(@Nonnull User user) {
+    public @Nonnull static User toLocalUser(@Nonnull User user) {
         User returnUser;
         if (user.getRealm().equals(LocalUserDetails.DEFAULT_REALM)) {
             returnUser = new LocalUserDetails(user);
@@ -79,7 +80,7 @@ public class UserServiceImpl implements IUserService {
      * {@inheritDoc}.
      */
     @Override
-    public <T extends User> void storeUser(@Nonnull T user) {
+    public <T extends User> void commit(@Nonnull T user) {
         User stUser = new User((User) user);
         if (user.getRealm() == null || user.getUserName().isBlank()) {
             throw new IllegalArgumentException("Realm and username must not be blank.");
@@ -88,8 +89,23 @@ public class UserServiceImpl implements IUserService {
             repository.save(stUser);
             log.debug("...stored");
         } else {
-            log.debug("Dont safe user: {}@{}", stUser.getUserName(), stUser.getRealm());
+            log.debug("Don't safe user: {}@{}", stUser.getUserName(), stUser.getRealm());
         }
+    }
+
+    /**
+     * @param <T>
+     * @return
+     */
+    @Override
+    
+    public @Nonnull LocalUserDetails addUser(@Nonnull String username) {
+        final var newUser = LocalUserDetails.newLocalUser(username, "", UserRole.DEFAULT);
+        if (isUserInStorage(newUser) ) {
+            throw new DuplicateEntryException(newUser);
+        }
+        commit(newUser);
+        return newUser;
     }
 
     /**
@@ -100,7 +116,7 @@ public class UserServiceImpl implements IUserService {
         Optional<List<User>> usersByName = repository.findByuserName(username);
         List<User> userList = usersByName.orElseGet(ArrayList::new)
             .stream()
-            .map(UserServiceImpl::transformToLocalUser)
+            .map(UserStorageImpl::toLocalUser)
             .collect(Collectors.toList());
         return notNull(userList);
     }
@@ -112,7 +128,7 @@ public class UserServiceImpl implements IUserService {
     public @Nonnull User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
             throws UserNotFoundException {
         Optional<User> optUser = repository.findByuserNameAndRealm(username, realm);
-        User user =  optUser.map(UserServiceImpl::transformToLocalUser).orElseThrow(
+        User user =  optUser.map(UserStorageImpl::toLocalUser).orElseThrow(
             () -> new UserNotFoundException("no user with this name in the given realm"));
         return notNull(user);
     } 
@@ -148,7 +164,7 @@ public class UserServiceImpl implements IUserService {
     /**
      * {@inheritDoc}.
      */
-    public boolean isUserInDatabase(@Nullable User user) {
+    public boolean isUserInStorage(@Nullable User user) {
         return checkForUser(user, 
             u -> this.findUserById(u.getId()), 
             u -> this.findUserByNameAndRealm(u.getUserName(), u.getRealm())

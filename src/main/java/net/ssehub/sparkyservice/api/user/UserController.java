@@ -1,8 +1,7 @@
 package net.ssehub.sparkyservice.api.user;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
-import java.util.Optional;
+import java.util.List;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
@@ -39,11 +38,15 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
-import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserEditException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.modification.UserEditException;
+import net.ssehub.sparkyservice.api.user.modification.UserModifcationService;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
+import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
@@ -59,27 +62,30 @@ public class UserController {
     private ServletContext servletContext;
 
     @Autowired
-    private IUserService userService;
+    private UserStorageService userService;
 
     @Autowired
-    private UserTransformer transformer;
+    private UserTransformerService transformer;
 
+    /**
+     * Creates a new user in the LOCAL realm. 
+     * 
+     * @param username - Unique username in LOCAL
+     * @return created User as DTO
+     * @throws UserEditException
+     */
     @Operation(summary = "Adds a new local user", security = { @SecurityRequirement(name = "bearer-key") })
     @PutMapping(ControllerPath.USERS_PUT)
     @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
-    public UserDto addLocalUser(@RequestBody @NotNull @Valid NewUserDto newUserDto) throws UserEditException {
-        final @Nonnull String username = notNull(newUserDto.username); // spring validation
-        final @Nonnull String password = notNull(newUserDto.password); // spring validation
-        final @Nonnull var role = notNull(Optional.ofNullable(newUserDto.role).orElse(UserRole.DEFAULT));
-        final var newUser = LocalUserDetails.newLocalUser(username, password, role);
-        if (!userService.isUserInDatabase(newUser)) {
-            userService.storeUser(newUser);
-            log.info("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
-            return newUser.asDto();
-        } else {
-            log.info("No user added: Duplicate entry");
-            throw new UserEditException("Can't add user: Already existing");
+    public UserDto addLocalUser(@RequestBody @NotNull @Nonnull String username) throws UserEditException {
+        try {
+            LocalUserDetails newUser = userService.addUser(username);
+            log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
+            return UserModificationServiceFactory.from(UserRole.ADMIN).userAsDto(newUser);
+        } catch (DuplicateEntryException e) {
+            log.debug("No user added: Duplicate entry");
+            throw(e);
         }
     }
 
@@ -100,38 +106,46 @@ public class UserController {
     @Secured({ UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN })
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
-        var authenticatedUser = notNull(Optional.ofNullable(transformer.extendFromAuthentication(auth)).orElseThrow(
-            () -> new UserNotFoundException("The authenticated user can't be edited or the database is down")));
-        boolean selfEdit = authenticatedUser.getUserName().equals(userDto.username)
-                && authenticatedUser.getRealm().equals(userDto.realm);
-        var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
-        User editTargetUser = null;
-        if (UserRole.ADMIN.getEnum(authority.getAuthority()) == UserRole.ADMIN) {
-            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
-            User.adminUserDtoEdit(editTargetUser, userDto);
-        } else if (selfEdit) {
-            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
-            User.defaultUserDtoEdit(editTargetUser, userDto);
+
+        User authenticatedUser = transformer.extendFromAuthentication(auth);
+        Predicate<User> selfEdit = user -> user.getUserName().equals(userDto.username) 
+                && user.getRealm().equals(userDto.realm);
+        UserModifcationService util = UserModificationServiceFactory.from(authenticatedUser.getRole());
+
+        if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
+            User targetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            util.changeUserValuesFromDto(targetUser, userDto);
+            userService.commit(targetUser);
+            return util.userAsDto(targetUser);
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges",
                     authenticatedUser.getUserName(), authenticatedUser.getRealm());
             log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
             throw new AccessDeniedException("Not allowed to modify other users data");
         }
-        userService.storeUser(editTargetUser);
-        return editTargetUser.asDto();
+//        var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
+//        User editTargetUser = null;
+//        if (UserRole.ADMIN.getEnum(authority.getAuthority()) == UserRole.ADMIN) {
+//            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+//            User.adminUserDtoEdit(editTargetUser, userDto);
+//        } else if (selfEdit) {
+//            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+//            User.defaultUserDtoEdit(editTargetUser, userDto);
+//        } else {
+//            log.info("User {}@{} tries to modify the data of other user without admin privileges",
+//                    authenticatedUser.getUserName(), authenticatedUser.getRealm());
+//            log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
+//            throw new AccessDeniedException("Not allowed to modify other users data");
+//        }
+//        userService.storeUser(editTargetUser);
+//        return editTargetUser.asDto();
     }
-
     @Operation(summary = "Gets all users from all realms", security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsers() {
         var list = userService.findAllUsers();
-        var dtoArray = new UserDto[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            dtoArray[i] = list.get(i).asDto();
-        }
-        return dtoArray;
+        return userListToDtoList(list);
     }
 
     @Operation(summary = "Gets all users from a single realm", security = { @SecurityRequirement(name = "bearer-key") })
@@ -139,11 +153,12 @@ public class UserController {
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
         var list = userService.findAllUsersInRealm(realm);
-        var dtoArray = new UserDto[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            dtoArray[i] = list.get(i).asDto();
-        }
-        return dtoArray;
+        return userListToDtoList(list);
+    }
+
+    private static UserDto[] userListToDtoList(List<User> userList) {
+        var util = UserModificationServiceFactory.from(UserRole.ADMIN);
+        return userList.stream().map(util::userAsDto).toArray(size -> new UserDto[size]);
     }
 
     @Operation(summary = "Gets a unique user", security = { @SecurityRequirement(name = "bearer-key") })
@@ -154,15 +169,15 @@ public class UserController {
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}/{username}")
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
             Authentication auth) throws  MissingDataException {
+        
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
         User authenticatedUser = transformer.extendFromAuthentication(auth);
-        if (username.equals(authenticatedUser.getUserName()) || role == UserRole.ADMIN) {
-            var user = userService.findUserByNameAndRealm(username, realm);
-            return user.asDto();
-        } else {
+        if (!username.equals(authenticatedUser.getUserName()) || role != UserRole.ADMIN) {
             throw new AccessDeniedException("Modifying this user is not allowed..");
         }
+        var user = userService.findUserByNameAndRealm(username, realm);
+        return UserModificationServiceFactory.from(role).userAsDto(user);
     }
 
     @Operation(summary = "Deletes a user", security = { @SecurityRequirement(name = "bearer-key") })
@@ -185,12 +200,12 @@ public class UserController {
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
     @ExceptionHandler(AccessDeniedException.class)
     public ErrorDto handleAccessViolationException(AccessDeniedException ex) {
-        return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.FORBIDDEN, servletContext.getContextPath())
-                .build();
+        return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.FORBIDDEN,
+                servletContext.getContextPath()).build();
     }
 
     /**
-     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * Exception handler for {@link UserController} for exceptions which occur during user edit. 
      * @param 
      * @return ErrorDTO with all collected information about the error
      */
@@ -202,18 +217,18 @@ public class UserController {
     }
 
     /**
-     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * Exception handler for {@link UserController} for exceptions which occur during user edit.
      * @param 
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.CONFLICT)
-    @ExceptionHandler(UserEditException.class)
+    @ExceptionHandler({UserEditException.class, DuplicateEntryException.class })
     public ErrorDto handleUserEditException(UserEditException ex) {
         return new ErrorDtoBuilder().newError(null, HttpStatus.CONFLICT, servletContext.getContextPath()).build();
     }
 
     /**
-     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
+     * Exception handler for {@link UserController} for exceptions which occur during user edit. 
      * @param 
      * @return ErrorDTO with all collected information about the error
      */

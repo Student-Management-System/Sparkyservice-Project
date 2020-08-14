@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 
 /**
  * Business search logic for {@link User} and {@link LocalUserDetails}. This class is also used for a 
@@ -22,15 +22,25 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
  * 
  * @author Marcel
  */
-public interface IUserService extends UserDetailsService {
+public interface UserStorageService extends UserDetailsService {
 
     /**
-     * Safe user in a persistent way (most likely SQL).
+     * Safes the given user to a persistent storage. When the entry already exists it changes the values.
      * 
      * @param <T> A class which must extends from {@link User} (which holds the JPA definitions).
      * @param user Is saved in a persistence way (must hold username and realm)
      */
-    <T extends User> void storeUser(@Nonnull T user);
+    <T extends User> void commit(@Nonnull T user);
+
+    /**
+     * Creates a new entry in the storage for the given user. 
+     * 
+     * @param <T> 
+     * @param user
+     * @return The created and saved user 
+     */
+    @Secured(UserRole.FullName.ADMIN)
+    @Nonnull LocalUserDetails addUser(@Nonnull String username);
 
     /**
      * Searches a data storage for an explicit user identified by unique id. 
@@ -67,7 +77,7 @@ public interface IUserService extends UserDetailsService {
      * @param user The user to check
      * @return <code>true</code> if the user was already stored in the past, <code>false</code> otherwise
      */
-    boolean isUserInDatabase(@Nullable User user);
+    boolean isUserInStorage(@Nullable User user);
 
     /**
      * Is used by SpringSecurity for getting user details with a given username. It returns a single UserDetails

@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.util;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A collection of small util methods.
@@ -47,4 +49,20 @@ public class SparkyUtil {
             .get()
         );
     }
+
+    /**
+     * Converts a date to a string in the format: MM/dd/yyyy HH:mm:ss
+     * 
+     * @param expDate Desired date
+     * @return the desired date as String
+     */
+    public static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
+        return notNull(
+            Optional.of("MM/dd/yyyy HH:mm:ss")
+                .map(SimpleDateFormat::new)
+                .map(dateFormat -> dateFormat.format(expDate))
+                .get()
+            );
+    }
+
 }

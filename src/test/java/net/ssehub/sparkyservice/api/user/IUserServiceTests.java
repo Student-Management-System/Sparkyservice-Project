@@ -26,10 +26,13 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserRepository;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
- * Tests for {@link IUserService} implementation. This test class should use the same implementation bean which 
+ * Tests for {@link UserStorageService} implementation. This test class should use the same implementation bean which 
  * is normally used in the application to make the test useful. 
  * The repository will be mocked to be sure, only the correct objects are used. 
  *
@@ -40,7 +43,7 @@ import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
 public class IUserServiceTests {
     
     @Autowired
-    private IUserService userService;
+    private UserStorageService userService;
 
     @MockBean
     private UserRepository mockedRepository;
@@ -104,7 +107,7 @@ public class IUserServiceTests {
     }
     
     /**
-     * Test for {@link UserServiceImpl#userExistsInDatabase(User)}.
+     * Test for {@link UserStorageImpl#userExistsInDatabase(User)}.
      * 
      * @throws UserNotFoundException
      */
@@ -112,7 +115,7 @@ public class IUserServiceTests {
     public void userExistTest() throws UserNotFoundException {
         when(mockedRepository.findById(1)).thenReturn(user);
         user.ifPresent(u -> {
-            assertTrue(userService.isUserInDatabase(u));
+            assertTrue(userService.isUserInStorage(u));
         });
     }
     
@@ -121,7 +124,7 @@ public class IUserServiceTests {
         when(mockedRepository.findById(0)).thenReturn(Optional.empty());
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(user);
         user.ifPresent(u -> {
-            assertTrue(userService.isUserInDatabase(u));
+            assertTrue(userService.isUserInStorage(u));
         });
     }
     
@@ -130,14 +133,14 @@ public class IUserServiceTests {
         when(mockedRepository.findById(0)).thenReturn(Optional.empty());
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(Optional.empty());
         user.ifPresent(u -> {
-            assertFalse(userService.isUserInDatabase(u));
+            assertFalse(userService.isUserInStorage(u));
         });
     }
     
     @Test
     public void userExistNullTest() throws UserNotFoundException {
         user.ifPresent(u -> {
-            assertFalse(userService.isUserInDatabase(null));
+            assertFalse(userService.isUserInStorage(null));
         });
     }
     
@@ -162,7 +165,7 @@ public class IUserServiceTests {
     public void storeUserBlankTest() {
         var user = new User("", null, UserRealm.UNKNOWN, false, UserRole.DEFAULT);
         assertThrows(IllegalArgumentException.class, 
-                () -> userService.storeUser(user));
+                () -> userService.commit(user));
     }
 
     @Test
