@@ -140,6 +140,7 @@ public class UserController {
 //        userService.storeUser(editTargetUser);
 //        return editTargetUser.asDto();
     }
+
     @Operation(summary = "Gets all users from all realms", security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
@@ -166,15 +167,16 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "User is not authorized"),
             @ApiResponse(responseCode = "401", description = "User is not authenticated "),
             @ApiResponse(responseCode = "404", description = "The desired user or realm was not found") })
-    @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}/{username}")
+    @GetMapping(ControllerPath.USERS_GET_SINGLE)
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
-            Authentication auth) throws  MissingDataException {
+            Authentication auth) throws MissingDataException {
         
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
         User authenticatedUser = transformer.extendFromAuthentication(auth);
-        if (!username.equals(authenticatedUser.getUserName()) || role != UserRole.ADMIN) {
-            throw new AccessDeniedException("Modifying this user is not allowed..");
+        if (role != UserRole.ADMIN && !username.equals(authenticatedUser.getUserName())) {
+            log.info("The user \" {} \" tried to access not allowed user data", username);
+            throw new AccessDeniedException("Modifying this user is not allowed.");
         }
         var user = userService.findUserByNameAndRealm(username, realm);
         return UserModificationServiceFactory.from(role).userAsDto(user);

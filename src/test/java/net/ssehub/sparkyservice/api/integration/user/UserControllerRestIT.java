@@ -7,13 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,11 +83,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void securityAddUserAdminAccessTest() throws Exception {
-        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
+        String username = "testuser";
         this.mvc
             .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content(content)
+                    .content(username)
                     .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isCreated());
     }
@@ -105,11 +102,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void addUserAdminSuccessTest() throws Exception {
-        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
+        String username = "testuser";
         MvcResult result = this.mvc
             .perform(put(ControllerPath.USERS_PUT)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(content)
+            .content(username)
             .accept(MediaType.APPLICATION_JSON))
             .andReturn();
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
@@ -130,11 +127,11 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "nonAdminUser", roles = "DEFAULT")
     public void securityAddUserNonAdminTest() throws Exception {
-        String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/NewUserDto.json.txt"));
+        String username = "testuser";
         this.mvc
             .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content(content)
+                    .content(username)
                     .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isForbidden());
     }
@@ -217,7 +214,8 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
         
-        assertEquals(200, result.getResponse().getStatus());
+        assertEquals(200, result.getResponse().getStatus(), "A single user couldn't loaded via controller - permission "
+                + "problems ? ");
         String dtoString = result.getResponse().getContentAsString();
         assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoString, UserDto.class), 
                 "Some wrong values was returned from the controller. The content is not a valid json dto"); 
