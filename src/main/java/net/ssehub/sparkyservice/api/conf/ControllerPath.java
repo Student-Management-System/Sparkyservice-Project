@@ -1,7 +1,7 @@
 package net.ssehub.sparkyservice.api.conf;
 
 public final class ControllerPath {
-    public static final String GLOBAL_PREFIX = "/api/v0";
+    public static final String GLOBAL_PREFIX = "/api/v1";
     public static final String HEARTBEAT = GLOBAL_PREFIX + "/heartbeat"; 
 
     public static final String SWAGGER = "swagger-ui.html";
