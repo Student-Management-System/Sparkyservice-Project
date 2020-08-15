@@ -1,10 +1,12 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,10 @@ public class LockedAccountsAuthorizeIT {
     @Qualifier("testUser")
     private User testUser;
 
+    @Autowired
+    @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
+    private Set<String> lockedJwt;
+
     /**
      * Test configuration class for early bean modification.
      * 
@@ -131,6 +137,8 @@ public class LockedAccountsAuthorizeIT {
     public void routingJwtLockedTest() throws Exception {
         String jwtToken = testUser.getProfileConfiguration().getPayload();
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
+        
+        assertFalse(lockedJwt.isEmpty(), "Testsetup is wrong. No token is locked");
         this.mvc
             .perform(
                 get(PROTECTED_PATH)
