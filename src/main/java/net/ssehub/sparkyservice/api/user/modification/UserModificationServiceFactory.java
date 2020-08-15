@@ -8,6 +8,7 @@ public final class UserModificationServiceFactory {
      * Disabled.
      */
     private UserModificationServiceFactory() {
+        throw new Error();
     }
 
     /**
@@ -21,7 +22,7 @@ public final class UserModificationServiceFactory {
         UserModifcationService util;
         switch(role) {
         case ADMIN:
-            util = new AdminUserModificationImpl();
+            util = new AdminUserModificationImpl(new DefaultUserModificationImpl());
             break;
         case SERVICE:
         case DEFAULT:

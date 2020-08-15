@@ -28,8 +28,7 @@ class DefaultUserModificationImpl implements UserModifcationService {
                 .filter(LocalUserDetails.class::isInstance)
                 .map(LocalUserDetails.class::cast)
                 .filter(u -> u.getEncoder().matches(passwordDto.oldPassword, u.getPassword()))
-                .ifPresent(u -> UserModifcationService.applyPassword(notNull(u), localNewPassword)); //check if pass by reference TODO
-//            UserUtils.applyPassword(databaseUser, passwordDto.newPassword);
+                .ifPresent(u -> UserModifcationService.applyPassword(notNull(u), localNewPassword));
             }
         }
     }

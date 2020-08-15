@@ -40,7 +40,7 @@ public class AdminModificationTests {
     private AdminUserModificationImpl modificationService;
 
     /**
-     * Access a (default) constructur of the user class in order to create new
+     * Access the (default) constructor of the user class in order to create new
      * instances during test cases. This is done to minimize the dependencies to
      * external factory methods.
      * 
@@ -149,7 +149,7 @@ public class AdminModificationTests {
     public void userAsDtoTest() throws Exception {
         var userDto = ChangePasswordValidationTest.createExampleDto();
         LocalUserDetails user = constructor.newInstance();
-
+        userDto.role = UserRole.ADMIN;
         modificationService.changeUserValuesFromDto(user, userDto);
         var modifiedDto = modificationService.userAsDto(user);
         assertDtoValuesEquals(modifiedDto, userDto);

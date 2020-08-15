@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.user.modification;
 
 import javax.annotation.Nullable;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
@@ -15,7 +16,21 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @author marcel
  */
 @Service
-class AdminUserModificationImpl extends DefaultUserModificationImpl implements UserModifcationService {
+class AdminUserModificationImpl implements UserModifcationService {
+
+    @Autowired
+    private final UserModifcationService lowerPermService;
+
+    /**
+     * An admin modification service. Set a lower permissions service where this implementation can inherit permissions
+     * from.
+     * 
+     * @param lowerPermService
+     */
+    @Autowired
+    public AdminUserModificationImpl(UserModifcationService lowerPermService) {
+        this.lowerPermService = lowerPermService;
+    }
 
     /**
      * {@inheritDoc}.
@@ -47,7 +62,6 @@ class AdminUserModificationImpl extends DefaultUserModificationImpl implements U
             if (localNewPassword != null) {
                 UserModifcationService.applyPassword(databaseUser, localNewPassword);
             }
-
         }
     }
 
@@ -55,10 +69,11 @@ class AdminUserModificationImpl extends DefaultUserModificationImpl implements U
      * Everything of the user as DTO including expiraton date and payload.
      * 
      * @param user
+     * @return The given user as DTO with all fields.
      */
     public UserDto userAsDto(User user) {
         PersonalSettings settings = user.getProfileConfiguration();
-        UserDto dto = super.userAsDto(user);
+        UserDto dto = lowerPermService.userAsDto(user);
         dto.settings.payload = settings.getPayload(); // is not done with Default user permissions
         dto.expirationDate = user.getExpirationDate().orElse(null);
         return dto;
@@ -67,6 +82,6 @@ class AdminUserModificationImpl extends DefaultUserModificationImpl implements U
     @Override
     public <T extends User> void setPermissionProvider(User user) {
         // TODO Auto-generated method stub
-        
+
     }
 }

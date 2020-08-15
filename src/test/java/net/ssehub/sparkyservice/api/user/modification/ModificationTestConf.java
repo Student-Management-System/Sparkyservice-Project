@@ -21,6 +21,11 @@ public class ModificationTestConf {
      */
     @Bean
     public AdminUserModificationImpl adminModificationService() {
-        return new AdminUserModificationImpl();
+        return new AdminUserModificationImpl(new DefaultUserModificationImpl());
+    }
+    
+    @Bean
+    public DefaultUserModificationImpl defaultModificationService() {
+        return new DefaultUserModificationImpl();
     }
 }

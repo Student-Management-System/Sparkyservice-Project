@@ -36,7 +36,7 @@ import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
-import net.ssehub.sparkyservice.api.user.storage.UserRepository;
+import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
 
 /**
  * Tests if locked users can't authorize. The locked user list is only loaded during spring boots startup, so a list of
@@ -81,7 +81,7 @@ public class LockedAccountsAuthorizeIT {
         private JwtSettings jwtConf; 
 
         @MockBean
-        private UserRepository mockedRepository;
+        private TestingUserRepository mockedRepository;
 
         @Autowired
         @Qualifier("testUser")
