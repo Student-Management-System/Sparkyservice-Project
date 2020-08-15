@@ -50,6 +50,8 @@ import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
+ * Rest controller for add, edit and view user data. 
+ * 
  * @author Marcel
  */
 @RestController
@@ -62,10 +64,10 @@ public class UserController {
     private ServletContext servletContext;
 
     @Autowired
-    private UserStorageService userService;
+    private UserStorageService storageService;
 
     @Autowired
-    private UserTransformerService transformer;
+    private UserTransformerService transformerService;
 
     /**
      * Creates a new user in the LOCAL realm. 
@@ -80,7 +82,7 @@ public class UserController {
     @Secured(UserRole.FullName.ADMIN)
     public UserDto addLocalUser(@RequestBody @NotNull @Nonnull String username) throws UserEditException {
         try {
-            LocalUserDetails newUser = userService.addUser(username);
+            LocalUserDetails newUser = storageService.addUser(username);
             log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
             return UserModificationServiceFactory.from(UserRole.ADMIN).userAsDto(newUser);
         } catch (DuplicateEntryException e) {
@@ -107,15 +109,15 @@ public class UserController {
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
 
-        User authenticatedUser = transformer.extendFromAuthentication(auth);
+        User authenticatedUser = transformerService.extendFromAuthentication(auth);
         Predicate<User> selfEdit = user -> user.getUserName().equals(userDto.username) 
                 && user.getRealm().equals(userDto.realm);
         UserModifcationService util = UserModificationServiceFactory.from(authenticatedUser.getRole());
 
         if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
-            User targetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            User targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
             util.changeUserValuesFromDto(targetUser, userDto);
-            userService.commit(targetUser);
+            storageService.commit(targetUser);
             return util.userAsDto(targetUser);
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges",
@@ -145,7 +147,7 @@ public class UserController {
     @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsers() {
-        var list = userService.findAllUsers();
+        var list = storageService.findAllUsers();
         return userListToDtoList(list);
     }
 
@@ -153,7 +155,7 @@ public class UserController {
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}")
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
-        var list = userService.findAllUsersInRealm(realm);
+        var list = storageService.findAllUsersInRealm(realm);
         return userListToDtoList(list);
     }
 
@@ -173,12 +175,12 @@ public class UserController {
         
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
-        User authenticatedUser = transformer.extendFromAuthentication(auth);
+        User authenticatedUser = transformerService.extendFromAuthentication(auth);
         if (role != UserRole.ADMIN && !username.equals(authenticatedUser.getUserName())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
-        var user = userService.findUserByNameAndRealm(username, realm);
+        var user = storageService.findUserByNameAndRealm(username, realm);
         return UserModificationServiceFactory.from(role).userAsDto(user);
     }
 
@@ -191,7 +193,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "User is not authenticated "),
             @ApiResponse(responseCode = "404", description = "The desired user was not found") })
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
-        userService.deleteUser(username, realm);
+        storageService.deleteUser(username, realm);
     }
 
     /**
