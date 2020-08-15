@@ -18,9 +18,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
+import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
+import net.ssehub.sparkyservice.api.auth.SparkyLdapUserDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
@@ -130,12 +132,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .roles(UserRole.ADMIN.name());
         }
         auth.userDetailsService(dbUserService);
+        var ldapMapper = new SparkyLdapUserDetailsMapper();
         if (ldapEnabled) {
             if (ldapAd) {
                 ActiveDirectoryLdapAuthenticationProvider adProvider = 
                         new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
                 adProvider.setConvertSubErrorCodesToExceptions(true);
                 adProvider.setUseAuthenticationRequestCredentials(true);
+                adProvider.setUserDetailsContextMapper(ldapMapper);
                 if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
                     adProvider.setSearchFilter(ldapUserDnPattern);
                 }
@@ -148,7 +152,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .managerDn(ldapSecurityPrincipal)
                     .managerPassword(ldapPrincipalPassword)
                     .and()
-                    .userDnPatterns(ldapUserDnPattern);
+                    .userDnPatterns(ldapUserDnPattern)
+                    .userDetailsContextMapper(ldapMapper);
             }
         }
     }

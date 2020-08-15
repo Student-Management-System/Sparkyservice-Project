@@ -22,6 +22,7 @@ import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.LdapUser;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
@@ -45,12 +46,11 @@ public class HeavyUserTransformerImpl implements UserTransformerService {
      */
     @Override
     public @Nonnull User extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException {
-        if (details instanceof LdapUserDetails) {
+        if (details instanceof LdapUser) {
             try {
-                return userSerivce.findUserByNameAndRealm(details.getUsername(), UserRealm.LDAP);
-            } catch (UserNotFoundException e) {
-                // probably the first time this user is authenticated?
-                return new User(notNull(details.getUsername()), null, UserRealm.LDAP, true, UserRole.DEFAULT);
+                return new LdapUser(userSerivce.findUserByNameAndRealm(details.getUsername(), UserRealm.LDAP));
+            } catch (UserNotFoundException e) { // probably the first time this user is authenticated?
+                return (LdapUser) details;
             }
         } else if (details instanceof org.springframework.security.core.userdetails.User) {
             return createMemoryUser((org.springframework.security.core.userdetails.User) details);
