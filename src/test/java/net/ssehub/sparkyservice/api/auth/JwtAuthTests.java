@@ -1,11 +1,9 @@
 package net.ssehub.sparkyservice.api.auth;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -16,8 +14,8 @@ import javax.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -53,8 +51,8 @@ public class JwtAuthTests {
         User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
-        assertNotNull(authTokenNull);
+        var authToken = JwtAuth.readJwtToken(token, confValues.getSecret());
+        assertTrue(authToken.isPresent());
     }
 
     @Test
@@ -68,10 +66,8 @@ public class JwtAuthTests {
         user.setUserName(USERNAME);
         user.setRole(UserRole.ADMIN);
         String token = JwtAuth.createJwtToken(user, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
-        
-        assertNotNull(authTokenNull);
-        var authToken = notNull(authTokenNull);
+        UsernamePasswordAuthenticationToken authToken = JwtAuth.readJwtToken(token, confValues.getSecret())
+                .orElseThrow(() -> new IllegalArgumentException("could not read jwt token"));
         var tokenAuthy = (GrantedAuthority) authToken.getAuthorities().toArray()[0];
         assertAll(
             () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
@@ -87,10 +83,8 @@ public class JwtAuthTests {
         User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
-        assumeTrue(authTokenNull != null);
-        var authToken = notNull(authTokenNull);
-
+        UsernamePasswordAuthenticationToken authToken = JwtAuth.readJwtToken(token, confValues.getSecret())
+                .orElseThrow(() -> new IllegalArgumentException("could not read jwt token"));
         assertAll(
             () -> assertTrue(authToken.getPrincipal() instanceof SparkysAuthPrincipal),
             () -> assertEquals(USERNAME, ((SparkysAuthPrincipal) authToken.getPrincipal()).getName()),
@@ -103,10 +97,8 @@ public class JwtAuthTests {
         User user = LocalUserDetails.newLocalUser(USERNAME, "", AUTHORITY);
         user.setRealm(UserRealm.UNKNOWN);
         String token = JwtAuth.createJwtToken(user, confValues);
-        UsernamePasswordAuthenticationToken authTokenNull = JwtAuth.readJwtToken(token, confValues.getSecret());
-        assumeTrue(authTokenNull != null);
-        var authToken = notNull(authTokenNull);
-
+        UsernamePasswordAuthenticationToken authToken = JwtAuth.readJwtToken(token, confValues.getSecret())
+                .orElseThrow(() -> new IllegalArgumentException("could not read jwt token"));
         var tokenAuthy = (GrantedAuthority) authToken.getAuthorities().toArray()[0];
         assertEquals(tokenAuthy.getAuthority(), "ROLE_ADMIN");
     }

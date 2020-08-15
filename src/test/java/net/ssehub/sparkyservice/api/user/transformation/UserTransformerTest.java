@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.transformation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -26,9 +26,10 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 @ExtendWith(SpringExtension.class) 
@@ -47,14 +48,14 @@ public class UserTransformerTest {
     }
 
     @Autowired
-    private UserTransformer transformer;
+    private UserTransformerService transformer;
 
     /**
      * Maybe the used transformer implementation have to do database operations. For that case, each 
      * test case should provided a mocked repository function.
      */
     @MockBean
-    private UserRepository mockedRepository;
+    private TestingUserRepository mockedRepository;
 
     @Test
     public void extendFromUserDetails() throws UserNotFoundException, MissingDataException {

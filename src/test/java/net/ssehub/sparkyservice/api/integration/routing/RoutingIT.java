@@ -36,9 +36,9 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 //checkstyle: stop exception type check
 public class RoutingIT {
 
+    public static final String PROTECTED_LIST_ROUTE = "/testroutesecure2";
     private static final String FREE_ROUTE = "/testroutefree";
     private static final String PROTECTED_ROUTE = "/testroutesecure/heartbeat";
-    private static final String PROTECTED_LIST_ROUTE = "/testroutesecure2";
 
     @Autowired
     private JwtSettings jwtConf; 
@@ -71,7 +71,7 @@ public class RoutingIT {
             .perform(
                 get(PROTECTED_ROUTE)
                 .accept(MediaType.ALL))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isForbidden());
     }
 
     /**
@@ -111,8 +111,8 @@ public class RoutingIT {
     }
 
     /**
-     * Tests if an authenticated user which is not authorized can't access the path. The authorized configuration has a
-     * set of users. All of these users must access the path in order to complete this test.
+     * Tests if an authenticated user which is not authorized for the requested resource can't access it. 
+     * The ACL has a set of users and all of these users must access the path in order to complete this test.
      *      
      * @throws Exception
      */
@@ -120,7 +120,6 @@ public class RoutingIT {
     public void authorizedListProtectedRouteTest() throws Exception {
         var user1 = LocalUserDetails.newLocalUser("user1", "", UserRole.DEFAULT);
         var user2 = LocalUserDetails.newLocalUser("user2", "", UserRole.DEFAULT);
-        var user3 = LocalUserDetails.newLocalUser("user3", "", UserRole.DEFAULT);
         String jwtToken = JwtAuth.createJwtToken(user1, jwtConf);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
@@ -139,7 +138,9 @@ public class RoutingIT {
                    .accept(MediaType.ALL))
             .andExpect(status().is2xxSuccessful());
 
-        jwtToken = JwtAuth.createJwtToken(user3, jwtConf);
+        // Negative test to check if this mechanism still work even with a list.
+        var user3 = LocalUserDetails.newLocalUser("user3", "", UserRole.DEFAULT);
+        jwtToken = JwtAuth.createJwtToken(user3, jwtConf); 
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -148,5 +149,4 @@ public class RoutingIT {
                    .accept(MediaType.ALL))
             .andExpect(status().is4xxClientError());
     }
-
 }

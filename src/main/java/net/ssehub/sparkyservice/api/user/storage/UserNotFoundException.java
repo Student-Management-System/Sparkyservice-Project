@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.exceptions;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import org.springframework.security.core.AuthenticationException;
 

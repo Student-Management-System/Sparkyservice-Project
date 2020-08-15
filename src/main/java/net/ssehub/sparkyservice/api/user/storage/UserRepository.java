@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user;
+package net.ssehub.sparkyservice.api.user.storage;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,11 +8,13 @@ import org.springframework.stereotype.Repository;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 @Repository
-interface UserRepository extends CrudRepository<User, Integer>{
+interface UserRepository extends CrudRepository<User, Integer> {
     Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
     Optional<List<User>> findByuserName(String username);
     Iterable<User> findAll();
     Iterable<User> findByRealm(UserRealm realm);
+    Iterable<User> findByRole(UserRole role);
 }

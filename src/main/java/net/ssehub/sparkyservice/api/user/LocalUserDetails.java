@@ -20,11 +20,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.dto.NewUserDto;
 
 /**
  * Class for authentication with SpringSecurity.  This class should be mainly used for authenticated users which are 
@@ -49,6 +47,7 @@ public class LocalUserDetails extends User implements UserDetails {
     /**
      * Default constructor only used for testing purposes.
      */
+    @Deprecated
     LocalUserDetails() {
         super("", new Password(""), UserRealm.UNKNOWN, false, UserRole.DEFAULT);
     }
@@ -94,32 +93,6 @@ public class LocalUserDetails extends User implements UserDetails {
         newUser.expirationTime = LocalDate.now().plusMonths(6);
         return newUser;
     }
-    
-    
-    /**
-     * Performs a transformation from DTO object to a local user. 
-     * 
-     * @param newUser - Valid DTO (username and password required)
-     * @return User with the values of the DTO
-     */
-    public static LocalUserDetails createNewUserFromDto(NewUserDto newUser) {
-        String username = newUser.username;
-        String password = newUser.password;
-        if (username != null && password != null) {
-            UserRole role = Optional.ofNullable(newUser.role).orElse(UserRole.DEFAULT);
-            LocalUserDetails newLocalUser =  LocalUserDetails.newLocalUser(username, password, notNull(role));
-            final var settings = newUser.personalSettings;
-            if (newUser.expirationTime != null) {
-                newLocalUser.expirationTime = newUser.expirationTime;
-            }
-            if (settings != null) {                
-                PersonalSettings.applyPersonalSettingsDto(newLocalUser, settings);
-            }
-            return newLocalUser;
-        } else {
-            throw new IllegalArgumentException("The NewUserDto hast null values which are not allowed");
-        }
-    }
 
     /**
      * Encodes a raw string to bcrypt hash sets the local password entity.
@@ -127,17 +100,9 @@ public class LocalUserDetails extends User implements UserDetails {
      * @return the hashed value - never null but may be empty
      */
     public String encodeAndSetPassword(String rawPassword) {
-        var passwordEntityLocal = passwordEntity;
-        if (passwordEntityLocal != null) {
-            @Nonnull final String encodedPass = encode(rawPassword);
-            passwordEntityLocal.setPasswordString(encodedPass);
-            passwordEntityLocal.setHashAlgorithm(DEFAULT_ALGO);
-        } else {
-            @Nonnull final String encodedPass = encode(rawPassword);
-            passwordEntityLocal = new Password(encodedPass, DEFAULT_ALGO);
-        }
-        setPasswordEntity(passwordEntityLocal);
-        return getPassword();
+        final Password passwordEntity = new Password(encode(rawPassword), DEFAULT_ALGO);
+        this.passwordEntity = passwordEntity;
+        return passwordEntity.getPasswordString();
     }
 
     /**
@@ -206,7 +171,7 @@ public class LocalUserDetails extends User implements UserDetails {
      */
     @Override
     public boolean isAccountNonExpired() {
-        return getExpirationTime().map(date -> date.isAfter(LocalDate.now())).orElse(true);
+        return getExpirationDate().map(date -> date.isAfter(LocalDate.now())).orElse(true);
     }
 
     /**

@@ -1,7 +1,10 @@
 package net.ssehub.sparkyservice.api.conf;
 
 
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +23,14 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
+/**
+ * Springs security configuration loaded at startup.
+ * 
+ * @author marcel
+ */
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
@@ -63,10 +72,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtSettings jwtSettings;
     
     @Autowired
-    private UserServiceImpl storedUserDetailService;
+    private UserStorageImpl dbUserService;
+    
+    @Autowired
+    @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
+    private Set<String> lockedJwtToken;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserTransformerService transformator;
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -88,8 +104,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
             .and()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storedUserDetailService))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtSettings))
+                .addFilter(
+                        new JwtAuthenticationFilter(authenticationManager(), jwtSettings, dbUserService, transformator)
+                    )
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
@@ -107,11 +125,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 throw new Exception("Set recovery.password or disable the account");
             }
             auth.inMemoryAuthentication()
-            .withUser(inMemoryUser)
-            .password(passwordEncoder.encode(inMemoryPassword))
-            .roles(UserRole.ADMIN.name());
+                .withUser(inMemoryUser)
+                .password(passwordEncoder.encode(inMemoryPassword))
+                .roles(UserRole.ADMIN.name());
         }
-        auth.userDetailsService(storedUserDetailService);
+        auth.userDetailsService(dbUserService);
         if (ldapEnabled) {
             if (ldapAd) {
                 ActiveDirectoryLdapAuthenticationProvider adProvider = 
@@ -125,12 +143,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 auth.eraseCredentials(false);
             } else {
                 auth.ldapAuthentication()
-                .contextSource()
-                .url(ldapUrls + ldapBaseDn)
-                .managerDn(ldapSecurityPrincipal)
-                .managerPassword(ldapPrincipalPassword)
-                .and()
-                .userDnPatterns(ldapUserDnPattern);
+                    .contextSource()
+                    .url(ldapUrls + ldapBaseDn)
+                    .managerDn(ldapSecurityPrincipal)
+                    .managerPassword(ldapPrincipalPassword)
+                    .and()
+                    .userDnPatterns(ldapUserDnPattern);
             }
         }
     }
@@ -138,6 +156,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean("authenticationManager")
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
-            return super.authenticationManagerBean();
+        return super.authenticationManagerBean();
     }
 }

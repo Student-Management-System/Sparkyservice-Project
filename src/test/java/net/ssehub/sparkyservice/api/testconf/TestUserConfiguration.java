@@ -3,25 +3,17 @@ package net.ssehub.sparkyservice.api.testconf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.UserServiceImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 @TestConfiguration
 public class TestUserConfiguration {
-
-    @Bean(name = "storedUserDetailsService")
-    @Primary
-    public IUserService iStoredUserService() {
-        return new UserServiceImpl();
-    }
 
     @Bean(name = "defaultUserService")
     public UserDetailsService defaultDetailsService() {
@@ -37,7 +29,7 @@ public class TestUserConfiguration {
         UserRole role;
 
         @Autowired
-        private IUserService service;
+        private UserStorageService service;
 
         public TestUserDetailsService(UserRole role) {
             this.role = role;
@@ -47,7 +39,7 @@ public class TestUserConfiguration {
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
             var basicUser = LocalUserDetails.newLocalUser(NullHelpers.notNull(username), "abcdefgh", 
                     NullHelpers.notNull(role));
-            service.storeUser(basicUser);
+            service.commit(basicUser);
             return basicUser;
         }
     }

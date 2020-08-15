@@ -21,4 +21,6 @@ public class SettingsDto {
     
     //@Email // TODO Marcel: fix exception
     public String email_address;
+
+    public String payload;
 }

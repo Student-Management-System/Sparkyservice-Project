@@ -25,14 +25,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.IUserService;
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.exceptions.MissingDataException;
-import net.ssehub.sparkyservice.api.user.exceptions.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
@@ -47,7 +47,7 @@ public class AuthController {
     @Autowired
     private ServletContext servletContext;
     @Autowired
-    private IUserService userService;
+    private UserTransformerService transformator;
     @Autowired
     private JwtSettings jwtConf;
 
@@ -107,7 +107,7 @@ public class AuthController {
             }
             throw new AuthenticationException();
         }
-        var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
+        var user = transformator.extendFromAuthentication(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = user.asDto();
         if (auth.getCredentials() instanceof TokenDto) {
@@ -135,18 +135,17 @@ public class AuthController {
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
     public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException {
         if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
-            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
-            if (auth != null) {
-                var user = userService.getDefaultTransformer().extendFromAuthentication(auth);
-                var dto = new AuthenticationInfoDto();
-                dto.user = user.asDto();
-                dto.token = (TokenDto) auth.getCredentials();
-                return dto;
-            }
+            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret())
+                    .orElseThrow(AuthenticationException::new); // should throw something
+            var user = transformator.extendFromAuthentication(auth);
+            var dto = new AuthenticationInfoDto();
+            dto.user = user.asDto();
+            dto.token = (TokenDto) auth.getCredentials();
+            return dto;
         }
         throw new AuthenticationException();
     }
-
+    
     /**
      * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
      * on the thrown exception.

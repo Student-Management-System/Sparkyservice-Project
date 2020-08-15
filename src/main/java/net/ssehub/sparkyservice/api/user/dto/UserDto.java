@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
 //CHECKSTYLE:OFF
 public class UserDto implements Serializable {
@@ -19,6 +20,7 @@ public class UserDto implements Serializable {
         public String oldPassword;
 
         @NotBlank
+        @ValidPassword
         public String newPassword; 
     }
 

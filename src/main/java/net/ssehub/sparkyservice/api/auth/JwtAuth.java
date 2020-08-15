@@ -2,15 +2,13 @@ package net.ssehub.sparkyservice.api.auth;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -30,6 +28,8 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
+import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
  * Helper class for working with JWT Tokens during Authentication.
@@ -37,8 +37,6 @@ import net.ssehub.sparkyservice.api.user.dto.TokenDto;
  * @author marcel
  */
 public class JwtAuth {
-    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
-
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
     /**
@@ -86,11 +84,12 @@ public class JwtAuth {
      */
     public static @Nonnull String createJwtToken(User user, JwtSettings jwtConf) {
         List<UserRole> roles = Stream.of(user.getRole()).map(e -> e).collect(Collectors.toList());
+        java.util.Date expDate = UserModificationServiceFactory.from(user.getRole()).createJwtExpirationDate(user);
         var signingKey = jwtConf.getSecret().getBytes();
         var token = Jwts.builder().signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
                 .setHeaderParam("typ", jwtConf.getType()).setIssuer(jwtConf.getIssuer())
                 .setAudience(jwtConf.getAudience()).setSubject(user.getUserName())
-                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS)).claim("rol", roles)
+                .setExpiration(expDate).claim("rol", roles)
                 .claim("realm", user.getRealm()).compact();
         return notNull(token);
     }
@@ -111,35 +110,28 @@ public class JwtAuth {
      *                  used for encoding
      * @return Springs authentication token
      */
-    public static @Nullable UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token,
+    public static @Nonnull Optional<UsernamePasswordAuthenticationToken> readJwtToken(@Nonnull String token,
             @Nonnull String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
         var parsedToken = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token.replace("Bearer ", ""));
         var username = parsedToken.getBody().getSubject();
-        var authorities = ((List<?>) parsedToken.getBody().get("rol")).stream()
-                .map(authority -> UserRole.DEFAULT.getEnum((String) authority)).collect(Collectors.toList());
+        List<UserRole> authorities = ((List<?>) parsedToken.getBody().get("rol"))
+                .stream()
+                .map(role -> UserRole.DEFAULT.getEnum((String) role))
+                .collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
         var realm = (String) parsedToken.getBody().get("realm");
+        
+        @Nonnull Optional<UsernamePasswordAuthenticationToken> tokenObject = notNull(Optional.empty());
         if (!StringUtils.isEmpty(username)) {
             SparkysAuthPrincipal principal = new AuthPrincipalImplementation(realm, username);
             var tokenDto = new TokenDto();
-            tokenDto.expiration = expirationDateAsString(expiration);
+            tokenDto.expiration = SparkyUtil.expirationDateAsString(expiration);
             tokenDto.token = token;
-            return new UsernamePasswordAuthenticationToken(principal, tokenDto, authorities);
-        } else {
-            return null;
+            tokenObject = notNull(
+                    Optional.of(new UsernamePasswordAuthenticationToken(principal, tokenDto, authorities))
+                );
         }
-    }
-
-    /**
-     * Converts a date to a string.
-     * 
-     * @param expDate Desired date
-     * @return the desired date as String
-     */
-    private static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
-        String pattern = "MM/dd/yyyy HH:mm:ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        return notNull(df.format(expDate));
+        return tokenObject;
     }
 }

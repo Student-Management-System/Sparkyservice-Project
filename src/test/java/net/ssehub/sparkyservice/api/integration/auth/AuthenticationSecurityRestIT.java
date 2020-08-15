@@ -41,9 +41,9 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
-import net.ssehub.sparkyservice.api.user.IUserService;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Tests the whole authentication and authorization (with JWT tokens)
@@ -58,10 +58,8 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 //checkstyle: stop exception type check
 public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase {
 
-    // checkstyle: stop visibility modifier check
     @Autowired
-    public IUserService userService; 
-    // checkstyle: resume visibility modifier check
+    private UserStorageService userService; 
 
     @Autowired
     private WebApplicationContext context;
@@ -217,9 +215,9 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @IntegrationTest
     public void authenticationExpireTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
-        user.setExpirationTime(LocalDate.now().minusDays(1)); // user is expired
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        user.setExpirationDate(LocalDate.now().minusDays(1)); // user is expired
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         this.mvc
@@ -299,8 +297,8 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @IntegrationTest
     public void jwtAuthLocalUserTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
-        userService.storeUser(user);
-        assumeTrue(userService.isUserInDatabase(user));
+        userService.commit(user);
+        assumeTrue(userService.isUserInStorage(user));
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var result = this.mvc

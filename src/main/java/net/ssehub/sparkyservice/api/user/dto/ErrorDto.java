@@ -1,4 +1,5 @@
 package net.ssehub.sparkyservice.api.user.dto;
+
 // checkstyle: stop visibility modifier check
 /**
  * Immutable DTO for errors. This DTO is compatible with default spring error messages. 

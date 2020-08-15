@@ -1,7 +1,13 @@
 package net.ssehub.sparkyservice.api.auth;
 
-import java.io.IOException;
+import static net.ssehub.sparkyservice.api.util.NullHelpers.*;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -22,14 +28,26 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 
+/**
+ * Filter which handles authorization with JWT token.
+ * 
+ * @author marcel
+ */
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
     private final JwtSettings confValues;
-    
+    private final @Nonnull Set<String> lockedJwtToken;
+
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf) {
+        this(authenticationManager, jwtConf, new HashSet<String>());
+    }
+
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
+            @Nullable Set<String> lockedJwtToken) {
         super(authenticationManager);
         confValues = jwtConf;
+        this.lockedJwtToken = notNull(Optional.ofNullable(lockedJwtToken).orElseGet(HashSet::new));
     }
 
     @Override
@@ -44,26 +62,40 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Creates an authentication token for spring with an JWT token which it extracts from the request.
+     * 
+     * @param request
+     * @return Token object with the values of the JWT token
+     */
     private @Nullable UsernamePasswordAuthenticationToken getAuthentication(@Nullable HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken tokenObject = null;
         if (request != null) {
             var token = request.getHeader(confValues.getHeader());            
             if (!StringUtils.isEmpty(token) && token.startsWith(confValues.getPrefix())) {
                 try {
-                    return JwtAuth.readJwtToken(token, confValues.getSecret());
+                    boolean userIsDisabled = lockedJwtToken.stream().anyMatch(e -> token.contains(e)); //wildcard possible
+                    if (userIsDisabled) {
+                        LOG.warn("Locked token tried to authorize: {}", token);
+                    } else {
+                        tokenObject = JwtAuth.readJwtToken(token, confValues.getSecret())
+                                .orElseThrow(IllegalArgumentException::new);
+                    }
                 } catch (ExpiredJwtException exception) {
-                    log.warn("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
+                    LOG.warn("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
                 } catch (UnsupportedJwtException exception) {
-                    log.warn("Request to parse unsupported JWT : {} failed : {}", token, exception.getMessage());
+                    LOG.warn("Request to parse unsupported JWT : {} failed : {}", token, exception.getMessage());
                 } catch (MalformedJwtException exception) {
-                    log.warn("Request to parse invalid JWT : {} failed : {}", token, exception.getMessage());
+                    LOG.warn("Request to parse invalid JWT : {} failed : {}", token, exception.getMessage());
                 } catch (SignatureException exception) {
-                    log.warn("Request to parse JWT with invalid signature : {} failed : {}", token, exception.getMessage());
+                    LOG.warn("Request to parse JWT with invalid signature : {} failed : {}", 
+                            token, exception.getMessage());
                 } catch (IllegalArgumentException exception) {
-                    log.warn("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
+                    LOG.warn("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
                 }
             }
         }
-        return null;
+        return tokenObject;
     }
 }
 
