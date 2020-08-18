@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
+import java.util.Optional;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,6 +11,23 @@ import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
+
+/**
+ * JPA representation of settings. 
+ * In the current state of this application, this object is always used as generel representation of settings in
+ * the whole project because it does not contain any logic. 
+ * Disadvantage of this is, that it is hard to keep in sync with the database. Instances of this object must be bound to 
+ * a {@link User}. When saving an instance to a storage, do not use it outside of the bounded user object (for example
+ * in {@link SparkyUser}). 
+ * <br><br>
+ * Strictly separate the use cases and create a new instance for each of them.
+ * 
+ * @author marcel
+ */
 @Entity
 @Table(name = "user_configuration")
 public class PersonalSettings {
@@ -32,6 +51,24 @@ public class PersonalSettings {
 
     @Column(name = "CONTENT", length = 512)
     private String payload;
+
+    public PersonalSettings() {
+    }
+
+    public PersonalSettings(PersonalSettings copyMe) {
+        this();
+        email_address = copyMe.email_address;
+        email_receive = copyMe.email_receive;
+        wantsAi = copyMe.wantsAi;
+        payload = copyMe.payload;
+    }
+    
+    public PersonalSettings(SettingsDto dto) {
+        email_address = dto.email_address;
+        email_receive = dto.email_receive;
+        wantsAi = dto.wantsAi;
+        payload = dto.payload;
+    }
 
     public int getConfigurationId() {
         return configurationId;
@@ -79,5 +116,28 @@ public class PersonalSettings {
 
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return Optional.ofNullable(object)
+            .filter(PersonalSettings.class::isInstance)
+            .map(PersonalSettings.class::cast)
+            .filter(s -> email_address.equals(s.email_address))
+            .filter(s -> payload.equals(s.payload))
+            .filter(s -> email_receive == s.email_receive)
+            .filter(s -> wantsAi == s.wantsAi)
+            .filter(s -> configurationId == s.configurationId)
+            .isPresent();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+            .append(email_receive)
+            .append(wantsAi)
+            .append(configurationId)
+            .append(email_receive)
+            .toHashCode();
     }
 }

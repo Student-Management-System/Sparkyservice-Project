@@ -37,6 +37,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
 
@@ -69,7 +70,7 @@ public class LockedAccountsAuthorizeIT {
 
     @Autowired
     @Qualifier("testUser")
-    private User testUser;
+    private SparkyUser testUser;
 
     @Autowired
     @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
@@ -91,7 +92,7 @@ public class LockedAccountsAuthorizeIT {
 
         @Autowired
         @Qualifier("testUser")
-        private User testUser;
+        private SparkyUser testUser;
 
         /**
          * Override the default implementation in order to mock the repository and return a locked service account.
@@ -107,7 +108,7 @@ public class LockedAccountsAuthorizeIT {
         public ServiceAccStorageService earlyService() {
             System.out.println("CALL EXT");
             var set = new HashSet<User>();
-            set.add(testUser);
+            set.add(testUser.getJpa());
             when(mockedRepository.findByRole(UserRole.SERVICE)).thenReturn(set);
             return new ServiceAccStorageService();
         }
@@ -118,10 +119,10 @@ public class LockedAccountsAuthorizeIT {
          * @return Returns the test user which holds a locked JWT token as payload.
          */
         @Bean("testUser")
-        public User testUser() {
+        public SparkyUser testUser() {
             var user = LocalUserDetails.newLocalUser(USERNAME, "test", UserRole.SERVICE);
             String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
-            user.getProfileConfiguration().setPayload(jwtToken);
+            user.getSettings().setPayload(jwtToken);
             return user;
         }
         
@@ -135,7 +136,7 @@ public class LockedAccountsAuthorizeIT {
      */
     @IntegrationTest
     public void routingJwtLockedTest() throws Exception {
-        String jwtToken = testUser.getProfileConfiguration().getPayload();
+        String jwtToken = testUser.getSettings().getPayload();
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         
         assertFalse(lockedJwt.isEmpty(), "Testsetup is wrong. No token is locked");
@@ -172,7 +173,7 @@ public class LockedAccountsAuthorizeIT {
      */
     @IntegrationTest
     public void nonAuthorizeLockedJwtTest() throws Exception {
-        String jwtToken = testUser.getProfileConfiguration().getPayload();
+        String jwtToken = testUser.getSettings().getPayload();
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(

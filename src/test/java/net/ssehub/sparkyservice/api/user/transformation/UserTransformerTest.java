@@ -22,11 +22,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
-import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
@@ -61,18 +61,18 @@ public class UserTransformerTest {
     public void extendFromUserDetails() throws UserNotFoundException, MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var userDetails = new org.springframework.security.core.userdetails.User("testuser", "testpass", Arrays.asList(authority));
-        User extendedUser = NullHelpers.notNull(transformer.extendFromAnyPrincipal(userDetails)); // in reality this is maybe null!
+        SparkyUser extendedUser = NullHelpers.notNull(transformer.extendFromAnyPrincipal(userDetails)); // in reality this is maybe null!
         assertAll(
                 () -> assertTrue(extendedUser != null),
-                () -> assertEquals("testuser", extendedUser.getUserName()),
+                () -> assertEquals("testuser", extendedUser.getUsername()),
                 () -> assertEquals(UserRealm.MEMORY, extendedUser.getRealm())
             );
     }
 
     @Test
     public void extendFromSparkyPrincipalTest() {
-        var user = (User) LocalUserDetails.newLocalUser("testUser", "test", UserRole.DEFAULT);
-        var optUser = Optional.ofNullable(user);
+        var user = (SparkyUser) LocalUserDetails.newLocalUser("testUser", "test", UserRole.DEFAULT);
+        var optUser = Optional.ofNullable(user.getJpa());
         when(mockedRepository.findByuserNameAndRealm("testUser", UserRealm.LOCAL)).thenReturn(optUser);
         assertDoesNotThrow(() -> transformer.extendFromSparkyPrincipal(new TestPrincipal()));
     }
@@ -83,14 +83,14 @@ public class UserTransformerTest {
         dto.realm = UserRealm.LOCAL;
         dto.username = "testUser";
         dto.role = UserRole.DEFAULT;
-        var user = (User) LocalUserDetails.newLocalUser("testUser", "test", UserRole.DEFAULT);
-        var optUser = Optional.ofNullable(user);
+        var user = (SparkyUser) LocalUserDetails.newLocalUser("testUser", "test", UserRole.DEFAULT);
+        var optUser = Optional.ofNullable(user.getJpa());
         when(mockedRepository.findByuserNameAndRealm("testUser", UserRealm.LOCAL)).thenReturn(optUser);
         
         var extendedUser = transformer.extendFromUserDto(dto);
         assertAll(
                 () -> assertEquals(dto.role, extendedUser.getRole()),
-                () -> assertEquals(dto.username, extendedUser.getUserName()),
+                () -> assertEquals(dto.username, extendedUser.getUsername()),
                 () -> assertEquals(dto.realm, extendedUser.getRealm())
             );
     }

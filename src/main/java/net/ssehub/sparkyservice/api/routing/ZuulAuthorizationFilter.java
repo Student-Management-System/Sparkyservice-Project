@@ -5,12 +5,15 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
+import org.jooq.lambda.Unchecked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import com.netflix.zuul.context.RequestContext;
 
 import io.jsonwebtoken.io.IOException;
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
+import net.ssehub.sparkyservice.api.auth.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
@@ -45,7 +49,6 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     private ZuulRoutes zuulRoutes;
     
     @Autowired
-    
     private JwtSettings jwtConf;
 
     @Autowired
@@ -62,6 +65,27 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     public int filterOrder() {
         return 999;
     }
+
+    static <T> Consumer<T> consumer(Consumer<T> c) {
+        return arg -> {
+            try {
+                c.accept(arg);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    static <T, R> Function<T, R> function(Function<T, R> f) {
+        return arg -> {
+            try {
+                return f.apply(arg);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
     /**
      * Creates a full identifier.
      * <br>Style: <code>user@REALM</code>
@@ -69,7 +93,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * @param auth - Typically extracted by an JWT token
      * @return fullIdentName
      */
-    private static @Nonnull String getFullIdentNameFromToken(UsernamePasswordAuthenticationToken auth) {
+    private static @Nonnull String getUserIdentifier(UsernamePasswordAuthenticationToken auth) {
         String name = auth.getName();
         var spPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
         UserRealm realm = spPrincipal.getRealm();
@@ -124,8 +148,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         boolean aclDisabled = aclList[0].equalsIgnoreCase(NO_ACL);
         
         if (!aclDisabled) {
-            header
-                .filter(jwtNonLocked)
+            header.filter(jwtNonLocked)
                 .flatMap(this::getAuthenticatedUser)
                 .map(name -> isUsernameAllowed(aclList, notNull(name)))
                 .filter(allow -> allow.booleanValue())
@@ -150,14 +173,14 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      *                   is stored
      * @return Optional Username with. Optional is empty when no valid token was given
      */
-    public @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
+    private @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
         Optional<String> fullUserNameRealm;
         try {
             fullUserNameRealm = Optional.ofNullable(authHeader)
-                    .flatMap(header -> JwtAuth.readJwtToken(notNull(header), jwtConf.getSecret()))
-                    .map(ZuulAuthorizationFilter::getFullIdentNameFromToken);
+                    .map(Unchecked.function(this::getTokenObject))
+                    .map(ZuulAuthorizationFilter::getUserIdentifier);
         } catch (IOException e) {
-            log.debug("Exception thrown (probably during JWT parsing): {}", e.getMessage());
+            log.debug("Could not read JWT token: {}", e.getMessage());
             fullUserNameRealm = Optional.empty();
         }
         if (fullUserNameRealm.isEmpty()) {
@@ -165,7 +188,11 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         }
         return fullUserNameRealm;
     }
-
+    
+    private UsernamePasswordAuthenticationToken getTokenObject(String token) throws JwtTokenReadException {
+        return JwtAuth.readJwtToken(token, jwtConf.getSecret());
+    }
+    
     /**
      * Configure the zuul tool chain to not sending a response to the client which is
      * equivalent to blocking the request. While doing this, it sets a proper HTTP

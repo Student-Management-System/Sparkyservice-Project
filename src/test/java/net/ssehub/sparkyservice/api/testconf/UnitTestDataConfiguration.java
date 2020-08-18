@@ -4,6 +4,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
+import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
@@ -34,5 +35,10 @@ public class UnitTestDataConfiguration {
     @Bean
     public ServiceAccStorageService service() {
         return new ServiceAccStorageService();
+    }
+
+    @Bean
+    public LocalLoginDetailsMapper mapper() {
+        return new LocalLoginDetailsMapper();
     }
 }

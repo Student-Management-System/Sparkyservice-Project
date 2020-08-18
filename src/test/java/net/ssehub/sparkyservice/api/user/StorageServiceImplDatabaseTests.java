@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -22,10 +21,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
@@ -47,16 +47,16 @@ public class StorageServiceImplDatabaseTests {
     
     @Autowired
     private UserStorageImpl storageService;
-    
+
     private static final String TEST_USER_NAME = "eatk234";
     
     @BeforeEach
     public void _storeUserToDB() {
-        @SuppressWarnings("deprecation") var user = new LocalUserDetails();
-        user.setActive(true);
-        user.setRealm(LocalUserDetails.DEFAULT_REALM);
-        user.setUserName(TEST_USER_NAME);
+        var user = new LocalUserFactory().create(TEST_USER_NAME, new Password("test", "PLAIN"), UserRole.DEFAULT, true);
+        user.setEnabled(true);
+        user.setUsername(TEST_USER_NAME);
         user.setRole(UserRole.DEFAULT);
+        user.encodeAndSetPassword("test");
         storageService.commit(user);
     }
 
@@ -67,12 +67,12 @@ public class StorageServiceImplDatabaseTests {
      */
     @Test
     public void storeUserDetailsTest() throws UserNotFoundException {
-        User loadedUser = storageService.findUserById(1);
+        SparkyUser loadedUser = storageService.findUserById(1);
         assertAll(
-                () -> assertEquals(TEST_USER_NAME, loadedUser.getUserName()),
+                () -> assertEquals(TEST_USER_NAME, loadedUser.getUsername()),
                 () -> assertEquals(LocalUserDetails.DEFAULT_REALM, loadedUser.getRealm()),
                 () -> assertEquals(UserRole.DEFAULT, loadedUser.getRole()),
-                () -> assertTrue(loadedUser.isActive())
+                () -> assertTrue(loadedUser.isEnabled())
             );
     }
 
@@ -90,13 +90,13 @@ public class StorageServiceImplDatabaseTests {
      */
     @Test
     public void findUserTest() throws UserNotFoundException {
-        User loadedUser = storageService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
-        assertNotNull(loadedUser, "User was not loaded from database.");
+        SparkyUser loadedUser = storageService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
+        assertNotNull(loadedUser, "SparkyUser was not loaded from database.");
     }
     
     @Test
     public void changeRoleValueAndStoreTest() throws UserNotFoundException {
-        User loadedUser = storageService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
+        SparkyUser loadedUser = storageService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
         loadedUser.setRole(UserRole.ADMIN);
         storageService.commit(loadedUser);
         loadedUser = storageService.findUserByNameAndRealm(TEST_USER_NAME, LocalUserDetails.DEFAULT_REALM);
@@ -105,9 +105,7 @@ public class StorageServiceImplDatabaseTests {
     
     @Test
     public void dataDuplicateUserTest() {
-        @SuppressWarnings("deprecation") var secondUser = new LocalUserDetails();
-        secondUser.setUserName(TEST_USER_NAME);
-        secondUser.setRealm(LocalUserDetails.DEFAULT_REALM);
+        var secondUser = LocalUserDetails.newLocalUser(TEST_USER_NAME, "", UserRole.DEFAULT);
         assertThrows(DataIntegrityViolationException.class, () -> storageService.commit(secondUser));
     }
     
@@ -124,30 +122,12 @@ public class StorageServiceImplDatabaseTests {
 
     @Test
     public void findMultipleEntries() throws UserNotFoundException {
-        @SuppressWarnings("deprecation") var user = new LocalUserDetails();
-        user.setActive(true);
-        user.setRealm(UserRealm.LDAP);
-        user.setUserName(TEST_USER_NAME);
+        var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create(TEST_USER_NAME, null, UserRole.DEFAULT, true);
         storageService.commit(user);
         var users = storageService.findUsersByUsername(TEST_USER_NAME);
         assertEquals(2, users.size());
     }
 
-    /**
-     * Tests if a username can be found and has the right type.
-     */
-    @Test
-    public void loadByUserNameInstanceTest() {
-        assertTrue(storageService.loadUserByUsername(TEST_USER_NAME) instanceof LocalUserDetails);
-    }
-
-    /**
-     * Tests if an {@link UsernameNotFoundException} is thrown when spring loads his user details.
-     */
-    @Test
-    public void loadMissingNameTest() {
-        assertThrows(UsernameNotFoundException.class, () -> storageService.loadUserByUsername("notExisting"));
-    }
 
     /**
      * Tests that multiple commits on the same user does not throw an exception. 
@@ -173,8 +153,8 @@ public class StorageServiceImplDatabaseTests {
     public void addUserValuesTest() {
         LocalUserDetails newUser = storageService.addUser("name");
         assertAll(
-            () -> assertEquals(newUser.getRealm(), UserRealm.LOCAL, "User is in the wrong realm"),
-            () -> assertEquals(newUser.getUsername(), "name", "User with wrong name was created")
+            () -> assertEquals(newUser.getRealm(), UserRealm.LOCAL, "SparkyUser is in the wrong realm"),
+            () -> assertEquals(newUser.getUsername(), "name", "SparkyUser with wrong name was created")
         );
     }
 }

@@ -6,23 +6,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 
 /**
- * Business search logic for {@link User} and {@link LocalUserDetails}. This class is also used for a
- * {@link UserDetailsService} authentication method through spring.
+ * Business search logic for storage management. Maps {@link User} to {@link SparkyUser}. 
  * 
  * @author Marcel
  */
-public interface UserStorageService extends UserDetailsService {
+public interface UserStorageService {
 
     /**
      * Safes the given user to a persistent storage. When the entry already exists it changes the values.
@@ -32,7 +28,7 @@ public interface UserStorageService extends UserDetailsService {
      * @param user
      *             Is saved in a persistence way (must hold username and realm)
      */
-    <T extends User> void commit(@Nonnull T user);
+    <T extends SparkyUser> void commit(@Nonnull T user);
 
     /**
      * Creates a new entry in the storage for the given user.
@@ -55,7 +51,7 @@ public interface UserStorageService extends UserDetailsService {
      *                               If no user with the given id is found in data storage
      */
     @Nonnull
-    User findUserById(int id) throws UserNotFoundException;
+    SparkyUser findUserById(int id) throws UserNotFoundException;
 
     /**
      * Searches a data storage for all users with a given username.
@@ -65,10 +61,10 @@ public interface UserStorageService extends UserDetailsService {
      * @throws UserNotFoundException
      */
     @Nonnull
-    List<User> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
+    List<SparkyUser> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
 
     @Nonnull
-    User findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) throws UserNotFoundException;
+    SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) throws UserNotFoundException;
 
     /**
      * A list with all users in the data storage. Never null but may be empty.
@@ -77,7 +73,7 @@ public interface UserStorageService extends UserDetailsService {
      */
     @Secured(UserRole.FullName.ADMIN)
     @Nonnull
-    List<User> findAllUsers();
+    List<SparkyUser> findAllUsers();
 
     /**
      * Checks if the given user is already stored in the used data storage. This could used as an indicator if the user
@@ -87,30 +83,14 @@ public interface UserStorageService extends UserDetailsService {
      *             The user to check
      * @return <code>true</code> if the user was already stored in the past, <code>false</code> otherwise
      */
-    boolean isUserInStorage(@Nullable User user);
-
-    /**
-     * Is used by SpringSecurity for getting user details with a given username. It returns a single UserDetails without
-     * limiting the search to a specific realm. Through this, a specific realm is always preferred (typically the realm
-     * which is used for local authentication).
-     * 
-     * @param username
-     *                 name to look for
-     * @return userDetails Details loaded from a data storage which is identified by the given username
-     * @throws When
-     *              a the given username is not found in storage (spring will continue with the next configured
-     *              {@link AuthenticationProvider})
-     */
-    @Override
-    @Nonnull
-    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+    boolean isUserInStorage(@Nullable SparkyUser user);
 
     /**
      * Deletes the given user.
      * 
      * @param user
      */
-    void deleteUser(User user);
+    void deleteUser(SparkyUser user);
 
     /**
      * Deletes a user specific user identified by his realm and username.
@@ -121,6 +101,23 @@ public interface UserStorageService extends UserDetailsService {
     @Secured(UserRole.FullName.ADMIN)
     void deleteUser(String username, UserRealm realm);
 
+    /**
+     * Find all users in a given realm (without pagination). Only admins are allowed to do this.
+     * 
+     * @param realm
+     * @return
+     */
     @Secured(UserRole.FullName.ADMIN)
-    List<User> findAllUsersInRealm(UserRealm realm);
+    List<SparkyUser> findAllUsersInRealm(UserRealm realm);
+
+    /**
+     * Load the same user from a storage in order to refresh the values. A new user object is created. 
+     * 
+     * @param user
+     * @return New object with values from a storage
+     * @throws UserNotFoundException
+     */
+    default SparkyUser refresh(SparkyUser user) throws UserNotFoundException {
+        return this.findUserByNameAndRealm(user.getUsername(), user.getRealm());
+    }
 }

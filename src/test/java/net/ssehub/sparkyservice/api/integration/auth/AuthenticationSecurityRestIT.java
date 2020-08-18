@@ -215,7 +215,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @IntegrationTest
     public void authenticationExpireTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
-        user.setExpirationDate(LocalDate.now().minusDays(1)); // user is expired
+        user.setExpireDate(LocalDate.now().minusDays(1)); // user is expired
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         

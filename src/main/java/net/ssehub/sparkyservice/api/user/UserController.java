@@ -34,14 +34,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.modification.UserEditException;
-import net.ssehub.sparkyservice.api.user.modification.UserModifcationService;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -84,7 +82,7 @@ public class UserController {
         try {
             LocalUserDetails newUser = storageService.addUser(username);
             log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
-            return UserModificationServiceFactory.from(UserRole.ADMIN).userAsDto(newUser);
+            return UserModificationService.from(UserRole.ADMIN).asDto(newUser);
         } catch (DuplicateEntryException e) {
             log.debug("No user added: Duplicate entry");
             throw(e);
@@ -109,19 +107,19 @@ public class UserController {
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
 
-        User authenticatedUser = transformerService.extendFromAuthentication(auth);
-        Predicate<User> selfEdit = user -> user.getUserName().equals(userDto.username) 
+        SparkyUser authenticatedUser = transformerService.extendFromAuthentication(auth);
+        Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username) 
                 && user.getRealm().equals(userDto.realm);
-        UserModifcationService util = UserModificationServiceFactory.from(authenticatedUser.getRole());
+        UserModificationService util = UserModificationService.from(authenticatedUser.getRole());
 
         if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
-            User targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
-            util.changeUserValuesFromDto(targetUser, userDto);
+            SparkyUser targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            util.update(targetUser, userDto);
             storageService.commit(targetUser);
-            return util.userAsDto(targetUser);
+            return util.asDto(targetUser);
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges",
-                    authenticatedUser.getUserName(), authenticatedUser.getRealm());
+                    authenticatedUser.getUsername(), authenticatedUser.getRealm());
             log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
             throw new AccessDeniedException("Not allowed to modify other users data");
         }
@@ -159,9 +157,9 @@ public class UserController {
         return userListToDtoList(list);
     }
 
-    private static UserDto[] userListToDtoList(List<User> userList) {
-        var util = UserModificationServiceFactory.from(UserRole.ADMIN);
-        return userList.stream().map(util::userAsDto).toArray(size -> new UserDto[size]);
+    private static UserDto[] userListToDtoList(List<SparkyUser> userList) {
+        var util = UserModificationService.from(UserRole.ADMIN);
+        return userList.stream().map(util::asDto).toArray(size -> new UserDto[size]);
     }
 
     @Operation(summary = "Gets a unique user", security = { @SecurityRequirement(name = "bearer-key") })
@@ -175,13 +173,13 @@ public class UserController {
         
         var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
         var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
-        User authenticatedUser = transformerService.extendFromAuthentication(auth);
-        if (role != UserRole.ADMIN && !username.equals(authenticatedUser.getUserName())) {
+        SparkyUser authenticatedUser = transformerService.extendFromAuthentication(auth);
+        if (role != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
         var user = storageService.findUserByNameAndRealm(username, realm);
-        return UserModificationServiceFactory.from(role).userAsDto(user);
+        return UserModificationService.from(role).asDto(user);
     }
 
     @Operation(summary = "Deletes a user", security = { @SecurityRequirement(name = "bearer-key") })

@@ -1,70 +1,88 @@
 package net.ssehub.sparkyservice.api.user;
 
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
+import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 
-public class LdapUser extends User implements LdapUserDetails {
-    
+/**
+ * Represents a user which is in the local realm.
+ * 
+ * @author marcel
+ */
+public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUserDetails {
+
     private static final long serialVersionUID = -2155556837850826196L;
 
-    private String dn; 
+    private String dn;
 
-    public LdapUser(@Nonnull String userName, @Nonnull UserRole role, boolean isEnabled, int timeUntilExpiration) {
-        super(userName, null, UserRealm.LDAP, isEnabled, role);
-        // TODO Exp time
+    /**
+     * Creates a user with necessary fields.
+     * 
+     * @param username
+     * @param role
+     * @param isEnabled
+     * @see #create(String, UserRole, boolean)
+     */
+    LdapUser(@Nonnull String username, @Nonnull UserRole role, boolean isEnabled) {
+        super(username, role);
+        setEnabled(isEnabled);
     }
 
-    public LdapUser(@Nonnull String userName, @Nonnull UserRole role, boolean isEnabled) {
-        super(userName, null, UserRealm.LDAP, isEnabled, role);
+    /**
+     * Copy constructor of another SparkyUser.
+     * 
+     * @param copyMe
+     * @see #create(String, UserRole, boolean)
+     */
+    LdapUser(SparkyUser copyMe) {
+        this(copyMe.getUsername(), copyMe.getRole(), copyMe.isEnabled());
+        if (copyMe instanceof LdapUser) {
+            dn = ((LdapUser) copyMe).getDn();
+        }
+        this.setExpireDate(copyMe.getExpireDate().orElse(null));
+        this.setSettings(copyMe.getSettings());
     }
 
-    public LdapUser(@Nonnull User user) {
-        super(user);
+    /**
+     * Creates an instance from a JPA user.
+     * 
+     * @param jpaUser
+     * @see #create(String, UserRole, boolean)
+     */
+    LdapUser(User jpaUser) {
+        this(jpaUser.getUserName(), jpaUser.getRole(), jpaUser.isActive());
+        var expireDate = jpaUser.getExpirationDate().map(d -> d.toLocalDate()).orElse(null);
+        this.setExpireDate(expireDate);
+        this.setSettings(jpaUser.getProfileConfiguration());
+        super.databaseId = jpaUser.getId();
     }
 
     @Override
     public String getPassword() {
-        return null;
-    }
-
-    @Override
-    public String getUsername() {
-        return super.getUserName();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return super.getExpirationDate().map(LocalDate.now()::isBefore).orElse(false);
+        throw new UnsupportedOperationException("LdapUsers don't contain passwords in the current version.");
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return super.isActive();
+        return isEnabled();
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return false; // not implemented
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return super.isActive();
+        return true;
     }
 
     @Override
     public void eraseCredentials() {
-        
+        // not necessary
     }
 
     @Override
@@ -72,18 +90,37 @@ public class LdapUser extends User implements LdapUserDetails {
         return dn;
     }
 
-    public void setDn(String dn) {
-        this.dn = dn;
+    @Override
+    @Nonnull
+    public User getJpa() {
+        var jpaUser = new User(getUsername(), null, UserRealm.LDAP, isEnabled(), getRole());
+        jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
+        jpaUser.setExpirationDate(getExpireDate());
+        jpaUser.setId(super.databaseId);
+        return jpaUser;
     }
 
-    public void setTimeBeforeExpiration(int time) {
-        
-    }
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Arrays.asList(getRole());
+    @Nonnull
+    public UserRealm getRealm() {
+        return UserRealm.LDAP;
+    }
+
+    @Override
+    public void updatePassword(@Nonnull ChangePasswordDto passwordDto, @Nonnull UserRole role) {
+        //nothing
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return Optional.ofNullable(object)
+            .flatMap(obj -> super.equalsCheck(obj, this))
+            .filter(u -> u.getDn().equals(dn))
+            .isPresent();
+    }
+
+    @Override
+    public int hashCode() {
+        return getHashCodeBuilder().append(dn).toHashCode();
     }
 }

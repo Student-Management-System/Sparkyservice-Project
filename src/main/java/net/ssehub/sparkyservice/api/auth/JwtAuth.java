@@ -20,15 +20,19 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
@@ -37,6 +41,7 @@ import net.ssehub.sparkyservice.api.util.SparkyUtil;
  * @author marcel
  */
 public class JwtAuth {
+
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuth.class);
 
     /**
@@ -82,35 +87,31 @@ public class JwtAuth {
      * @param jwtConf - Essential settings like secrets and the used issuer and audience
      * @return plain encoded JWT token as string (without bearer keyword)
      */
-    public static @Nonnull String createJwtToken(User user, JwtSettings jwtConf) {
+    public static @Nonnull String createJwtToken(SparkyUser user, JwtSettings jwtConf) {
         List<UserRole> roles = Stream.of(user.getRole()).map(e -> e).collect(Collectors.toList());
-        java.util.Date expDate = UserModificationServiceFactory.from(user.getRole()).createJwtExpirationDate(user);
+        java.util.Date expDate = UserModificationService.from(user.getRole()).createJwtExpirationDate(user);
         var signingKey = jwtConf.getSecret().getBytes();
         var token = Jwts.builder().signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
                 .setHeaderParam("typ", jwtConf.getType()).setIssuer(jwtConf.getIssuer())
-                .setAudience(jwtConf.getAudience()).setSubject(user.getUserName())
+                .setAudience(jwtConf.getAudience()).setSubject(user.getUsername())
                 .setExpiration(expDate).claim("rol", roles)
                 .claim("realm", user.getRealm()).compact();
         return notNull(token);
     }
 
     /**
-     * Extracts information of a given token. The secret must be the same as the
-     * secret which was used to encode the JWT token. <br>
-     * The returned authentication contains:<br>
+     * Decodes the content of a JWT Token. Content of the returned object: 
      * <ul>
-     * <li>{@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}
-     * </li>
+     * <li>{@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}</li>
      * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
      * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
      * </ul>
      * 
-     * @param token     JWT token as string
-     * @param jwtSecret Is used to decode the token - must be the same which was
-     *                  used for encoding
-     * @return Springs authentication token
+     * @param token
+     * @param jwtSecret
+     * @return Can be used for authorization
      */
-    public static @Nonnull Optional<UsernamePasswordAuthenticationToken> readJwtToken(@Nonnull String token,
+    private static @Nonnull Optional<UsernamePasswordAuthenticationToken> decodeToken(@Nonnull String token,
             @Nonnull String jwtSecret) {
         var signingKey = jwtSecret.getBytes();
         var parsedToken = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token.replace("Bearer ", ""));
@@ -133,5 +134,44 @@ public class JwtAuth {
                 );
         }
         return tokenObject;
+    }
+
+    /**
+     * Extracts information of a given token. The secret must be the same as the secret which was used 
+     * to encode the JWT token. <br>
+     * The returned authentication contains:<br>
+     * <ul>
+     * <li>{@link Authentication#getPrincipal()} => {@link SparkysAuthPrincipal}</li>
+     * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
+     * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
+     * </ul>
+     * 
+     * @param token - JWT token as string
+     * @param jwtSecret - Is used to decode the token; must be the same which was used for encoding
+     * @return Springs authentication token
+     */
+    @Nonnull
+    public static UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token, @Nonnull String jwtSecret) 
+            throws JwtTokenReadException {
+        try {
+            return notNull(
+                JwtAuth.decodeToken(token, jwtSecret).orElseThrow(IllegalArgumentException::new)
+            );
+        } catch (ExpiredJwtException exception) {
+            LOG.debug("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
+            throw new JwtTokenReadException(exception.getMessage());
+        } catch (UnsupportedJwtException exception) {
+            LOG.debug("Request to parse unsupported JWT : {} failed : {}", token, exception.getMessage());
+            throw new JwtTokenReadException(exception.getMessage());
+        } catch (MalformedJwtException exception) {
+            LOG.debug("Request to parse invalid JWT : {} failed : {}", token, exception.getMessage());
+            throw new JwtTokenReadException(exception.getMessage());
+        } catch (SignatureException exception) {
+            LOG.debug("Request to parse JWT with invalid signature : {} failed : {}", token, exception.getMessage());
+            throw new JwtTokenReadException(exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            LOG.debug("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
+            throw new JwtTokenReadException(exception.getMessage());
+        }
     }
 }

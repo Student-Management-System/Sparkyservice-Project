@@ -30,7 +30,9 @@ import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
@@ -50,6 +52,8 @@ public class AuthController {
     private UserTransformerService transformator;
     @Autowired
     private JwtSettings jwtConf;
+    @Autowired
+    private UserStorageService storageService;
 
     /**
      * This method does nothing. The method header is important to let swagger list
@@ -85,6 +89,7 @@ public class AuthController {
      * @return user information which are stored in the JWT token
      * @throws UserNotFoundException
      * @throws MissingDataException
+     * @throws JwtTokenReadException 
      */
     @Operation(description = "Checks the authentication state of the users authorization header and returns all "
             + " user informations which belongs to the user",
@@ -99,17 +104,18 @@ public class AuthController {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorDto.class))) })
     public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
-            HttpServletRequest request) throws MissingDataException {
+            HttpServletRequest request) throws MissingDataException, JwtTokenReadException {
         if (auth == null) { // check what went wrong
             var jwtToken = request.getHeader(jwtConf.getHeader());
             if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
-                JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // should throw something
+                JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret()); // throws something
             }
             throw new AuthenticationException();
         }
         var user = transformator.extendFromAuthentication(auth);
+        storageService.refresh(user);
         var dto = new AuthenticationInfoDto();
-        dto.user = user.asDto();
+        dto.user = UserModificationService.from(user.getRole()).asDto(user);
         if (auth.getCredentials() instanceof TokenDto) {
             dto.token = (TokenDto) auth.getCredentials();
         }
@@ -129,17 +135,19 @@ public class AuthController {
      * @param jwtToken - The token which should be verified
      * @return The stored information in the token
      * @throws MissingDataException - Is thrown when the data of the token is not complete
+     * @throws JwtTokenReadException 
      */
     @Operation(description = "Prints the validity status of a given token",
             security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
-    public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) throws MissingDataException {
+    public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) 
+            throws MissingDataException, JwtTokenReadException {
         if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
-            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret())
-                    .orElseThrow(AuthenticationException::new); // should throw something
+            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret());
             var user = transformator.extendFromAuthentication(auth);
+            user = storageService.refresh(user);
             var dto = new AuthenticationInfoDto();
-            dto.user = user.asDto();
+            dto.user = UserModificationService.from(user.getRole()).asDto(user);
             dto.token = (TokenDto) auth.getCredentials();
             return dto;
         }
@@ -154,7 +162,8 @@ public class AuthController {
      * @return Informational ErrorDto which is comparable with the  default Spring Error Text
      */
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    @ExceptionHandler({ AuthenticationException.class, MissingDataException.class, UserNotFoundException.class })
+    @ExceptionHandler({ AuthenticationException.class, MissingDataException.class, UserNotFoundException.class, 
+        JwtTokenReadException.class })
     public ErrorDto handleUserEditException(Exception ex) {
         return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
     }

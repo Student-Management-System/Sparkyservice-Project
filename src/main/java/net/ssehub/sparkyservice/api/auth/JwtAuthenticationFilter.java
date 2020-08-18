@@ -1,30 +1,28 @@
 package net.ssehub.sparkyservice.api.auth;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
-import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
  * A Filter which handles all authentication requests and actually handles the login.
@@ -36,7 +34,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final JwtSettings jwtConf;
     private final UserStorageService userService;
     private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
-    private final UserTransformerService transformator;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
@@ -53,7 +50,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.jwtConf = jwtConf;
-        this.transformator = transformator;
     }
 
     /**
@@ -62,30 +58,34 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
         var userDetails = JwtAuth.extractCredentialsFromHttpRequest(request);
-        return authenticationManager.authenticate(userDetails);
+        var authentication = authenticationManager.authenticate(userDetails);
+        assertSparkyUser(authentication);
+        return authentication;
+        // in memory auth: principal=MemoryUser
+        // ldap auth: principal=LdapUser
+        // local: Principal=LocalUserDetails (vermutung)
+        //vermutlich beim authorization im principal:
+            //  sparkysauthprincipal
+            // oder spring user
     }
 
     /**
      * {@inheritDoc}.
+     * The principal (accessable through {@link Authentication#getPrincipal()} of this authentication always contains 
+     * the authenticated {@link SparkyUser}.
      */
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain filterChain, Authentication authentication) {
+            FilterChain filterChain, Authentication authentication) {
+
         log.info("Successful authentication with JWT");
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails) {
-            var details = (UserDetails) principal;
-            try {
-                User user = transformator.extendFromUserDetails(details);
-                if (!userService.isUserInStorage(user)) {
-                    userService.commit(user);
-                }
-                AuthenticationInfoDto authDto = buildAuthenticatioInfoFromUser(user);
-                setResponseValue(NullHelpers.notNull(response), authDto);
-            } catch (UserNotFoundException e) {
-                log.info("A user which is currently logged in, is not found in the database");
-            }
-        }
+        var user = Optional.of(authentication)
+            .map(a -> a.getPrincipal())
+            .map(SparkyUser.class::cast);
+        user.filter(u -> !userService.isUserInStorage(u))
+            .ifPresent(userService::commit);
+        user.map(this::buildAuthenticatioInfoFromUser)
+            .ifPresent(dto -> setResponseValue(response, dto));
     }
 
     /**
@@ -94,9 +94,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param user - object which contains all necessary information.
      * @return AuthenticationDTO currently without {@link TokenDto#expiration}
      */
-    private @Nonnull AuthenticationInfoDto buildAuthenticatioInfoFromUser(@Nonnull User user) {
+    private @Nonnull AuthenticationInfoDto buildAuthenticatioInfoFromUser(@Nonnull SparkyUser user) {
         var authDto = new AuthenticationInfoDto();
-        authDto.user = user.asDto();
+        authDto.user = UserModificationService.from(user.getRole()).asDto(user);
         authDto.token.token = JwtAuth.createJwtToken(user, jwtConf);
         return authDto;
     }
@@ -117,5 +117,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         } catch (IOException e) {
             log.warn("Authentication Header not written: Invalid json format.");
         }
+    }
+
+    private static void assertSparkyUser(Authentication auth) {
+        Optional.of(auth)
+            .map(a -> a.getPrincipal())
+            .filter(SparkyUser.class::isInstance)
+            .map(SparkyUser.class::cast)
+            .orElseThrow(() -> new RuntimeException("Spring authentication didn't provide a "
+                    + "valid authentication object after authentication."));
     }
 }

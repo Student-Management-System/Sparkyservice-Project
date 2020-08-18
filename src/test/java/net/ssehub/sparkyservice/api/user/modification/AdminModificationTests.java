@@ -18,8 +18,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
 import net.ssehub.sparkyservice.api.validation.ChangePasswordValidationTest;
@@ -73,7 +75,7 @@ public class AdminModificationTests {
         userDto.passwordDto.newPassword = "hallo123";
 
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        modificationService.changePasswordFromDto(user, userDto.passwordDto);
+        modificationService.update(user, userDto);
         assertTrue(encoder.matches("hallo123", user.getPassword()));
     }
 
@@ -86,15 +88,10 @@ public class AdminModificationTests {
     public void changePasswordFromNull() throws Exception {
         LocalUserDetails user = constructor.newInstance();
         var userDto = ChangePasswordValidationTest.createExampleDto();
-        var passwordDto = userDto.passwordDto; 
         assertAll(
-            () -> assertDoesNotThrow(() -> modificationService.changePasswordFromDto(user, null)),
-            () -> assertDoesNotThrow(() -> modificationService.changePasswordFromDto(null, passwordDto)),
-            () -> assertDoesNotThrow(() -> modificationService.changePasswordFromDto(null, null)),
-            
-            () -> assertDoesNotThrow(() -> modificationService.changeUserValuesFromDto(user, null)),
-            () -> assertDoesNotThrow(() -> modificationService.changeUserValuesFromDto(null, userDto)),
-            () -> assertDoesNotThrow(() -> modificationService.changeUserValuesFromDto(null, null))
+            () -> assertDoesNotThrow(() -> modificationService.update(user, null)),
+            () -> assertDoesNotThrow(() -> modificationService.update(null, userDto)),
+            () -> assertDoesNotThrow(() -> modificationService.update(null, null))
         );
     }
 
@@ -107,15 +104,18 @@ public class AdminModificationTests {
     public void changeUserValuesTest() throws Exception {
         var userDto = ChangePasswordValidationTest.createExampleDto();
         userDto.role = UserRole.DEFAULT;
+        userDto.realm = UserRealm.LOCAL;
         LocalUserDetails user = constructor.newInstance();
-        modificationService.changeUserValuesFromDto(user, userDto);
-        var userSettings = user.getProfileConfiguration();
+        modificationService.update(user, userDto);
+        var userSettings = user.getSettings();
         var dtoSettings = userDto.settings;
-        assertAll(() -> assertEquals(user.getUsername(), userDto.username, "Username was not changed"),
+        
+        assertAll(
+            () -> assertEquals(user.getUsername(), userDto.username, "Username was not changed"),
             () -> assertEquals(user.getRealm(), userDto.realm, "Realm was not changed"),
             () -> assertEquals(user.getRole(), userDto.role, "Role was not changed"),
-            () -> assertEquals(user.getExpirationDate().get(), userDto.expirationDate, "Exp. Date not changed"),
-            () -> assertEquals(user.getFullName(), userDto.fullName, "Fullname not changed"),
+            () -> assertEquals(user.getExpireDate().get(), userDto.expirationDate, "Exp. Date not changed"),
+            () -> assertEquals(user.getFullname(), userDto.fullName, "Fullname not changed"),
             () -> assertEquals(userSettings.getEmail_address(), dtoSettings.email_address, "Email not changed"),
             () -> assertEquals(userSettings.getPayload(), dtoSettings.payload, "Payload not changed")
         );
@@ -134,24 +134,33 @@ public class AdminModificationTests {
         userDto.role = null;
         LocalUserDetails user = constructor.newInstance();
         user.setRole(UserRole.DEFAULT);
-        modificationService.changeUserValuesFromDto(user, userDto);
+        modificationService.update(user, userDto);
 
         assertEquals(user.getRole(), UserRole.DEFAULT, "Role was changed to null! But it should be mandatory");
     }
 
     /**
-     * Test for {@link AdminUserModificationImpl#userAsDto(User)}.
+     * Test for {@link AdminUserModificationImpl#asDto(User)}.
      * The used modification service has admin permissions and should set all values to the DTO.
      * 
      * @throws Exception
      */
     @Test
     public void userAsDtoTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
-        LocalUserDetails user = constructor.newInstance();
-        userDto.role = UserRole.ADMIN;
-        modificationService.changeUserValuesFromDto(user, userDto);
-        var modifiedDto = modificationService.userAsDto(user);
-        assertDtoValuesEquals(modifiedDto, userDto);
+        var testDto = ChangePasswordValidationTest.createExampleDto();
+        testDto.role = UserRole.ADMIN;
+        testDto.realm = UserRealm.LOCAL;
+        var testUserFromDto = UserFactoryProvider.getFactory(UserRealm.LOCAL).create(testDto);
+        var userDto = modificationService.asDto(testUserFromDto);
+        assertDtoValuesEquals(testDto, userDto);
     }
+
+    // TODO create test case for default user creation
+//    public void defaultRealmTest() throws Exception {
+//        var userDto = ChangePasswordValidationTest.createExampleDto();
+//        LocalUserDetails user = constructor.newInstance();
+//        modificationService.update(user, userDto);
+//        var modifiedDto = modificationService.asDto(user);
+//        assertDtoValuesEquals(modifiedDto, userDto);
+//    } 
 }

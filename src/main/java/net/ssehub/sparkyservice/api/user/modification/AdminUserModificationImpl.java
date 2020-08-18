@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
-import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
@@ -16,10 +17,10 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @author marcel
  */
 @Service
-class AdminUserModificationImpl implements UserModifcationService {
+class AdminUserModificationImpl implements UserModificationService {
 
     @Autowired
-    private final UserModifcationService lowerPermService;
+    private final UserModificationService lowerPermService;
 
     /**
      * An admin modification service. Set a lower permissions service where this implementation can inherit permissions
@@ -28,7 +29,7 @@ class AdminUserModificationImpl implements UserModifcationService {
      * @param lowerPermService
      */
     @Autowired
-    public AdminUserModificationImpl(UserModifcationService lowerPermService) {
+    public AdminUserModificationImpl(UserModificationService lowerPermService) {
         this.lowerPermService = lowerPermService;
     }
 
@@ -36,31 +37,20 @@ class AdminUserModificationImpl implements UserModifcationService {
      * {@inheritDoc}.
      */
     @Override
-    public void changeUserValuesFromDto(@Nullable User databaseUser, @Nullable UserDto userDto) {
-        if (databaseUser != null && userDto != null) {
+    public void update(@Nullable SparkyUser user, @Nullable UserDto userDto) {
+        if (user != null && userDto != null) {
             final SettingsDto localDtoSettings = userDto.settings;
-            final String localUserName = userDto.username;
-            if (localDtoSettings != null && localUserName != null) {
-                databaseUser.setUserName(localUserName);
-                changePasswordFromDto(databaseUser, userDto.passwordDto);
-                databaseUser.setExpirationDate(userDto.expirationDate);
-                databaseUser.setFullName(userDto.fullName);
-                databaseUser.setRole(userDto.role);
-                DefaultUserModificationImpl.applyPersonalSettingsDto(databaseUser, localDtoSettings);
-                databaseUser.getProfileConfiguration().setPayload(userDto.settings.payload);
-            }
-        }
-    }
-
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public void changePasswordFromDto(@Nullable User databaseUser, @Nullable UserDto.ChangePasswordDto passwordDto) {
-        if (databaseUser != null && passwordDto != null) {
-            final String localNewPassword = passwordDto.newPassword;
-            if (localNewPassword != null) {
-                UserModifcationService.applyPassword(databaseUser, localNewPassword);
+            final var pwDto = userDto.passwordDto;
+            if (localDtoSettings != null) {
+                user.setUsername(userDto.username);
+                if (pwDto != null) {
+                    user.updatePassword(pwDto, UserRole.ADMIN);                    
+                }
+                user.setExpireDate(userDto.expirationDate);
+                user.setFullname(userDto.fullName);
+                user.setRole(userDto.role);
+                DefaultUserModificationImpl.applyPersonalSettingsDto(user, localDtoSettings);
+                user.getSettings().setPayload(userDto.settings.payload);
             }
         }
     }
@@ -71,17 +61,11 @@ class AdminUserModificationImpl implements UserModifcationService {
      * @param user
      * @return The given user as DTO with all fields.
      */
-    public UserDto userAsDto(User user) {
-        PersonalSettings settings = user.getProfileConfiguration();
-        UserDto dto = lowerPermService.userAsDto(user);
+    public UserDto asDto(SparkyUser user) {
+        PersonalSettings settings = user.getSettings();
+        UserDto dto = lowerPermService.asDto(user);
         dto.settings.payload = settings.getPayload(); // is not done with Default user permissions
-        dto.expirationDate = user.getExpirationDate().orElse(null);
+        dto.expirationDate = user.getExpireDate().orElse(null);
         return dto;
-    }
-
-    @Override
-    public <T extends User> void setPermissionProvider(User user) {
-        // TODO Auto-generated method stub
-
     }
 }

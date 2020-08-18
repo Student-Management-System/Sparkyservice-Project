@@ -23,7 +23,7 @@ import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.HeavyUserTransformerImpl;
+import net.ssehub.sparkyservice.api.user.transformation.SimpleTransfomerImpl;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
@@ -74,12 +74,12 @@ public class SpringConfig {
     /**
      * Defines the UserTranfsformer Bean.
      * 
-     * @return Using {@link HeavyUserTransformerImpl}
+     * @return Using {@link SimpleTransfomerImpl}
      */
     @Bean
     @Primary
     public UserTransformerService userTransformer() {
-        return new HeavyUserTransformerImpl();
+        return new SimpleTransfomerImpl();
     }
 
     /**

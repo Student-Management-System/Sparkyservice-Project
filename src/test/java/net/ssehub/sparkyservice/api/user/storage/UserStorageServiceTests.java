@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -27,6 +26,8 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 
 /**
  * Tests for {@link UserStorageService} implementation. This test class should use the same implementation bean which 
@@ -48,36 +49,42 @@ public class UserStorageServiceTests {
     private static final String USER_PW = "abcdefh";
     private static final UserRealm USER_REALM = LocalUserDetails.DEFAULT_REALM;
 
-    private Optional<List<User>> userList;
-    private Optional<User> user;
+    private Optional<List<User>> jpaUserList;
+    private Optional<User> jpaUser;
+    private SparkyUser user;
 
     @BeforeEach
     public void _setup() {
         var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
-        var user2 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
-        user2.setRealm(UserRealm.MEMORY); // To simulate a working database, user with the same name should be in different realms
-        user1.setId(1);
-        user2.setId(2);
-        this.userList = Optional.of(Arrays.asList(user1, user2));
-        this.user = Optional.of(user1);
+        var user1Jpa = user1.getJpa();
+        user1Jpa.setId(1);
+        this.user = user1;
+        
+        // To simulate a working database, user with the same name should be in different realms
+        var user2 = UserFactoryProvider.getFactory(UserRealm.LDAP).create(USER_NAME, null, UserRole.DEFAULT, false);
+        var user2Jpa = user2.getJpa();
+        user2Jpa.setId(2);
+        
+        this.jpaUserList = Optional.of(Arrays.asList(user1Jpa, user2Jpa));
+        this.jpaUser = Optional.of(user1Jpa);
     }
 
     @Test
     public void findUserByNameTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserName(USER_NAME)).thenReturn(userList);
-        List<User> users = userService.findUsersByUsername(USER_NAME);
+        when(mockedRepository.findByuserName(USER_NAME)).thenReturn(jpaUserList);
+        List<SparkyUser> users = userService.findUsersByUsername(USER_NAME);
         assertTrue(!users.isEmpty(), "No user was loaded from service class");
     }
 
     @Test
     public void findMultipleUsersByNameTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserName(USER_NAME)).thenReturn(userList);
+        when(mockedRepository.findByuserName(USER_NAME)).thenReturn(jpaUserList);
         assertEquals(2, userService.findUsersByUsername(USER_NAME).size());
     }
 
     @Test
     public void findUserByNameAndRealmTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.user);
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertNotNull(loadedUser, "User was null.");
     }
@@ -90,14 +97,14 @@ public class UserStorageServiceTests {
 
     @Test
     public void userNameValueTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.user);
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
-        assertEquals(USER_NAME, loadedUser.getUserName(), "Wrong username provided by user service");
+        assertEquals(USER_NAME, loadedUser.getUsername(), "Wrong username provided by user service");
     }
 
     @Test
     public void userRealmValueTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.user);
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
         var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
         assertEquals(USER_REALM, loadedUser.getRealm(), "Wrong realm provided by user service");
     }
@@ -109,69 +116,39 @@ public class UserStorageServiceTests {
      */
     @Test
     public void userExistTest() throws UserNotFoundException {
-        when(mockedRepository.findById(1)).thenReturn(user);
-        user.ifPresent(u -> {
-            assertTrue(userService.isUserInStorage(u));
-        });
+        when(mockedRepository.findById(1)).thenReturn(jpaUser);
+        assertTrue(userService.isUserInStorage(user));
     }
     
     @Test
     public void userExistWithoutIdTest() throws UserNotFoundException {
         when(mockedRepository.findById(0)).thenReturn(Optional.empty());
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(user);
-        user.ifPresent(u -> {
-            assertTrue(userService.isUserInStorage(u));
-        });
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(jpaUser);
+        assertTrue(userService.isUserInStorage(user));
     }
     
     @Test
     public void userExistWithoutIdNegativeTest() throws UserNotFoundException {
         when(mockedRepository.findById(0)).thenReturn(Optional.empty());
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(Optional.empty());
-        user.ifPresent(u -> {
-            assertFalse(userService.isUserInStorage(u));
-        });
+        assertTrue(userService.isUserInStorage(user));
     }
     
     @Test
     public void userExistNullTest() throws UserNotFoundException {
-        user.ifPresent(u -> {
+        jpaUser.ifPresent(u -> {
             assertFalse(userService.isUserInStorage(null));
         });
     }
-    
-    @Test
-    public void loadUserByNameNegativeTest() {
-        when(mockedRepository.findByuserNameAndRealm("djshfdjkhs", USER_REALM)).thenReturn(Optional.empty());
-        assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername("djshfdjkhs"));
-    }
-    
-    @Test
-    public void loadUserByNameTest() {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(user);
-        assertNotNull(userService.loadUserByUsername(USER_NAME));
-    }
 
     @Test
-    public void loadUserByNameNullTest() {
-        assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername(null));
-    }
-
-    @Test
-    public void storeUserBlankTest() {
-        var user = new User("", null, UserRealm.UNKNOWN, false, UserRole.DEFAULT);
-        assertThrows(IllegalArgumentException.class, 
-                () -> userService.commit(user));
-    }
-
-    @Test
-    public void iterableToListCastTest() {
-        when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(user.get()));
+    public void findAllUserInRealmTypeTest() {
+        when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(jpaUser.get()));
         var castedUserList = userService.findAllUsersInRealm(USER_REALM);
         assertAll(
-                () -> assertEquals(1, castedUserList.size()),
-                () -> assertEquals(user.get(), castedUserList.get(0))
-            );
+            () -> assertEquals(1, castedUserList.size()),
+            () -> assertEquals(user, castedUserList.get(0))
+        );
     }
 
     @Test
@@ -183,5 +160,6 @@ public class UserStorageServiceTests {
     public void addUserTest() {
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(Optional.ofNullable(null));
     }
+
 }
 

@@ -18,11 +18,8 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationServiceFactory;
-
 /**
- * Represents a user with JPA annotations. Although contains static methods to modify a users values.
+ * Represents a user with JPA annotations.
  *
  * @author marcel
  */
@@ -66,11 +63,12 @@ public class User {
 
     @OneToOne(cascade = {
             CascadeType.ALL }, targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
+    @Nonnull
     protected PersonalSettings profileConfiguration;
 
     @Nullable
     @Column
-    protected LocalDate expirationTime; //only used in LOCAL realm
+    protected java.sql.Date expirationTime;
 
     /**
      * Default constructor used by hibernate.
@@ -80,6 +78,7 @@ public class User {
         role = UserRole.DEFAULT;
         userName = "";
         realm = UserRealm.UNKNOWN;
+        profileConfiguration = new PersonalSettings();
     }
 
     public User(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive, UserRole role) {
@@ -128,6 +127,7 @@ public class User {
      * 
      * @return name of the user which is unique per realm
      */
+    @Nonnull
     public String getUserName() {
         return this.userName;
     }
@@ -210,32 +210,29 @@ public class User {
 
     /**
      * {@link PersonalSettings} of the user where extra settings are stored like
-     * email addressees.
+     * email addresses.
      * 
      * @return associated profile of this StoredUser - if no exists, a new will be
      *         generated
      */
     @Nonnull
     public PersonalSettings getProfileConfiguration() {
-        final var profileConfiguration2 = profileConfiguration;
-        if (profileConfiguration2 != null) {
-            return profileConfiguration2;
-        } else {
-            final var conf = new PersonalSettings();
-            profileConfiguration = conf;
-            return conf;
-        }
+        return profileConfiguration;
     }
     
-    public Optional<LocalDate> getExpirationDate() {
+    public Optional<java.sql.Date> getExpirationDate() {
         return Optional.ofNullable(expirationTime);
     }
 
-    public void setExpirationDate(@Nullable LocalDate expirationTime) {
-        this.expirationTime = expirationTime;
+    public void setExpirationDate(@Nullable java.sql.Date expirationDate) {
+        this.expirationTime = expirationDate;
     }
 
-    public void setProfileConfiguration(@Nullable PersonalSettings profileConfiguration) {
+    public void setExpirationDate(Optional<LocalDate> expirationDate) {
+        this.expirationTime = expirationDate.map(java.sql.Date::valueOf).orElse(null);
+    }
+
+    public void setProfileConfiguration(PersonalSettings profileConfiguration) {
         this.profileConfiguration = profileConfiguration;
     }
 
@@ -247,12 +244,8 @@ public class User {
         this.realm = realm;
     }
 
+    @Nonnull
     public UserRole getRole() {
         return role;
-    }
-
-    @Deprecated
-    public UserDto asDto() {
-        return UserModificationServiceFactory.from(getRole()).userAsDto(this);
     }
 }
