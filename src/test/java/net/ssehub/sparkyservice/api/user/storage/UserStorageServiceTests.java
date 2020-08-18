@@ -58,6 +58,7 @@ public class UserStorageServiceTests {
         var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
         var user1Jpa = user1.getJpa();
         user1Jpa.setId(1);
+        user1 = (LocalUserDetails) UserFactoryProvider.getFactory(USER_REALM).create(user1Jpa);
         this.user = user1;
         
         // To simulate a working database, user with the same name should be in different realms
@@ -131,7 +132,7 @@ public class UserStorageServiceTests {
     public void userExistWithoutIdNegativeTest() throws UserNotFoundException {
         when(mockedRepository.findById(0)).thenReturn(Optional.empty());
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(Optional.empty());
-        assertTrue(userService.isUserInStorage(user));
+        assertFalse(userService.isUserInStorage(user));
     }
     
     @Test
@@ -144,10 +145,11 @@ public class UserStorageServiceTests {
     @Test
     public void findAllUserInRealmTypeTest() {
         when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(jpaUser.get()));
-        var castedUserList = userService.findAllUsersInRealm(USER_REALM);
+        var userList = userService.findAllUsersInRealm(USER_REALM);
+        var castedUser = UserFactoryProvider.getFactory(USER_REALM).create(jpaUserList.get().get(0));
         assertAll(
-            () -> assertEquals(1, castedUserList.size()),
-            () -> assertTrue(user.equals(castedUserList.get(0)))
+            () -> assertEquals(1, userList.size()),
+            () -> assertTrue(user.equals(castedUser))
         );
     }
 
