@@ -113,10 +113,12 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
 
     @Override
     public boolean equals(Object object) {
-        return Optional.ofNullable(object)
-            .flatMap(obj -> super.equalsCheck(obj, this))
-            .filter(u -> u.getDn().equals(dn))
-            .isPresent();
+       Optional<LdapUser> optDn = Optional.ofNullable(object).flatMap(obj -> super.equalsCheck(obj, this));
+        if (dn == null) {
+            return optDn.map(u -> u.getDn() == null).orElse(false);
+        } else {
+            return optDn.map(u -> u.getDn()).filter(dn::equals).isPresent();
+        }
     }
 
     @Override

@@ -147,7 +147,7 @@ public class UserStorageServiceTests {
         var castedUserList = userService.findAllUsersInRealm(USER_REALM);
         assertAll(
             () -> assertEquals(1, castedUserList.size()),
-            () -> assertEquals(user, castedUserList.get(0))
+            () -> assertTrue(user.equals(castedUserList.get(0)))
         );
     }
 

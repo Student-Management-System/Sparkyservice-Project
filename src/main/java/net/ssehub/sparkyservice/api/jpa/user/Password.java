@@ -113,17 +113,13 @@ public class Password {
      */
     @Override
     public boolean equals(@Nullable Object object) {
-        try {
-            return Optional.ofNullable(object)
-                    .map(Password.class::isInstance)
-                    .map(Password.class::cast)
-                    .filter(p -> hashAlgorithm.equalsIgnoreCase(p.getHashAlgorithm()))
-                    .filter(p -> passwordString.equals(p.getPasswordString()))
-                    .filter(p -> p.passwordId == passwordId)
-                    .isPresent();
-        } catch (NullPointerException e) {
-            return false;
-        }
+        return Optional.ofNullable(object)
+                .filter(Password.class::isInstance)
+                .map(Password.class::cast)
+                .filter(p -> hashAlgorithm.equalsIgnoreCase(p.getHashAlgorithm()))
+                .filter(p -> passwordString.equals(p.getPasswordString()))
+                .filter(p -> p.passwordId == passwordId)
+                .isPresent();
     }
 
     @Override

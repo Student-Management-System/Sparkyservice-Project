@@ -1,9 +1,9 @@
 package net.ssehub.sparkyservice.api.user;
 
-import static org.junit.Assume.assumeTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -35,6 +35,18 @@ public class UpdatePasswordTests {
     }
 
     /**
+     * Test if password updates for LDAP user result in an error when queried.
+     */
+    @Test
+    public void ldapUserPasswordTest() {
+        var user = new LdapUser("test", UserRole.ADMIN, true);
+        var pwDto = new ChangePasswordDto();
+        user.updatePassword(pwDto, UserRole.ADMIN);
+
+        assertThrows(UnsupportedOperationException.class, () -> user.getPassword(), "LDAP user never have passwords"); 
+    }
+
+    /**
      * Test if a password could succesfully changed when invoked with {@link UserRole#DEFAULT} permissions with a 
      * correct provided old password.
      */
@@ -52,17 +64,5 @@ public class UpdatePasswordTests {
         
         assumeTrue(user.getPasswordEntity().getHashAlgorithm().equalsIgnoreCase(pw.getHashAlgorithm()));
         assertTrue(encoder.matches("yes", user.getPassword()), "The password be changed to a new one changed"); 
-    }
-
-    /**
-     * Test if password updates for LDAP user result in an error when queried.
-     */
-    @Test
-    public void ldapUserPasswordTest() {
-        var user = new LdapUser("test", UserRole.ADMIN, true);
-        var pwDto = new ChangePasswordDto();
-        user.updatePassword(pwDto, UserRole.ADMIN);
-
-        assertThrows(UnsupportedOperationException.class, () -> user.getPassword(), "LDAP user never have passwords"); 
     }
 }

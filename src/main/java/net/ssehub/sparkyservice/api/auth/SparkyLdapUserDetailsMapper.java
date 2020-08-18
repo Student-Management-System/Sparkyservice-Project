@@ -18,6 +18,7 @@ import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LdapUser;
+import net.ssehub.sparkyservice.api.user.LdapUserFactory;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -43,7 +44,7 @@ public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapp
             Collection<? extends GrantedAuthority> authorities) {
 
         // we don't want LDAP Authroties here so we don't use them
-        var ldapUser = LdapUser.create(username, UserRole.DEFAULT /* maybe change later */, true);
+        var ldapUser = new LdapUserFactory().create(username, null, UserRole.DEFAULT /* maybe change later */, true);
         if (storageService.isUserInStorage(ldapUser)) {
             ldapUser = (LdapUser) storageService.refresh(ldapUser);
         } else {

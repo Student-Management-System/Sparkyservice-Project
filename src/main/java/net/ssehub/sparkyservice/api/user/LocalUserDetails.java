@@ -34,7 +34,7 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
 public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
 
     public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
-    public static final String DEFAULT_ALGO = BCryptPasswordEncoder.class.getSimpleName();
+    public static final String DEFAULT_ALGO = BCryptPasswordEncoder.class.getSimpleName().toLowerCase();
     private static final long serialVersionUID = 1L;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
