@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.user;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,6 +35,19 @@ public class LocalUserTests {
         var user2 = factory.create("test", pw2, UserRole.ADMIN, false);
         
         assertTrue(user1.equals(user2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
+    public void unEqualityTest(Class<AbstractSparkyUserFactory<?>> factoryClass) throws Exception {
+        AbstractSparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+        var pw1 = new Password("hallo", "plain");
+        var pw2 = new Password(pw1);
+        var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
+        var user2 = factory.create("test", pw2, UserRole.ADMIN, false);
+        user2.setFullname("other");
+        
+        assertFalse(user1.equals(user2));
     }
 
     /**

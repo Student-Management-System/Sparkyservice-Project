@@ -119,28 +119,36 @@ public class PersonalSettings {
     }
 
     @Override
-    public boolean equals(Object object) {
-        Optional<PersonalSettings> check = Optional.ofNullable(object)
-            .filter(PersonalSettings.class::isInstance)
-            .map(PersonalSettings.class::cast)
-            .filter(s -> email_receive == s.email_receive)
-            .filter(s -> wantsAi == s.wantsAi)
-            .filter(s -> configurationId == s.configurationId);
-        boolean isEqual = check.isPresent();
-        if (!isEqual) {
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
             return false;
-        }
-        if (email_address != null) {
-            isEqual = email_address.equals(check.get().email_address);
-        } else {
-            isEqual = check.get().email_address == null;
-        }
-        if (!isEqual && payload == null) {
-            isEqual = payload.equals(check.get().payload);
-        } else {
-            isEqual = check.get().payload == null;
-        }
-        return isEqual;
+        if (getClass() != obj.getClass())
+            return false;
+        PersonalSettings other = (PersonalSettings) obj;
+        if (configurationId != other.configurationId)
+            return false;
+        if (email_address == null) {
+            if (other.email_address != null)
+                return false;
+        } else if (!email_address.equals(other.email_address))
+            return false;
+        if (email_receive != other.email_receive)
+            return false;
+        if (payload == null) {
+            if (other.payload != null)
+                return false;
+        } else if (!payload.equals(other.payload))
+            return false;
+        if (user == null) {
+            if (other.user != null)
+                return false;
+        } else if (!user.equals(other.user))
+            return false;
+        if (wantsAi != other.wantsAi)
+            return false;
+        return true;
     }
 
     @Override
