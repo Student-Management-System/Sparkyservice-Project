@@ -105,9 +105,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
             .and()
                 .addFilter(
-                        new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storageService, transformator)
-                    )
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken))
+                    new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storageService, transformator)
+                )
+                .addFilter(
+                    new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken, transformator)
+                )
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 

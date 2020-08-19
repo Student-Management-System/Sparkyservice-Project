@@ -13,7 +13,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
-import org.jooq.lambda.Unchecked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import io.jsonwebtoken.io.IOException;
 import net.ssehub.sparkyservice.api.auth.JwtAuth;
 import net.ssehub.sparkyservice.api.auth.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
@@ -176,10 +174,9 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     private @Nonnull Optional<String> getAuthenticatedUser(@Nullable String authHeader) {
         Optional<String> fullUserNameRealm;
         try {
-            fullUserNameRealm = Optional.ofNullable(authHeader)
-                    .map(Unchecked.function(this::getTokenObject))
+            fullUserNameRealm = Optional.of(getTokenObject(authHeader))
                     .map(ZuulAuthorizationFilter::getUserIdentifier);
-        } catch (IOException e) {
+        } catch (JwtTokenReadException e) {
             log.debug("Could not read JWT token: {}", e.getMessage());
             fullUserNameRealm = Optional.empty();
         }
@@ -189,7 +186,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         return fullUserNameRealm;
     }
     
-    private UsernamePasswordAuthenticationToken getTokenObject(String token) throws JwtTokenReadException {
+    private UsernamePasswordAuthenticationToken getTokenObject(@Nullable String token) throws JwtTokenReadException {
         return JwtAuth.readJwtToken(token, jwtConf.getSecret());
     }
     

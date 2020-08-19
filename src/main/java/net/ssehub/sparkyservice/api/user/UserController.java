@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -107,7 +106,7 @@ public class UserController {
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
 
-        SparkyUser authenticatedUser = transformerService.extendFromAuthentication(auth);
+        SparkyUser authenticatedUser = transformerService.extractFromAuthentication(auth);
         Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username) 
                 && user.getRealm().equals(userDto.realm);
         UserModificationService util = UserModificationService.from(authenticatedUser.getRole());
@@ -170,16 +169,14 @@ public class UserController {
     @GetMapping(ControllerPath.USERS_GET_SINGLE)
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
             Authentication auth) throws MissingDataException {
-        
-        var singleAuthy = (GrantedAuthority) auth.getAuthorities().toArray()[0];
-        var role = UserRole.DEFAULT.getEnum(singleAuthy.getAuthority());
-        SparkyUser authenticatedUser = transformerService.extendFromAuthentication(auth);
-        if (role != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
+
+        SparkyUser authenticatedUser = transformerService.extractFromAuthentication(auth);
+        if (authenticatedUser.getRole() != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
         var user = storageService.findUserByNameAndRealm(username, realm);
-        return UserModificationService.from(role).asDto(user);
+        return UserModificationService.from(authenticatedUser.getRole()).asDto(user);
     }
 
     @Operation(summary = "Deletes a user", security = { @SecurityRequirement(name = "bearer-key") })

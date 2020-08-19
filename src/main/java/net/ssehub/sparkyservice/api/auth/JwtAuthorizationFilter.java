@@ -23,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Filter which handles authorization with JWT token.
@@ -34,15 +35,18 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
     private final JwtSettings confValues;
     private final @Nonnull Set<String> lockedJwtToken;
+    private final UserTransformerService userTransformer;
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf) {
-        this(authenticationManager, jwtConf, new HashSet<String>());
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
+            UserTransformerService service) {
+        this(authenticationManager, jwtConf, new HashSet<String>(), service);
     }
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
-            @Nullable Set<String> lockedJwtToken) {
+            @Nullable Set<String> lockedJwtToken, UserTransformerService service) {
         super(authenticationManager);
         confValues = jwtConf;
+        this.userTransformer = service;
         this.lockedJwtToken = notNull(Optional.ofNullable(lockedJwtToken).orElseGet(HashSet::new));
     }
 
@@ -86,7 +90,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private UsernamePasswordAuthenticationToken getTokenObject(@Nonnull String jwt) {
         UsernamePasswordAuthenticationToken tokenObject = null;
         try {
-            tokenObject = JwtAuth.readJwtToken(jwt, confValues.getSecret());
+            tokenObject = JwtAuth.readJwtToken(jwt, confValues.getSecret(), userTransformer);
         } catch (JwtTokenReadException e1) {
             LOG.info("Non valid JWT Token was provided for authorization: {}", jwt);
         }

@@ -2,8 +2,8 @@ package net.ssehub.sparkyservice.api.user.transformation;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -32,19 +32,6 @@ public class SimpleTransfomerImpl implements UserTransformerService {
     @Autowired
     private UserStorageService storageService;
 
-    private Optional<SparkyUser> transformToSparkyUser(UserDetails details) {
-        Optional<SparkyUser> optUser = Optional.empty();
-        String passwordString = details.getPassword();
-        if (passwordString != null) {
-            var pw = new Password(passwordString, "UNKWN");
-            optUser = Optional.of(
-                UserFactoryProvider.getFactory(UserRealm.MEMORY)
-                    .create(details.getUsername(), pw, getRole(details.getAuthorities()) , details.isEnabled())
-            );
-        }
-        return optUser;
-    }
-
     @Nonnull
     private static UserRole getRole(Collection<? extends GrantedAuthority> authorities) {
         String[] authList = authorities.toArray(new String[1]);
@@ -60,17 +47,27 @@ public class SimpleTransfomerImpl implements UserTransformerService {
         } else if (details instanceof SparkyUser) {
             user = (SparkyUser) details;
         } else if (details instanceof User) { // mocked Spring user - always memory
-            user = notNull(transformToSparkyUser(details).orElseThrow());
+            var springUser = (User) details;
+            user = notNull(transfromSpringUser(springUser).orElseThrow());
         } else {
             throw new UnsupportedOperationException("Unkown user type");
         }
         return user;
     }
 
+    private static Optional<SparkyUser> transfromSpringUser(User details) {
+        Optional<SparkyUser> optUser = Optional.empty();
+        String passwordString = details.getPassword();
+        if (passwordString != null) {
+            var pw = new Password(passwordString, "UNKWN");
+            optUser = Optional.of(
+                UserFactoryProvider.getFactory(UserRealm.MEMORY)
+                    .create(details.getUsername(), pw, getRole(details.getAuthorities()) , details.isEnabled())
+            );
+        }
+        return optUser;
+    }
 
-    /**
-     *  Fullfill information from a storage.
-     */
     @Override
     @Nonnull
     public SparkyUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
@@ -80,24 +77,31 @@ public class SimpleTransfomerImpl implements UserTransformerService {
         return storageService.findUserByNameAndRealm(principal.getName(), principal.getRealm());
     }
 
-    /**
-     * Fullfill information from a storage. 
-     */
     @Override
-    @Nullable
-    public SparkyUser extendFromAnyPrincipal(@Nullable Object principal) throws MissingDataException {
-        return notNull( 
-            Optional.ofNullable(principal)
-                .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
-                .map(SparkysAuthPrincipal.class::cast)
-                .map(this::extendFromSparkyPrincipal)
+    @Nonnull
+    public SparkyUser extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
+        Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElse(null);
+        return notNull(
+            fromUserDetails(principal)
+                .or(() -> fromSparkyPrincipal(principal))
                 .orElseThrow(() -> new MissingDataException(""))
         );
     }
 
-    /**
-     * Fullfill information from a storage.
-     */
+    private Optional<SparkyUser> fromUserDetails(Object obj) {
+        return Optional.ofNullable(obj)
+            .filter(p -> UserDetails.class.isAssignableFrom(p.getClass()))
+            .map(UserDetails.class::cast)
+            .map(this::extendFromUserDetails);
+    }
+
+    private Optional<SparkyUser> fromSparkyPrincipal(Object obj) {
+        return Optional.of(obj)
+            .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
+            .map(SparkysAuthPrincipal.class::cast)
+            .map(this::extendFromSparkyPrincipal);
+    }
+
     @Override
     @Nonnull
     public SparkyUser extendFromUserDto(@Nullable UserDto user) throws MissingDataException {
@@ -113,26 +117,43 @@ public class SimpleTransfomerImpl implements UserTransformerService {
      */
     @Override
     @Nonnull
-    public SparkyUser extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
-        if (auth == null) {
-            throw new MissingDataException("Can't extend from null");
-        } else if (auth != null && auth.getPrincipal() instanceof UserDetails) {
-            return extendFromUserDetails((UserDetails) auth.getPrincipal());
-        } else if (auth != null && auth.getAuthorities().size() == 1) {
-            String username = auth.getName();
-            UserRealm realm = Optional.ofNullable(auth.getPrincipal())
-                    .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
-                    .map(SparkysAuthPrincipal.class::cast)
-                    .map(sp -> sp.getRealm())
-                    .orElseThrow(() -> new MissingDataException("realm information missing"));
-            Password pw = null;
-            final var localCred = auth.getCredentials();
-            if (localCred != null) {
-                pw = new Password(notNull(localCred.toString()), "UNKWN");
-            }
-            return UserFactoryProvider.getFactory(realm).create(username, pw, getRole(auth.getAuthorities()), false);
-        } else {
-            throw new UnsupportedOperationException("Can't extend from authentication with unkown user type.");
+    public SparkyUser extractFromAuthentication(@Nullable Authentication auth) {
+        try {
+            Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow();
+            return notNull(
+                fromUserDetails(principal)
+                    .or(() -> tryExtractInformation(notNull(auth)))
+                    .orElseThrow()
+            );
+        } catch (NoSuchElementException e) {
+            throw new MissingDataException("Not enough information to extract from");
         }
+    }
+    /**
+     * Trys to extract information of the authentication object an build a user. 
+     * 
+     * @param auth
+     * @return User with information present from the authentication object
+     * @throws MissingDataException When the principal is not an {@link SparkysAuthPrincipal}
+     */
+    private Optional<SparkyUser> tryExtractInformation(@Nonnull Authentication auth) {
+        String username = auth.getName();
+        Password pw = extractPassword(auth);
+        return Optional.of(auth.getPrincipal())
+                .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
+                .map(SparkysAuthPrincipal.class::cast)
+                .map(sp -> sp.getRealm())
+                .map(UserFactoryProvider::getFactory)
+                .map(factory -> factory.create(username, pw, getRole(auth.getAuthorities()), false));
+    }
+
+    @Nullable
+    private Password extractPassword(@Nonnull Authentication auth) {
+        Password pw = null;
+        final var localCred = auth.getCredentials();
+        if (localCred != null) {
+            pw = new Password(notNull(localCred.toString()), "UNKWN");
+        }
+        return pw;
     }
 }

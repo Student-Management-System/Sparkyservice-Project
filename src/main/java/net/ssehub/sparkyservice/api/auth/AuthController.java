@@ -112,7 +112,7 @@ public class AuthController {
             }
             throw new AuthenticationException();
         }
-        var user = transformator.extendFromAuthentication(auth);
+        var user = transformator.extractFromAuthentication(auth);
         storageService.refresh(user);
         var dto = new AuthenticationInfoDto();
         dto.user = UserModificationService.from(user.getRole()).asDto(user);
@@ -144,7 +144,7 @@ public class AuthController {
             throws MissingDataException, JwtTokenReadException {
         if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
             var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret());
-            var user = transformator.extendFromAuthentication(auth);
+            var user = transformator.extractFromAuthentication(auth);
             user = storageService.refresh(user);
             var dto = new AuthenticationInfoDto();
             dto.user = UserModificationService.from(user.getRole()).asDto(user);

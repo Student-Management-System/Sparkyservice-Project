@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.StringUtils;
@@ -33,6 +34,8 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
@@ -148,15 +151,23 @@ public class JwtAuth {
      * 
      * @param token - JWT token as string
      * @param jwtSecret - Is used to decode the token; must be the same which was used for encoding
+     * @throws JwtTokenReadException
      * @return Springs authentication token
      */
     @Nonnull
-    public static UsernamePasswordAuthenticationToken readJwtToken(@Nonnull String token, @Nonnull String jwtSecret) 
+    public static UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret) 
             throws JwtTokenReadException {
         try {
-            return notNull(
-                JwtAuth.decodeToken(token, jwtSecret).orElseThrow(IllegalArgumentException::new)
-            );
+            /*
+             * Token and jwtSecret are not allowed to be null. In this lambda statement we can't be sure this is the 
+             * case. But because this is a lazy init, this is executed when get() is called. This is done
+             * after necessary null-checks.
+             */
+            @SuppressWarnings("null") var lazyTokenObj = Lazy.of(() -> decodeToken(token, jwtSecret));
+            if (token == null || jwtSecret == null || lazyTokenObj.get().isEmpty() ) {
+                throw new IllegalArgumentException("Couldn't decode JWT Token with given information");
+            }
+            return notNull(lazyTokenObj.get().get());
         } catch (ExpiredJwtException exception) {
             LOG.debug("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
             throw new JwtTokenReadException(exception.getMessage());
@@ -173,5 +184,28 @@ public class JwtAuth {
             LOG.debug("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
             throw new JwtTokenReadException(exception.getMessage());
         }
+    }
+
+    /**
+     * Extracts information of a given token and verify/extends them with information of a storage. 
+     * The secret must be the same as the secret which was used to encode the JWT token. <br>
+     * The returned authentication contains:<br>
+     * 
+     * <ul>
+     * <li>{@link Authentication#getPrincipal()} => {@link SparkyUser}</li>
+     * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
+     * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
+     * </ul>
+     * 
+     * @param token - JWT token as string
+     * @param jwtSecret - Is used to decode the token; must be the same which was used for encoding
+     * @throws JwtTokenReadException
+     * @return Springs authentication token
+     */
+    public static UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret,
+            UserTransformerService service) throws JwtTokenReadException {
+        var tokenObj = readJwtToken(token, jwtSecret);
+        var user = service.extendFromAuthentication(tokenObj);
+        return new UsernamePasswordAuthenticationToken(user, tokenObj.getCredentials(), user.getAuthorities());
     }
 }
