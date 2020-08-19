@@ -125,6 +125,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
     }
 
     private boolean equals(AbstractSparkyUser user) {
+        String localFullname = fullname;
         try {
             boolean isEqual = user.isEnabled == isEnabled;
             isEqual = user.role.equals(role);
@@ -132,6 +133,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
             isEqual = user.getSettings().equals(settings);
             isEqual = user.username.equals(username);
             isEqual = user.databaseId == databaseId;
+            isEqual = localFullname == null ? user.fullname == null : localFullname.equals(user.fullname);
             return isEqual;
         } catch (NullPointerException e) {
             return false;
