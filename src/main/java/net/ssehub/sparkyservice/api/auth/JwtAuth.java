@@ -34,7 +34,6 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
@@ -128,7 +127,7 @@ public class JwtAuth {
         
         @Nonnull Optional<UsernamePasswordAuthenticationToken> tokenObject = notNull(Optional.empty());
         if (!StringUtils.isEmpty(username)) {
-            SparkysAuthPrincipal principal = new AuthPrincipalImplementation(realm, username);
+            SparkysAuthPrincipal principal = new AuthPrincipalImpl(realm, username);
             var tokenDto = new TokenDto();
             tokenDto.expiration = SparkyUtil.expirationDateAsString(expiration);
             tokenDto.token = token;
@@ -170,16 +169,16 @@ public class JwtAuth {
             return notNull(lazyTokenObj.get().get());
         } catch (ExpiredJwtException exception) {
             LOG.debug("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
-            throw new JwtTokenReadException(exception.getMessage());
+            throw new JwtTokenReadException("Expired token");
         } catch (UnsupportedJwtException exception) {
             LOG.debug("Request to parse unsupported JWT : {} failed : {}", token, exception.getMessage());
-            throw new JwtTokenReadException(exception.getMessage());
+            throw new JwtTokenReadException("Unsupported JWT");
         } catch (MalformedJwtException exception) {
             LOG.debug("Request to parse invalid JWT : {} failed : {}", token, exception.getMessage());
-            throw new JwtTokenReadException(exception.getMessage());
+            throw new JwtTokenReadException("Invalid JWT");
         } catch (SignatureException exception) {
             LOG.debug("Request to parse JWT with invalid signature : {} failed : {}", token, exception.getMessage());
-            throw new JwtTokenReadException(exception.getMessage());
+            throw new JwtTokenReadException("Invalid signature");
         } catch (IllegalArgumentException exception) {
             LOG.debug("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
             throw new JwtTokenReadException(exception.getMessage());
@@ -199,6 +198,7 @@ public class JwtAuth {
      * 
      * @param token - JWT token as string
      * @param jwtSecret - Is used to decode the token; must be the same which was used for encoding
+     * @param service - Transformer which should be used for completing information from a storage
      * @throws JwtTokenReadException
      * @return Springs authentication token
      */

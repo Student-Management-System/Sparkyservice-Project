@@ -18,11 +18,16 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
+/**
+ * Manages the login request to a local storage and returns users from {@link UserRealm#LOCAL}. 
+ * 
+ * @author marcel
+ */
 @Service
 public class LocalLoginDetailsMapper implements UserDetailsService {
 
     @Autowired
-    public UserStorageService storageService;
+    private UserStorageService storageService;
 
     /**
      * Is used by SpringSecurity for getting user details with a given username. It returns a single UserDetails without

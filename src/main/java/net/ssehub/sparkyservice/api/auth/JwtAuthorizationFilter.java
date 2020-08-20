@@ -37,11 +37,35 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private final @Nonnull Set<String> lockedJwtToken;
     private final UserTransformerService userTransformer;
 
+    /**
+     * JWT Authorization filter for paths which are configured in the authentication manager. 
+     * It reads a JWT token from {@link JwtSettings#getHeader()} and tries to authorize the user. 
+     * When the token is valid, the user is granted access to the requested a the user object is stored in the 
+     * authentication object. 
+     * 
+     * @param authenticationManager
+     * @param jwtConf - Contains all necessary JWT configurations
+     * @param service - Used to extends the information from the JWT token to be sure, all information matches with 
+     *                  the database
+     */
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
             UserTransformerService service) {
         this(authenticationManager, jwtConf, new HashSet<String>(), service);
     }
 
+    /**
+     * JWT Authorization filter for paths which are configured in the authentication manager. 
+     * It reads a JWT token from {@link JwtSettings#getHeader()} and tries to authorize the user. 
+     * When the token is valid, the user is granted access to the requested a the user object is stored in the 
+     * authentication object. 
+     * 
+     * @param authenticationManager
+     * @param jwtConf - Contains all necessary JWT configurations
+     * @param service - Used to extends the information from the JWT token to be sure, all information matches with 
+     *                  the database
+     * @param lockedJwtToken - A set of token which are currently locked (they never can get access to the requested
+     *                         resource)
+     */
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
             @Nullable Set<String> lockedJwtToken, UserTransformerService service) {
         super(authenticationManager);

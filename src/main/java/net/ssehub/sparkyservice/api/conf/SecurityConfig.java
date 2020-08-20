@@ -21,7 +21,7 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
-import net.ssehub.sparkyservice.api.auth.SparkyLdapUserDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
@@ -34,6 +34,7 @@ import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
+//checkstyle: stop exception type check
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${ldap.urls:}")
     private String ldapUrls;
@@ -83,6 +84,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private UserTransformerService transformator;
+
+    @Autowired
+    private MemoryLoginDetailsService memoryDetailsService;
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -127,8 +131,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         configureLdap(auth);
     }
 
-    @Autowired
-    MemoryLoginDetailsService memoryDetailsService;
     /**
      * Configures in memory authentication service.
      * 
@@ -151,7 +153,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * Configures LDAP as login provider
+     * Configures LDAP as login provider.
      * 
      * @param auth
      * @throws Exception 

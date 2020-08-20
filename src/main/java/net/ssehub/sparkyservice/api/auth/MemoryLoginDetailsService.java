@@ -14,6 +14,11 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
+/**
+ * Manages the login requests and returns users from {@link UserRealm#MEMORY}.
+ * 
+ * @author marcel
+ */
 @Service
 public class MemoryLoginDetailsService implements UserDetailsService {
 

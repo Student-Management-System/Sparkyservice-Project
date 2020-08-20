@@ -119,6 +119,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
     }
 
+    /**
+     * Technically it could happen that an administrator configures spring to not return a supported implementation.
+     * This is a check at runtime for this.
+     * 
+     * @param auth - Current authentication object where the principal is checked
+     */
     private static void assertSparkyUser(Authentication auth) {
         Optional.of(auth)
             .map(a -> a.getPrincipal())
