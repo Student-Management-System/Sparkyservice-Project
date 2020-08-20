@@ -35,8 +35,9 @@ import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 @ExtendWith(SpringExtension.class) 
-@ContextConfiguration(classes= {UnitTestDataConfiguration.class})
+@ContextConfiguration(classes = {UnitTestDataConfiguration.class})
 public class UserTransformerTest {
+
     static class TestPrincipal implements SparkysAuthPrincipal {
         @Override
         public @Nonnull String getName() {
@@ -90,10 +91,10 @@ public class UserTransformerTest {
         
         var extendedUser = transformer.extendFromUserDto(dto);
         assertAll(
-                () -> assertEquals(dto.role, extendedUser.getRole()),
-                () -> assertEquals(dto.username, extendedUser.getUsername()),
-                () -> assertEquals(dto.realm, extendedUser.getRealm())
-            );
+            () -> assertEquals(dto.role, extendedUser.getRole()),
+            () -> assertEquals(dto.username, extendedUser.getUsername()),
+            () -> assertEquals(dto.realm, extendedUser.getRealm())
+        );
     }
 
     @Test
@@ -102,10 +103,10 @@ public class UserTransformerTest {
         var token = new UsernamePasswordAuthenticationToken(new TestPrincipal(), "test", Arrays.asList(authority));
         var extractedUser = NullHelpers.notNull(transformer.extractFromAuthentication(token));
         assertAll(
-                () -> assertEquals(authority.toString(), extractedUser.getRole().getAuthority()),
-                () -> assertEquals(UserRealm.LOCAL, extractedUser.getRealm()),
-                () -> assertEquals("test", extractedUser.getPassword())
-            );
+            () -> assertEquals(authority.toString(), extractedUser.getRole().getAuthority()),
+            () -> assertEquals(UserRealm.LOCAL, extractedUser.getRealm()),
+            () -> assertEquals("test", extractedUser.getPassword())
+        );
     }
 
     /**
@@ -124,6 +125,6 @@ public class UserTransformerTest {
     public void userNameTokenTest() throws MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var token = new UsernamePasswordAuthenticationToken("user", "test", Arrays.asList(authority));
-        assertThrows(UnsupportedOperationException.class, () -> transformer.extendFromAuthentication(token));
+        assertThrows(MissingDataException.class, () -> transformer.extendFromAuthentication(token));
     }
 }
