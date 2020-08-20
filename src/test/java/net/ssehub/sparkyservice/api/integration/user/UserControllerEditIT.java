@@ -215,6 +215,9 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     /**
      * An in memory user is authenticated and tries to change data of a stored ldap user via 
      * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication).
+     * Values to change:
+     * - UserRole from DEFAULT to ADMIN
+     * - E-Mail Settings update
      * 
      * @throws Exception
      */
@@ -222,12 +225,12 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void editLdapUserRolesTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoLdap.json.txt"));
-        // Should match with the data of the given json txt content:
-        var editUserLocal = UserFactoryProvider.getFactory(UserRealm.LDAP)
-                .create("testuserldap", null, UserRole.DEFAULT, true);
-        editUserLocal.getSettings().setEmail_receive(true);
-        userService.commit(editUserLocal);
-        assumeTrue(userService.isUserInStorage(editUserLocal));
+        var userDto = new ObjectMapper().readValue(content, UserDto.class);
+        var userFromFile = UserFactoryProvider.getFactory(userDto.realm).create(userDto);
+        userFromFile.setRole(UserRole.ADMIN);
+        userFromFile.getSettings().setEmail_receive(true);
+        userService.commit(userFromFile);
+        assumeTrue(userService.isUserInStorage(userFromFile));
         
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)

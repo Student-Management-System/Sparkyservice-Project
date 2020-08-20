@@ -9,6 +9,7 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
+import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 
 /**
  * User implementation of a Memory user. Those user only "live" in the process memory and can't create 
@@ -69,7 +70,7 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     @Override
     @Nonnull
     public User getJpa() {
-        throw new UnsupportedOperationException("Memory user can't produce a JPA User instance");
+        throw new NoTransactionUnitException(MemoryUser.class.getName() + " can't produce a JPA User instance");
     }
 
     @Override

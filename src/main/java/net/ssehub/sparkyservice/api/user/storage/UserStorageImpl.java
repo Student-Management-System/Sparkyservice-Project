@@ -91,15 +91,19 @@ public class UserStorageImpl implements UserStorageService {
      */
     @Override
     public <T extends SparkyUser> void commit(@Nonnull T user) {
-        User jpa = user.getJpa();
-        if (jpa.getRealm() == null || jpa.getUserName().isBlank()) {
+        if (user.getRealm() == null || user.getUsername().isBlank()) {
             throw new IllegalArgumentException("Realm and username must not be blank.");
-        } else if (user.getRealm() != UserRealm.MEMORY) {
-            log.debug("Try to store user {}@{} into database", jpa.getUserName(), jpa.getRealm());
-            repository.save(jpa);
-            log.debug("...stored");
+        } else if (user.getRealm() != UserRealm.UNKNOWN) {
+            try {
+                User jpa = user.getJpa();
+                log.debug("Try to store user {}@{} into database", jpa.getUserName(), jpa.getRealm());
+                repository.save(jpa);
+                log.debug("...stored");
+            } catch (NoTransactionUnitException e) {
+                log.debug("Don't safe user: {}@{}", user.getUsername(), user.getRealm());
+            }
         } else {
-            log.debug("Don't safe user: {}@{}", jpa.getUserName(), jpa.getRealm());
+            log.warn("UNKNOWN USER REALM: {}@{}", user.getUsername(), user.getRealm());
         }
     }
 
@@ -159,14 +163,14 @@ public class UserStorageImpl implements UserStorageService {
     public boolean isUserInStorage(@Nullable SparkyUser user) {
         boolean found = false;
         try {
-            
             if (user != null) {
                 found = checkForUser(user,
-                        u -> this.findUserById(u.getJpa().getId()), 
-                        u -> this.findUserByNameAndRealm(u.getUsername(), u.getRealm())
-                        );
+                    u -> this.findUserById(u.getJpa().getId()), 
+                    u -> this.findUserByNameAndRealm(u.getUsername(), u.getRealm())
+                );
             } 
-        } catch (IllegalArgumentException e) {
+        } catch (NoTransactionUnitException e) {
+            found = false;
         }
         return found;
     }
