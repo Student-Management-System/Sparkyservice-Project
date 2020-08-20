@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.user.transformation;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -34,7 +35,8 @@ public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Nonnull
     private static UserRole getRole(Collection<? extends GrantedAuthority> authorities) {
-        String[] authList = authorities.toArray(new String[1]);
+        Object[] objList = authorities.toArray();
+        String[] authList = Arrays.stream(objList).map(String::valueOf).toArray(String[]::new);
         return UserRole.DEFAULT.getEnum(authList[0]);
     }
 
@@ -59,10 +61,10 @@ public class SimpleTransfomerImpl implements UserTransformerService {
         Optional<SparkyUser> optUser = Optional.empty();
         String passwordString = details.getPassword();
         if (passwordString != null) {
-            var pw = new Password(passwordString, "UNKWN");
+            var password = new Password(passwordString, "UNKWN");
             optUser = Optional.of(
                 UserFactoryProvider.getFactory(UserRealm.MEMORY)
-                    .create(details.getUsername(), pw, getRole(details.getAuthorities()) , details.isEnabled())
+                    .create(details.getUsername(), password, getRole(details.getAuthorities()) , details.isEnabled())
             );
         }
         return optUser;
@@ -80,11 +82,11 @@ public class SimpleTransfomerImpl implements UserTransformerService {
     @Override
     @Nonnull
     public SparkyUser extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
-        Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElse(null);
+        Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow(MissingDataException::new);
         return notNull(
             fromUserDetails(principal)
                 .or(() -> fromSparkyPrincipal(principal))
-                .orElseThrow(() -> new MissingDataException(""))
+                .orElseThrow(() -> new UnsupportedOperationException("Not supported to extend from this auth"))
         );
     }
 
@@ -129,6 +131,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
             throw new MissingDataException("Not enough information to extract from");
         }
     }
+
     /**
      * Trys to extract information of the authentication object an build a user. 
      * 
