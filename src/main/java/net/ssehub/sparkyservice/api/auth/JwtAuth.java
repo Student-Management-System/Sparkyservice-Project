@@ -34,6 +34,7 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
@@ -205,7 +206,12 @@ public class JwtAuth {
     public static UsernamePasswordAuthenticationToken readJwtToken(String token, String jwtSecret,
             UserTransformerService service) throws JwtTokenReadException {
         var tokenObj = readJwtToken(token, jwtSecret);
-        var user = service.extendFromAuthentication(tokenObj);
-        return new UsernamePasswordAuthenticationToken(user, tokenObj.getCredentials(), user.getAuthorities());
+        try {
+            var user = service.extendFromAuthentication(tokenObj);
+            tokenObj = new UsernamePasswordAuthenticationToken(user, tokenObj.getCredentials(), user.getAuthorities());
+        } catch (UserNotFoundException e) {
+            
+        }
+        return tokenObj;
     }
 }

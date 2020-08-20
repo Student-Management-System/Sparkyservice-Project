@@ -99,7 +99,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             .filter(isNotLocked)
             .map(this::getTokenObject);
         optTokenObj.ifPresentOrElse(
-            token -> LOG.debug("Successful authorization with: {}", token),
+            token -> LOG.debug("Successful authorization of: {}", token.getName()),
             () -> LOG.debug("Token not was not valid {}", jwt)
         );
         return optTokenObj.orElse(null);

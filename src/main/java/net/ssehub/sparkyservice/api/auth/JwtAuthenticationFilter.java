@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -78,14 +80,14 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain, Authentication authentication) {
 
-        log.info("Successful authentication with JWT");
+        log.info("Successful authentication with JWT: {}@", authentication.getName());
         var user = Optional.of(authentication)
             .map(a -> a.getPrincipal())
             .map(SparkyUser.class::cast);
         user.filter(u -> !userService.isUserInStorage(u))
             .ifPresent(userService::commit);
         user.map(this::buildAuthenticatioInfoFromUser)
-            .ifPresent(dto -> setResponseValue(response, dto));
+            .ifPresent(dto -> setResponseValue(notNull(response), notNull(dto)));
     }
 
     /**

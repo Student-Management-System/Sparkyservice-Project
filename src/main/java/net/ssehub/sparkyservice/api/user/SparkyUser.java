@@ -17,6 +17,7 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
+import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
@@ -93,9 +94,10 @@ public interface SparkyUser extends UserDetails {
      * Returns a storage user.
      * 
      * @return User with JPA annotations for persistent save
+     * @throws NoTransactionUnitException when the implementation can't provide an JPA object for transaction
      */
     @Nonnull
-    User getJpa();
+    User getJpa() throws NoTransactionUnitException;
 
     /**
      * Returns settings of a user.

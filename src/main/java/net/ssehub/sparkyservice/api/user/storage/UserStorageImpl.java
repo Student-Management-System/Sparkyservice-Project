@@ -40,29 +40,54 @@ public class UserStorageImpl implements UserStorageService {
     private final Logger log = LoggerFactory.getLogger(UserStorageImpl.class);
 
     /**
-     * Checks if a user is present with the provided search actions with error handling. 
+     * Finds user by a provided strategy. 
      * 
-     * @param user - The user to search for
-     * @param userSearchAction - Methods to use for search
-     * @return <code>true</code> When the user was found by any provided action
+     * @author marcel
      */
-    @SafeVarargs
-    public static boolean checkForUser(SparkyUser user, Function<SparkyUser, SparkyUser>... userSearchAction) {
-        var actionList = Stream.of(userSearchAction)
-                .map(Function.identity())
-                .collect(Collectors.toList());
-        return actionList
-            .stream()
-            .dropWhile(searchAction -> {
-                boolean found;
-                try {
-                    found = Optional.ofNullable(user).map(searchAction).orElse(null) != null;
-                } catch (UserNotFoundException e) {
-                    found = false;
-                }
-                return !found; //if not found, drop action and try next one
-            })
-            .count() > 0;
+    private static class UserFinder {
+        private final SparkyUser user;
+
+        /**
+         * Finds user by a provided strategy.
+         * 
+         * @param user - The user to search for
+         */
+        public UserFinder(SparkyUser user) {
+            this.user = user;
+        }
+        
+        /**
+         * Checks if a user is present with the provided search actions with error handling. 
+         * 
+         * @param userSearchAction - Methods which is used for searching a user; when one fails, the next one is used
+         *                           The method can throw a {@link UserNotFoundException}
+         * @return <code>true</code> When the user was found by any provided action
+         */
+        @SafeVarargs
+        public final boolean checkForUser(Function<SparkyUser, SparkyUser>... userSearchAction) {
+            var actionList = Stream.of(userSearchAction)
+                    .map(Function.identity())
+                    .collect(Collectors.toList());
+            return actionList.stream()
+                .dropWhile(this::invokeSingleAction)
+                .count() > 0;
+        }
+
+        /**
+         * Applys a single search action.
+         * 
+         * @param searchAction
+         * @return <code>true</code> if search action finds the desired {@link #user}
+         */
+        private final boolean invokeSingleAction(Function<SparkyUser, SparkyUser> searchAction) {
+            boolean found;
+            try {
+                found = Optional.ofNullable(user).map(searchAction).orElse(null) != null;
+            } catch (UserNotFoundException e) {
+                found = false;
+            }
+            return !found; //if not found, drop action and try next one
+        }
     }
 
     /**
@@ -72,17 +97,6 @@ public class UserStorageImpl implements UserStorageService {
      * @return SparkyUser representation of given JPA object
      */
     public @Nonnull static SparkyUser transformUser(@Nonnull User user) {
-//        SparkyUser returnUser;
-//        switch(user.getRealm()) {
-//        case LOCAL:
-//            returnUser = new LocalUserDetails(user);
-//            break;
-//        case LDAP:
-//            returnUser = new LdapUser(user);
-//        default:
-//            throw new UnsupportedOperationException();
-//        }
-//        return returnUser;
         return UserFactoryProvider.getFactory(user.getRealm()).create(user);
     }
 
@@ -142,7 +156,7 @@ public class UserStorageImpl implements UserStorageService {
             throws UserNotFoundException {
         Optional<User> optUser = repository.findByuserNameAndRealm(username, realm);
         SparkyUser user =  optUser.map(UserStorageImpl::transformUser).orElseThrow(
-            () -> new UserNotFoundException("no user with this name in the given realm"));
+            () -> new UserNotFoundException(username + "@" + realm + " not found in storage."));
         return notNull(user);
     } 
 
@@ -161,10 +175,11 @@ public class UserStorageImpl implements UserStorageService {
      * {@inheritDoc}.
      */
     public boolean isUserInStorage(@Nullable SparkyUser user) {
+        var filter = new UserFinder(user);
         boolean found = false;
         try {
             if (user != null) {
-                found = checkForUser(user,
+                found =  filter.checkForUser(
                     u -> this.findUserById(u.getJpa().getId()), 
                     u -> this.findUserByNameAndRealm(u.getUsername(), u.getRealm())
                 );

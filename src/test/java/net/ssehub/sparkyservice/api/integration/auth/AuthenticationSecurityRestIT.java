@@ -385,7 +385,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .andReturn();
         assumeTrue(authResult.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
         
-        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader);
+        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader).replace(jwtTokenPrefix, "");
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_VERIFY)

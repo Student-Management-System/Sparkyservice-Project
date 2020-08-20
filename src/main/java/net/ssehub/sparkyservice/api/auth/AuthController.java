@@ -84,7 +84,7 @@ public class AuthController {
      * information about what went wrong.
      * 
      * @param auth - Injected through spring if the user is logged in - holds
-     *             authentication information
+     *               authentication information
      * @param request - Provided by Spring
      * @return user information which are stored in the JWT token
      * @throws UserNotFoundException
@@ -113,7 +113,6 @@ public class AuthController {
             throw new AuthenticationException();
         }
         var user = transformator.extractFromAuthentication(auth);
-        storageService.refresh(user);
         var dto = new AuthenticationInfoDto();
         dto.user = UserModificationService.from(user.getRole()).asDto(user);
         if (auth.getCredentials() instanceof TokenDto) {
@@ -142,16 +141,12 @@ public class AuthController {
     @GetMapping(value = ControllerPath.AUTHENTICATION_VERIFY)
     public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) 
             throws MissingDataException, JwtTokenReadException {
-        if (!StringUtils.isEmpty(jwtToken) && jwtToken.startsWith(jwtConf.getPrefix())) {
-            var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret());
-            var user = transformator.extractFromAuthentication(auth);
-            user = storageService.refresh(user);
-            var dto = new AuthenticationInfoDto();
-            dto.user = UserModificationService.from(user.getRole()).asDto(user);
-            dto.token = (TokenDto) auth.getCredentials();
-            return dto;
-        }
-        throw new AuthenticationException();
+        var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret());
+        var user = transformator.extractFromAuthentication(auth);
+        var dto = new AuthenticationInfoDto();
+        dto.user = UserModificationService.from(user.getRole()).asDto(user);
+        dto.token = (TokenDto) auth.getCredentials();
+        return dto;
     }
     
     /**
@@ -165,19 +160,6 @@ public class AuthController {
     @ExceptionHandler({ AuthenticationException.class, MissingDataException.class, UserNotFoundException.class, 
         JwtTokenReadException.class })
     public ErrorDto handleUserEditException(Exception ex) {
-        return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
-    }
-
-    /**
-     * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
-     * on the thrown exception.
-     * 
-     * @param ex - Can be AuthenticationException.class 
-     * @return Informational ErrorDto which is comparable with the  default Spring Error Text
-     */
-    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler({ AuthenticationException.class })
-    public ErrorDto handleAuthenticationException(AuthenticationException ex) {
         return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
     }
 

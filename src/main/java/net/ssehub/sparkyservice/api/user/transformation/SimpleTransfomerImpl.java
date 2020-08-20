@@ -27,12 +27,24 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
+/**
+ * Simple user transformer which does the necessary work. Tries to make a compromise between performance
+ * and simplicity.
+ * 
+ * @author marcel
+ */
 @Service
 public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Autowired
     private UserStorageService storageService;
 
+    /**
+     * Get a role from a GrantedAuthority. Only a single authority is used (the first one). 
+     * 
+     * @param authorities
+     * @return UserRole which was casted from an authority
+     */
     @Nonnull
     private static UserRole getRole(Collection<? extends GrantedAuthority> authorities) {
         Object[] objList = authorities.toArray();
@@ -86,28 +98,41 @@ public class SimpleTransfomerImpl implements UserTransformerService {
         return notNull(
             fromUserDetails(principal)
                 .or(() -> fromSparkyPrincipal(principal))
+                .or(() -> Optional.of(extractFromAuthentication(auth)))
                 .orElseThrow(() -> new UnsupportedOperationException("Not supported to extend from this auth"))
         );
     }
 
     private Optional<SparkyUser> fromUserDetails(Object obj) {
-        return Optional.ofNullable(obj)
-            .filter(p -> UserDetails.class.isAssignableFrom(p.getClass()))
-            .map(UserDetails.class::cast)
-            .map(this::extendFromUserDetails);
+        Optional<SparkyUser> user; 
+        try {
+            user = Optional.ofNullable(obj)
+                .filter(p -> UserDetails.class.isAssignableFrom(p.getClass()))
+                .map(UserDetails.class::cast)
+                .map(this::extendFromUserDetails);
+        } catch (UserNotFoundException e) {
+            user = Optional.empty();
+        }
+        return user;
     }
 
     private Optional<SparkyUser> fromSparkyPrincipal(Object obj) {
-        return Optional.of(obj)
-            .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
-            .map(SparkysAuthPrincipal.class::cast)
-            .map(this::extendFromSparkyPrincipal);
+        Optional<SparkyUser> user;
+        try {
+            return Optional.of(obj)
+                .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
+                .map(SparkysAuthPrincipal.class::cast)
+                .map(this::extendFromSparkyPrincipal);
+        } catch (UserNotFoundException e) {
+            user = Optional.empty();
+        }
+        return user;
     }
 
     @Override
     @Nonnull
     public SparkyUser extendFromUserDto(@Nullable UserDto user) throws MissingDataException {
-        if(user == null) {
+        if (user == null) {
             throw new MissingDataException("UserDto was null");
         }
         return storageService.findUserByNameAndRealm(user.username, user.realm);
@@ -133,7 +158,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
     }
 
     /**
-     * Trys to extract information of the authentication object an build a user. 
+     * Tries to extract information of the authentication object an build a user. 
      * 
      * @param auth
      * @return User with information present from the authentication object
