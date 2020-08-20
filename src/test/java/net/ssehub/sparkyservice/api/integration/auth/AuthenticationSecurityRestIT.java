@@ -215,7 +215,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
     @IntegrationTest
     public void authenticationExpireTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
-        user.setExpirationDate(LocalDate.now().minusDays(1)); // user is expired
+        user.setExpireDate(LocalDate.now().minusDays(1)); // user is expired
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
@@ -385,7 +385,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
             .andReturn();
         assumeTrue(authResult.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
         
-        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader);
+        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader).replace(jwtTokenPrefix, "");
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_VERIFY)

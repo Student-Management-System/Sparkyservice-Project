@@ -63,16 +63,16 @@ public class DefaultModificationTests {
     @Test
     public void userAsDtoTest() throws Exception {
         LocalUserDetails user = LocalUserDetails.newLocalUser("test", "test", UserRole.DEFAULT);
-        user.getProfileConfiguration().setEmail_address("test@test");
-        user.getProfileConfiguration().setPayload("test");
-        user.setExpirationDate(LocalDate.now());
+        user.getSettings().setEmail_address("test@test");
+        user.getSettings().setPayload("test");
+        user.setExpireDate(LocalDate.now());
         
-        var modifiedDto = modificationService.userAsDto(user);
+        var modifiedDto = modificationService.asDto(user);
         var dtoSettings = modifiedDto.settings;
         assertAll(
             () -> assertEquals(user.getRealm(), modifiedDto.realm, "Realm not available in DTO"),
             () -> assertEquals(null, modifiedDto.expirationDate, "Exp Date is available!"),
-            () -> assertEquals(user.getFullName(), modifiedDto.fullName, "Fullname not avaiable"),
+            () -> assertEquals(user.getFullname(), modifiedDto.fullName, "Fullname not avaiable"),
             () -> assertEquals(null, dtoSettings.payload, "Payload is available"),
             () -> assertEquals("test@test", dtoSettings.email_address, "Email not in dto")
         );
@@ -87,7 +87,7 @@ public class DefaultModificationTests {
         userDto.passwordDto.oldPassword = "oldPw";
 
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        modificationService.changePasswordFromDto(user, userDto.passwordDto);
+        modificationService.update(user, userDto);
         assertTrue(encoder.matches("hallo123", user.getPassword()), "Password not changed");
     }
 
@@ -100,7 +100,7 @@ public class DefaultModificationTests {
         userDto.passwordDto.oldPassword = "wrongOldPw";
 
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        modificationService.changePasswordFromDto(user, userDto.passwordDto);
+        modificationService.update(user, userDto);
         assertFalse(encoder.matches("hallo123", user.getPassword()), "Password was changed even when old password"
                 + " not matched");
     }

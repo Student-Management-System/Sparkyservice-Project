@@ -1,9 +1,9 @@
 package net.ssehub.sparkyservice.api.integration.user;
 
 import static net.ssehub.sparkyservice.api.testconf.SparkyAssertions.assertDtoEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -36,14 +36,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserController;
+import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
+import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -57,6 +60,9 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 //checkstyle: stop exception type check
 public class UserControllerEditIT extends AbstractContainerTestDatabase {
+
+    private static final AbstractSparkyUserFactory<? extends SparkyUser> FACTORY = 
+            UserFactoryProvider.getFactory(UserRealm.LOCAL);
 
     @Autowired
     private WebApplicationContext context;
@@ -153,7 +159,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     public void editOtherAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDto.json.txt"));
         // Should match with the data of the given json txt content:
-        var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
+        var editUserLocal = FACTORY.create("testuser", new Password("oldPass"), UserRole.DEFAULT, true);
         userService.commit(editUserLocal);
         assumeTrue(userService.isUserInStorage(editUserLocal));
         
@@ -175,7 +181,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     public void editOtherInMemoryAdminTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         // Should match with the data of the given json txt content:
-        var editUserLocal = new User("testuser", new Password("oldPass"), UserRealm.LOCAL, true, UserRole.DEFAULT);
+        var editUserLocal = FACTORY.create("testuser", new Password("oldPass"), UserRole.DEFAULT, true);
         userService.commit(editUserLocal);
         assumeTrue(userService.isUserInStorage(editUserLocal));
         
@@ -209,6 +215,9 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     /**
      * An in memory user is authenticated and tries to change data of a stored ldap user via 
      * {@link UserController#editLocalUser(UserDto, org.springframework.security.core.Authentication).
+     * Values to change:
+     * - UserRole from DEFAULT to ADMIN
+     * - E-Mail Settings update
      * 
      * @throws Exception
      */
@@ -216,11 +225,12 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void editLdapUserRolesTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoLdap.json.txt"));
-        // Should match with the data of the given json txt content:
-        var editUserLocal = new User("testuserLdap", null, UserRealm.LDAP, true, UserRole.DEFAULT);
-        editUserLocal.getProfileConfiguration().setEmail_receive(true);
-        userService.commit(editUserLocal);
-        assumeTrue(userService.isUserInStorage(editUserLocal));
+        var userDto = new ObjectMapper().readValue(content, UserDto.class);
+        var userFromFile = UserFactoryProvider.getFactory(userDto.realm).create(userDto);
+        userFromFile.setRole(UserRole.ADMIN);
+        userFromFile.getSettings().setEmail_receive(true);
+        userService.commit(userFromFile);
+        assumeTrue(userService.isUserInStorage(userFromFile));
         
         this.mvc
             .perform(patch(ControllerPath.USERS_PATCH)
@@ -231,7 +241,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         var editedUser = userService.findUserByNameAndRealm("testuserLdap", UserRealm.LDAP);
         assertAll(
             () -> assertEquals(UserRole.ADMIN, editedUser.getRole()),
-            () -> assertFalse(editedUser.getProfileConfiguration().isEmail_receive())
+            () -> assertFalse(editedUser.getSettings().isEmail_receive())
         );
     }
 
@@ -248,8 +258,8 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
          */
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoAdmin.json.txt"));
         var authenticatedUser = userService.findUserByNameAndRealm("testuser", UserRealm.LOCAL);
-        authenticatedUser.getProfileConfiguration().setEmail_address("old@test");
-        int userId = authenticatedUser.getId();
+        authenticatedUser.getSettings().setEmail_address("old@test");
+        int userId = authenticatedUser.getJpa().getId();
         userService.commit(authenticatedUser);
         
         MvcResult result = this.mvc
@@ -262,9 +272,10 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         String dtoArrayString = result.getResponse().getContentAsString();
         var returnedDto = new ObjectMapper().readValue(dtoArrayString, UserDto.class);
         var editedUser = userService.findUserById(userId);
+        var editedDto = UserModificationService.from(UserRole.ADMIN).asDto(editedUser);
         assertAll(
-            () -> assertEquals("test@test", editedUser.getProfileConfiguration().getEmail_address()),
-            () -> assertDtoEquals(editedUser.asDto(), returnedDto)
+            () -> assertEquals("test@test", editedUser.getSettings().getEmail_address()),
+            () -> assertDtoEquals(editedDto, returnedDto)
         );
     }
 }

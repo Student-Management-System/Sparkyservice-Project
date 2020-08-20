@@ -1,6 +1,5 @@
 package net.ssehub.sparkyservice.api.conf;
 
-
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +15,15 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
-import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
-import net.ssehub.sparkyservice.api.auth.SparkyLdapUserDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
+import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
@@ -36,6 +34,7 @@ import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
+//checkstyle: stop exception type check
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${ldap.urls:}")
     private String ldapUrls;
@@ -74,17 +73,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtSettings jwtSettings;
     
     @Autowired
-    private UserStorageImpl dbUserService;
+    private LocalLoginDetailsMapper localDetailsMapper;
+
+    @Autowired
+    private UserStorageService storageService;
     
     @Autowired
     @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
     private Set<String> lockedJwtToken;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private UserTransformerService transformator;
+
+    @Autowired
+    private MemoryLoginDetailsService memoryDetailsService;
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -107,9 +109,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
             .and()
                 .addFilter(
-                        new JwtAuthenticationFilter(authenticationManager(), jwtSettings, dbUserService, transformator)
-                    )
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken))
+                    new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storageService, transformator)
+                )
+                .addFilter(
+                    new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken, transformator)
+                )
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
@@ -122,18 +126,41 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        configureInMemory(auth);
+        auth.userDetailsService(localDetailsMapper);
+        configureLdap(auth);
+    }
+
+    /**
+     * Configures in memory authentication service.
+     * 
+     * @param auth - Current builder which is configure with inMemory authentication
+     */
+    public void configureInMemory(AuthenticationManagerBuilder auth) throws Exception {
         if (inMemoryEnabled) {
             if (inMemoryPassword.isEmpty()) {
                 throw new Exception("Set recovery.password or disable the account");
             }
-            auth.inMemoryAuthentication()
-                .withUser(inMemoryUser)
-                .password(passwordEncoder.encode(inMemoryPassword))
-                .roles(UserRole.ADMIN.name());
+            auth.userDetailsService(memoryDetailsService);
+//            auth.inMemoryAuthentication().set
+//                .withUser(inMemoryUser)
+//                .password(passwordEncoder.encode(inMemoryPassword))
+//                .roles(UserRole.ADMIN.name())
+//                .and()
+//                .withUser(memUser));
+//                .password(passwordEncoder.encode(inMemoryPassword));
         }
-        auth.userDetailsService(dbUserService);
-        var ldapMapper = new SparkyLdapUserDetailsMapper();
+    }
+
+    /**
+     * Configures LDAP as login provider.
+     * 
+     * @param auth
+     * @throws Exception 
+     */
+    public void configureLdap(AuthenticationManagerBuilder auth) throws Exception {
         if (ldapEnabled) {
+            var ldapMapper = new SparkyLdapUserDetailsMapper(storageService);
             if (ldapAd) {
                 ActiveDirectoryLdapAuthenticationProvider adProvider = 
                         new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
@@ -157,7 +184,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             }
         }
     }
-    
+
     @Bean("authenticationManager")
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {

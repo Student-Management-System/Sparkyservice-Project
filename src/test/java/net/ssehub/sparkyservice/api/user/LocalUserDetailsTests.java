@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
 class LocalUserDetailsTests {
@@ -34,13 +35,13 @@ class LocalUserDetailsTests {
     @Test
     public void userDetailsFactoryActiveTest() {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
-        assertTrue(userDetails.isActive());
+        assertTrue(userDetails.isEnabled());
     }
     
     @Test
     public void userDetailsFactoryDefaultRealmTest() {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
-        assertEquals(LocalUserDetails.DEFAULT_REALM, userDetails.getRealm(), 
+        assertEquals(UserRealm.LOCAL, userDetails.getRealm(), 
                 "The user is user details are not stored in the default realm.");
     }
 
@@ -53,7 +54,7 @@ class LocalUserDetailsTests {
     @Test
     public void userExpirationFunctionTest() {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
-        userDetails.setExpirationDate(LocalDate.now().minusDays(1)); // is expired
+        userDetails.setExpireDate(LocalDate.now().minusDays(1)); // is expired
         assertFalse(userDetails.isAccountNonExpired(), "User should be expired!");
     }
 }

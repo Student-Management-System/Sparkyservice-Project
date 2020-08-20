@@ -30,8 +30,8 @@ public class ServiceAccStorageService {
      */
     @Nonnull
     public List<User> findAllServiceAccounts() {
-        return NullHelpers.notNull(
-            SparkyUtil.toList(repository.findByRole(UserRole.SERVICE))
+        return SparkyUtil.toList(
+                NullHelpers.notNull(repository.findByRole(UserRole.SERVICE))
         );
     }
 }
