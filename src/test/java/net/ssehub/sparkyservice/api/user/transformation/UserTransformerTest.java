@@ -1,10 +1,10 @@
 package net.ssehub.sparkyservice.api.user.transformation;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -22,10 +22,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.LocalUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
@@ -35,7 +37,7 @@ import net.ssehub.sparkyservice.api.util.NullHelpers;
 @ExtendWith(SpringExtension.class) 
 @ContextConfiguration(classes= {UnitTestDataConfiguration.class})
 public class UserTransformerTest {
-    class TestPrincipal implements SparkysAuthPrincipal {
+    static class TestPrincipal implements SparkysAuthPrincipal {
         @Override
         public @Nonnull String getName() {
             return "testUser";
@@ -58,15 +60,14 @@ public class UserTransformerTest {
     private TestingUserRepository mockedRepository;
 
     @Test
-    public void extendFromUserDetails() throws UserNotFoundException, MissingDataException {
+    public void extendFromSpringUserDetails() throws UserNotFoundException, MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var userDetails = new org.springframework.security.core.userdetails.User("testuser", "testpass", Arrays.asList(authority));
-        SparkyUser extendedUser = NullHelpers.notNull(transformer.extendFromAuthentication(userDetails)); // in reality this is maybe null!
+        SparkyUser extendedUser = transformer.extendFromUserDetails(userDetails); // in reality this is maybe null!
         assertAll(
-                () -> assertTrue(extendedUser != null),
-                () -> assertEquals("testuser", extendedUser.getUsername()),
-                () -> assertEquals(UserRealm.MEMORY, extendedUser.getRealm())
-            );
+            () -> assertEquals("testuser", extendedUser.getUsername()),
+            () -> assertEquals(UserRealm.MEMORY, extendedUser.getRealm())
+        );
     }
 
     @Test
@@ -99,21 +100,30 @@ public class UserTransformerTest {
     public void userNameTokenRealmTest() throws MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var token = new UsernamePasswordAuthenticationToken(new TestPrincipal(), "test", Arrays.asList(authority));
-        var extendedUser = NullHelpers.notNull(transformer.extractFromAuthentication(token));
+        var extractedUser = NullHelpers.notNull(transformer.extractFromAuthentication(token));
         assertAll(
-                () -> assertNotNull(extendedUser),
-                () -> assertEquals(UserRealm.LOCAL, extendedUser.getRealm())
+                () -> assertEquals(authority.toString(), extractedUser.getRole().getAuthority()),
+                () -> assertEquals(UserRealm.LOCAL, extractedUser.getRealm()),
+                () -> assertEquals("test", extractedUser.getPassword())
             );
+    }
+
+    /**
+     * Tests if SparkyUser is extracted when it's present as principal.
+     */
+    @Test
+    public void extractSparkyUserPrincipalTest() {
+        var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
+        var user = new LocalUserFactory().create("test", new Password("hallo", "plain"), UserRole.ADMIN, true);
+        var token = new UsernamePasswordAuthenticationToken(user, "test", Arrays.asList(authority));
+        var extractedUser = NullHelpers.notNull(transformer.extractFromAuthentication(token));
+        assertTrue(user.equals(extractedUser));
     }
 
     @Test
     public void userNameTokenTest() throws MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
         var token = new UsernamePasswordAuthenticationToken("user", "test", Arrays.asList(authority));
-        var extendedUser = NullHelpers.notNull(transformer.extractFromAuthentication(token));
-        assertAll(
-                () -> assertNotNull(extendedUser),
-                () -> assertEquals(UserRealm.MEMORY, extendedUser.getRealm())
-            );
+        assertThrows(UnsupportedOperationException.class, () -> transformer.extendFromAuthentication(token));
     }
 }

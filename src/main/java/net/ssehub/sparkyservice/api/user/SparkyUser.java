@@ -163,5 +163,6 @@ public interface SparkyUser extends UserDetails {
      * 
      * @return Hashed integer using fields
      */
+    @Override
     int hashCode();
 }

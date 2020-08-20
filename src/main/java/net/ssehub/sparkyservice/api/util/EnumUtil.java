@@ -40,7 +40,7 @@ public class EnumUtil {
     @SuppressWarnings("null")
     public @Nonnull static <T extends Enum<T>> Optional<T> castFromArray(@Nonnull T[] values, 
             @Nonnull List<Predicate<T>> selectorList) {
-        for (var singleSelector : selectorList) {
+        for (Predicate<T> singleSelector : selectorList) {
             var filteredList = Arrays.stream(values).filter(singleSelector).collect(Collectors.toList());
             if (!filteredList.isEmpty()) {
                 return Optional.of(filteredList.get(0));
@@ -48,5 +48,4 @@ public class EnumUtil {
         }
         return Optional.empty();
     }
-    
 }
