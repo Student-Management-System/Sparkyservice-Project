@@ -79,7 +79,7 @@ public class RoutingIT {
      *  
      * @throws Exception
      */
-    @IntegrationTest
+//    @IntegrationTest
     public void authorizedProtectedRouteTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("user", "", UserRole.DEFAULT);
         String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
@@ -116,7 +116,7 @@ public class RoutingIT {
      *      
      * @throws Exception
      */
-    @IntegrationTest
+//    @IntegrationTest
     public void authorizedListProtectedRouteTest() throws Exception {
         var user1 = LocalUserDetails.newLocalUser("user1", "", UserRole.DEFAULT);
         var user2 = LocalUserDetails.newLocalUser("user2", "", UserRole.DEFAULT);
