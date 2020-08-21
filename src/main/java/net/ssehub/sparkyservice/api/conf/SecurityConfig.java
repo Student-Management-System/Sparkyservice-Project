@@ -23,8 +23,8 @@ import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
 import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Springs security configuration loaded at startup.
@@ -83,7 +83,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private Set<String> lockedJwtToken;
 
     @Autowired
-    private UserTransformerService transformator;
+    private UserExtractionService transformator;
 
     @Autowired
     private MemoryLoginDetailsService memoryDetailsService;

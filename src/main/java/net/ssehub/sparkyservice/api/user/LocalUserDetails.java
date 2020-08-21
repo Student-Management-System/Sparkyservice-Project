@@ -184,8 +184,9 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
     @Nonnull
     public User getJpa() {
         var jpaUser = new User(
-             getUsername(), new Password(getPasswordEntity()), UserRealm.LOCAL, isEnabled(), getRole()
-         );
+            getUsername(), UserRealm.LOCAL, isEnabled(), getRole()
+        );
+        jpaUser.setPasswordEntity(new Password(getPassword()));
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);

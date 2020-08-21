@@ -65,6 +65,10 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
             ctxValid = false;
             log.error("No jwt conf present in zuul authorization filter");
             blockRequest(HttpStatus.INTERNAL_SERVER_ERROR);
+        } else if (zuulRoutes == null) {
+            ctxValid = false;
+            log.debug("No zuul route configuration");
+            
         }
         return ctxValid;
     }

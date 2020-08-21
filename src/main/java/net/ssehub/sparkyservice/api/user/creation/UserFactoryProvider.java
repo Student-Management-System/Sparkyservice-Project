@@ -6,7 +6,19 @@ import net.ssehub.sparkyservice.api.user.LocalUserFactory;
 import net.ssehub.sparkyservice.api.user.MemoryUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 
+/**
+ * Provides Factory methods for {@link AbstractSparkyUserFactory} depending on a given {@link UserRealm}.
+ * 
+ * @author marcel
+ */
 public class UserFactoryProvider {
+    
+    /**
+     * Creates a user factory depending on the given realm. 
+     * 
+     * @param realm
+     * @return Factory class for a concrete type
+     */
     public static AbstractSparkyUserFactory<? extends SparkyUser> getFactory(UserRealm realm) {
         AbstractSparkyUserFactory<? extends SparkyUser> fac = new LdapUserFactory();
         switch (realm) {

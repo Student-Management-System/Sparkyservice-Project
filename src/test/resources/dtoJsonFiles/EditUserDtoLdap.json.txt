@@ -2,8 +2,8 @@
   "realm": "LDAP",
   "passwordDto": null,
   "settings": {
-    "email_address": "test@test",
-    "email_receive": false,
+    "emailAddress": "test@test",
+    "emailReceive": false,
     "wantsAi": true
   },
   "username": "testuserLdap",

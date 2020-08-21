@@ -5,8 +5,8 @@
   },
   "realm": "LOCAL",
   "settings": {
-    "email_address": "test@test",
-    "email_receive": true,
+    "emailAddress": "test@test",
+    "emailReceive": true,
     "wantsAi": true
   },
   "username": "testuser"

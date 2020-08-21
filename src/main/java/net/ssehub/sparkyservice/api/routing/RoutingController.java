@@ -14,6 +14,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
+/**
+ * Informational controller for routing purposes.
+ * 
+ * @author marcel
+ */
 @RestController
 public class RoutingController {
 
@@ -31,6 +36,9 @@ public class RoutingController {
             @ApiResponse(responseCode = "401", description = "This path is protected. User needs to authenticate ") })
     public void route(@PathVariable("path") String path) {}
 
+    /**
+     * Hearbeat - gives a simple live sign.
+     */
     @Operation(description = "Checks if the and API is reachable under /api/v0")
     @GetMapping(value = ControllerPath.HEARTBEAT)
     @ResponseStatus(code = HttpStatus.NO_CONTENT)

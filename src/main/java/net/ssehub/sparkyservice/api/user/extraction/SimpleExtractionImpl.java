@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.transformation;
+package net.ssehub.sparkyservice.api.user.extraction;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -34,7 +34,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  * @author marcel
  */
 @Service
-public class SimpleTransfomerImpl implements UserTransformerService {
+public class SimpleExtractionImpl implements UserExtractionService {
 
     @Autowired
     private UserStorageService storageService;
@@ -54,7 +54,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Override
     @Nonnull
-    public SparkyUser extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException {
+    public SparkyUser extractAndRefresh(@Nullable UserDetails details) throws UserNotFoundException {
         SparkyUser user;
         if (details == null) {
             throw new UserNotFoundException("Cant find null user");
@@ -84,7 +84,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Override
     @Nonnull
-    public SparkyUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
+    public SparkyUser extendAndRefresh(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
         if (principal == null) {
             throw new UserNotFoundException("Principal was null");
         }
@@ -93,12 +93,12 @@ public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Override
     @Nonnull
-    public SparkyUser extendFromAuthentication(@Nullable Authentication auth) throws MissingDataException {
+    public SparkyUser extractAndRefresh(@Nullable Authentication auth) throws MissingDataException {
         Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow(MissingDataException::new);
         return notNull(
             fromUserDetails(principal)
                 .or(() -> fromSparkyPrincipal(principal))
-                .or(() -> Optional.of(extractFromAuthentication(auth)))
+                .or(() -> Optional.of(extract(auth)))
                 .orElseThrow(() -> new UnsupportedOperationException("Not supported to extend from this auth"))
         );
     }
@@ -109,7 +109,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
             user = Optional.ofNullable(obj)
                 .filter(p -> UserDetails.class.isAssignableFrom(p.getClass()))
                 .map(UserDetails.class::cast)
-                .map(this::extendFromUserDetails);
+                .map(this::extractAndRefresh);
         } catch (UserNotFoundException e) {
             user = Optional.empty();
         }
@@ -122,7 +122,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
             return Optional.of(obj)
                 .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
                 .map(SparkysAuthPrincipal.class::cast)
-                .map(this::extendFromSparkyPrincipal);
+                .map(this::extendAndRefresh);
         } catch (UserNotFoundException e) {
             user = Optional.empty();
         }
@@ -131,7 +131,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
 
     @Override
     @Nonnull
-    public SparkyUser extendFromUserDto(@Nullable UserDto user) throws MissingDataException {
+    public SparkyUser extractAndRefresh(@Nullable UserDto user) throws MissingDataException {
         if (user == null) {
             throw new MissingDataException("UserDto was null");
         }
@@ -144,7 +144,7 @@ public class SimpleTransfomerImpl implements UserTransformerService {
      */
     @Override
     @Nonnull
-    public SparkyUser extractFromAuthentication(@Nullable Authentication auth) {
+    public SparkyUser extract(@Nullable Authentication auth) {
         try {
             Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow();
             return notNull(

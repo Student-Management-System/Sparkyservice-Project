@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.transformation;
+package net.ssehub.sparkyservice.api.user.extraction;
 
 /**
  * MissingDateException.

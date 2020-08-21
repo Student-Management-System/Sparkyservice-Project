@@ -1,7 +1,5 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
-import java.util.Optional;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -17,12 +15,12 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 
 /**
- * JPA representation of settings. 
+ * Provides a JPA representation of account settings. <br>
  * In the current state of this application, this object is always used as generel representation of settings in
  * the whole project because it does not contain any logic. 
- * Disadvantage of this is, that it is hard to keep in sync with the database. Instances of this object must be bound to 
- * a {@link User}. When saving an instance to a storage, do not use it outside of the bounded user object (for example
- * in {@link SparkyUser}). 
+ * Disadvantage of this is, that it is hard to keep in sync with the database. Instances of this object must be 
+ * bound to a {@link User}. When saving an instance to a storage, do not use it outside of the bounded user object 
+ * (for example in {@link SparkyUser}). 
  * <br><br>
  * Strictly separate the use cases and create a new instance for each of them.
  * 
@@ -41,10 +39,10 @@ public class PersonalSettings {
     private User user; 
 
     @Column
-    private boolean email_receive = false;
+    private boolean emailReceive = false;
 
     @Column
-    private String email_address;
+    private String emailAddress;
     
     @Column
     private boolean wantsAi = false;
@@ -57,15 +55,15 @@ public class PersonalSettings {
 
     public PersonalSettings(PersonalSettings copyMe) {
         this();
-        email_address = copyMe.email_address;
-        email_receive = copyMe.email_receive;
+        emailAddress = copyMe.emailAddress;
+        emailReceive = copyMe.emailReceive;
         wantsAi = copyMe.wantsAi;
         payload = copyMe.payload;
     }
     
     public PersonalSettings(SettingsDto dto) {
-        email_address = dto.email_address;
-        email_receive = dto.email_receive;
+        emailAddress = dto.emailAddress;
+        emailReceive = dto.emailReceive;
         wantsAi = dto.wantsAi;
         payload = dto.payload;
     }
@@ -87,19 +85,19 @@ public class PersonalSettings {
     }
     
     public boolean isEmail_receive() {
-        return email_receive;
+        return emailReceive;
     }
     
     public void setEmail_receive(boolean email_receive) {
-        this.email_receive = email_receive;
+        this.emailReceive = email_receive;
     }
     
     public String getEmail_address() {
-        return email_address;
+        return emailAddress;
     }
     
     public void setEmail_address(String email_address) {
-        this.email_address = email_address;
+        this.emailAddress = email_address;
     }
     
     public boolean isWantsAi() {
@@ -118,46 +116,61 @@ public class PersonalSettings {
         this.payload = payload;
     }
 
+    /*
+     * Auto generated with eclipse.
+     */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         PersonalSettings other = (PersonalSettings) obj;
-        if (configurationId != other.configurationId)
+        if (configurationId != other.configurationId) {
             return false;
-        if (email_address == null) {
-            if (other.email_address != null)
+        }
+        if (emailAddress == null) {
+            if (other.emailAddress != null) {
                 return false;
-        } else if (!email_address.equals(other.email_address))
+            }
+        } else if (!emailAddress.equals(other.emailAddress)) {
             return false;
-        if (email_receive != other.email_receive)
+        }
+        if (emailReceive != other.emailReceive) {
             return false;
+        }
         if (payload == null) {
-            if (other.payload != null)
+            if (other.payload != null) {
                 return false;
-        } else if (!payload.equals(other.payload))
+            }
+        } else if (!payload.equals(other.payload)) {
             return false;
+        }
         if (user == null) {
-            if (other.user != null)
+            if (other.user != null) {
                 return false;
-        } else if (!user.equals(other.user))
+            }
+        } else if (!user.equals(other.user)) {
             return false;
-        if (wantsAi != other.wantsAi)
+        }
+        if (wantsAi != other.wantsAi) {
             return false;
+        }
         return true;
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-            .append(email_receive)
+            .append(emailReceive)
             .append(wantsAi)
             .append(configurationId)
-            .append(email_receive)
+            .append(emailReceive)
             .toHashCode();
     }
 }

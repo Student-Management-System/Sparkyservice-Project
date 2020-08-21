@@ -2,12 +2,12 @@ package net.ssehub.sparkyservice.api.user.dto;
 
 import javax.validation.constraints.NotNull;
 
-//checkstyle: stop visibility modifier check
 /**
  * DTO for settings of one user.
  * 
  * @author marcel
  */
+//checkstyle: stop visibility modifier check
 public class SettingsDto {
     
     @NotNull // TODO Marcel: Test if necessary
@@ -17,10 +17,10 @@ public class SettingsDto {
      * User can decide if he wants receive email from the system.
      */
     @NotNull // TODO Marcel: Test if necessary (boolean)
-    public boolean email_receive;
+    public boolean emailReceive;
     
     //@Email // TODO Marcel: fix exception
-    public String email_address;
+    public String emailAddress;
 
     public String payload;
 }

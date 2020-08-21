@@ -23,7 +23,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
-import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
+import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
 import net.ssehub.sparkyservice.api.validation.ChangePasswordValidationTest;
 
 //checkstyle: stop exception type check
@@ -116,7 +116,7 @@ public class AdminModificationTests {
             () -> assertEquals(user.getRole(), userDto.role, "Role was not changed"),
             () -> assertEquals(user.getExpireDate().get(), userDto.expirationDate, "Exp. Date not changed"),
             () -> assertEquals(user.getFullname(), userDto.fullName, "Fullname not changed"),
-            () -> assertEquals(userSettings.getEmail_address(), dtoSettings.email_address, "Email not changed"),
+            () -> assertEquals(userSettings.getEmail_address(), dtoSettings.emailAddress, "Email not changed"),
             () -> assertEquals(userSettings.getPayload(), dtoSettings.payload, "Payload not changed")
         );
     }

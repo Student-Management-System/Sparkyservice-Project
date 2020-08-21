@@ -6,10 +6,10 @@ import org.springframework.context.annotation.Primary;
 
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Spring configuration class which provides a set of beans which should be used
@@ -28,7 +28,7 @@ public class UnitTestDataConfiguration {
 
     @Bean
     @Primary
-    public UserTransformerService userTransformer() {
+    public UserExtractionService userTransformer() {
         return new SpringConfig().userTransformer();
     }
 

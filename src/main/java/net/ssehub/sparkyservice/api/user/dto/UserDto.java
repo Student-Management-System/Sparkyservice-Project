@@ -9,13 +9,25 @@ import javax.validation.constraints.NotNull;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.validation.ValidPassword;
 
-//CHECKSTYLE:OFF
+/**
+ * DTO for {@link SparkyUser}.
+ * 
+ * @author marcel
+ */
+//checkstyle: stop visibility modifier check
 public class UserDto implements Serializable {
 
     private static final long serialVersionUID = 4775708076296820879L;
 
+    /**
+     * DTO for passwords or changing Passwords.
+     * 
+     * @author marcel
+     *
+     */
     public static class ChangePasswordDto {
 
         public String oldPassword;

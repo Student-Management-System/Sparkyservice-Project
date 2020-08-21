@@ -46,8 +46,8 @@ public class ChangePasswordValidationTest {
         editUserDto.passwordDto.oldPassword = OLD_PASSWORD;
         editUserDto.settings = new SettingsDto();
         editUserDto.settings.payload = PAYLOAD;
-        editUserDto.settings.email_address = USER_EMAIL;
-        editUserDto.settings.email_receive = true;
+        editUserDto.settings.emailAddress = USER_EMAIL;
+        editUserDto.settings.emailReceive = true;
         editUserDto.settings.wantsAi = true;
         editUserDto.expirationDate = EXP_DATE;
         return editUserDto;

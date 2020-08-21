@@ -22,9 +22,9 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * A Filter which handles all authentication requests and actually handles the login.
@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param transformator
      */
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf,
-                                   UserStorageService userSerivce, UserTransformerService transformator) {
+                                   UserStorageService userSerivce, UserExtractionService transformator) {
         this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);

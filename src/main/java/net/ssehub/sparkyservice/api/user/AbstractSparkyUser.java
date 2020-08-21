@@ -25,16 +25,16 @@ abstract class AbstractSparkyUser implements SparkyUser {
     protected int databaseId;
 
     @Nullable
-    String fullname;
+    protected String fullname;
     @Nonnull
-    String username;
-    boolean isEnabled;
+    protected String username;
+    protected boolean isEnabled;
     @Nonnull
-    UserRole role;
+    protected UserRole role;
     @Nonnull
-    Optional<LocalDate> expirationDate = notNull(Optional.ofNullable(null));
+    protected Optional<LocalDate> expirationDate = notNull(Optional.ofNullable(null));
     @Nullable
-    PersonalSettings settings;
+    protected PersonalSettings settings;
 
     /**
      * Creates a new Abstract user with mandatory information.

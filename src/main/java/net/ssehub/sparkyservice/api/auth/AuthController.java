@@ -30,11 +30,11 @@ import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
@@ -49,7 +49,7 @@ public class AuthController {
     @Autowired
     private ServletContext servletContext;
     @Autowired
-    private UserTransformerService transformator;
+    private UserExtractionService transformator;
     @Autowired
     private JwtSettings jwtConf;
     @Autowired
@@ -112,7 +112,7 @@ public class AuthController {
             }
             throw new AuthenticationException();
         }
-        var user = transformator.extractFromAuthentication(auth);
+        var user = transformator.extract(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = UserModificationService.from(user.getRole()).asDto(user);
         if (auth.getCredentials() instanceof TokenDto) {
@@ -142,7 +142,7 @@ public class AuthController {
     public AuthenticationInfoDto verifyTokenValidity(@NotNull @Nonnull String jwtToken) 
             throws MissingDataException, JwtTokenReadException {
         var auth = JwtAuth.readJwtToken(jwtToken, jwtConf.getSecret());
-        var user = transformator.extractFromAuthentication(auth);
+        var user = transformator.extract(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = UserModificationService.from(user.getRole()).asDto(user);
         dto.token = (TokenDto) auth.getCredentials();

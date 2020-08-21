@@ -74,7 +74,7 @@ public class DefaultModificationTests {
             () -> assertEquals(null, modifiedDto.expirationDate, "Exp Date is available!"),
             () -> assertEquals(user.getFullname(), modifiedDto.fullName, "Fullname not avaiable"),
             () -> assertEquals(null, dtoSettings.payload, "Payload is available"),
-            () -> assertEquals("test@test", dtoSettings.email_address, "Email not in dto")
+            () -> assertEquals("test@test", dtoSettings.emailAddress, "Email not in dto")
         );
     }
 

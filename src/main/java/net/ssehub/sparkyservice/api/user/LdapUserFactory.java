@@ -14,6 +14,12 @@ import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
+/**
+ * Provides Factory methods for {@link LdapUser}. 
+ * 
+ * @author marcel
+ * @see UserFactoryProvider 
+ */
 @ParametersAreNonnullByDefault
 public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser> {
 
@@ -39,6 +45,7 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
      * Specials:<br>
      * <ul> <li>  Doesn't contains a password and can't change a password
      * </li><li>  Provides a DN which can used by an {@link AuthenticationManager}
+     * </ul>
      * 
      * @param username - Mandatory
      * @param password - Is ignored

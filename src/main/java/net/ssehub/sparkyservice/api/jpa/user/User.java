@@ -81,15 +81,27 @@ public class User {
         profileConfiguration = new PersonalSettings();
     }
 
-    public User(String userName, @Nullable Password passwordEntity, UserRealm realm, boolean isActive, UserRole role) {
+    /**
+     * Creates a new JPA user with necessary fields which can't be empty. 
+     * 
+     * @param userName
+     * @param realm
+     * @param isActive
+     * @param role
+     */
+    public User(String userName,  UserRealm realm, boolean isActive, UserRole role) {
         this.userName = userName;
-        this.passwordEntity = passwordEntity;
         this.realm = realm;
         this.isActive = isActive;
         this.role = role;
         this.profileConfiguration = new PersonalSettings();
     }
 
+    /**
+     * Copy constructor.
+     * 
+     * @param user
+     */
     public User(final User user) {
         this.id = user.id;
         this.realm = user.realm;
@@ -193,6 +205,11 @@ public class User {
         return passwordEntity;
     }
 
+    /**
+     * Sets a new password entity.
+     * 
+     * @param password
+     */
     public void setPasswordEntity(@Nullable Password password) {
         this.passwordEntity = password;
     }
@@ -236,14 +253,28 @@ public class User {
         this.profileConfiguration = profileConfiguration;
     }
 
+    /**
+     * Can be used as unique identifier together with {@link #getUserName()}.
+     * 
+     * @return Authentication realm of the user
+     */
     public UserRealm getRealm() {
         return realm;
     }
 
+    /**
+     * User realm defines the authentication realm. Together with {@link #getUserName()} this is a unique identifier. 
+     * 
+     * @param realm
+     */
     public void setRealm(UserRealm realm) {
         this.realm = realm;
     }
 
+    /**
+     * .
+     * @return permission role of the user
+     */
     @Nonnull
     public UserRole getRole() {
         return role;

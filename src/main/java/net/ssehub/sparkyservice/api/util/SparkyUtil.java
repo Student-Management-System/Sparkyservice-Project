@@ -3,8 +3,6 @@ package net.ssehub.sparkyservice.api.util;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +34,8 @@ public class SparkyUtil {
     }
 
     /**
-     * Converts a date to a string in the format: MM/dd/yyyy HH:mm:ss
+     * Converts a date to a string in the format: 
+     * <code> MM/dd/yyyy HH:mm:ss </code>.
      * 
      * @param expDate Desired date
      * @return the desired date as String

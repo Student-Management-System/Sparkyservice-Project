@@ -12,6 +12,11 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
+/**
+ * Provides methods for user data modification with default (=user) permissions. 
+ * 
+ * @author marcel
+ */
 @Service
 class DefaultUserModificationImpl implements UserModificationService {
 
@@ -51,9 +56,9 @@ class DefaultUserModificationImpl implements UserModificationService {
      */
     protected static void applyPersonalSettingsDto(@Nonnull SparkyUser user, @Nonnull SettingsDto settings) {
         PersonalSettings dbSettings = user.getSettings();
-        dbSettings.setEmail_address(settings.email_address);
+        dbSettings.setEmail_address(settings.emailAddress);
         dbSettings.setWantsAi(settings.wantsAi);
-        dbSettings.setEmail_receive(settings.email_receive);
+        dbSettings.setEmail_receive(settings.emailReceive);
     }
 
     /**
@@ -64,8 +69,8 @@ class DefaultUserModificationImpl implements UserModificationService {
      */
     protected static SettingsDto settingsAsDto(PersonalSettings settings) {
         var dto = new SettingsDto();
-        dto.email_address = settings.getEmail_address();
-        dto.email_receive = settings.isEmail_receive();
+        dto.emailAddress = settings.getEmail_address();
+        dto.emailReceive = settings.isEmail_receive();
         dto.wantsAi = settings.isWantsAi();
         return dto;
     }

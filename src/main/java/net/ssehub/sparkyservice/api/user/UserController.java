@@ -37,13 +37,13 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserEditException;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.MissingDataException;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
@@ -64,7 +64,7 @@ public class UserController {
     private UserStorageService storageService;
 
     @Autowired
-    private UserTransformerService transformerService;
+    private UserExtractionService transformerService;
 
     /**
      * Creates a new user in the LOCAL realm. 
@@ -106,7 +106,7 @@ public class UserController {
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
 
-        SparkyUser authenticatedUser = transformerService.extractFromAuthentication(auth);
+        SparkyUser authenticatedUser = transformerService.extract(auth);
         Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username) 
                 && user.getRealm().equals(userDto.realm);
         UserModificationService util = UserModificationService.from(authenticatedUser.getRole());
@@ -170,7 +170,7 @@ public class UserController {
     public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
             Authentication auth) throws MissingDataException {
 
-        SparkyUser authenticatedUser = transformerService.extractFromAuthentication(auth);
+        SparkyUser authenticatedUser = transformerService.extract(auth);
         if (authenticatedUser.getRole() != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
@@ -193,7 +193,7 @@ public class UserController {
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
-     * @param 
+     * @param ex
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.FORBIDDEN)
@@ -205,19 +205,19 @@ public class UserController {
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit. 
-     * @param 
+     * @param ex
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = UserNotFoundException.class)
-    public ErrorDto handleUserNotFoundException(Exception e) {
+    public ErrorDto handleUserNotFoundException(Exception ex) {
         return new ErrorDtoBuilder().newError("User target not found", 
                 HttpStatus.NOT_FOUND, servletContext.getContextPath()).build();
     }
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit.
-     * @param 
+     * @param ex
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.CONFLICT)
@@ -228,7 +228,7 @@ public class UserController {
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit. 
-     * @param 
+     * @param ex
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)

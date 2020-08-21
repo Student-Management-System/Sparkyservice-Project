@@ -20,11 +20,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
+import net.ssehub.sparkyservice.api.user.extraction.SimpleExtractionImpl;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.user.transformation.SimpleTransfomerImpl;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
 
 /**
  * Default configuration class for spring.
@@ -74,12 +74,12 @@ public class SpringConfig {
     /**
      * Defines the UserTranfsformer Bean.
      * 
-     * @return Using {@link SimpleTransfomerImpl}
+     * @return Using {@link SimpleExtractionImpl}
      */
     @Bean
     @Primary
-    public UserTransformerService userTransformer() {
-        return new SimpleTransfomerImpl();
+    public UserExtractionService userTransformer() {
+        return new SimpleExtractionImpl();
     }
 
     /**

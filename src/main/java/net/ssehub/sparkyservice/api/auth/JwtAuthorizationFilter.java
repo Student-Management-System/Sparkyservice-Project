@@ -23,7 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.transformation.UserTransformerService;
+import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 
 /**
  * Filter which handles authorization with JWT token.
@@ -35,7 +35,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
     private final JwtSettings confValues;
     private final @Nonnull Set<String> lockedJwtToken;
-    private final UserTransformerService userTransformer;
+    private final UserExtractionService userTransformer;
 
     /**
      * JWT Authorization filter for paths which are configured in the authentication manager. 
@@ -49,7 +49,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      *                  the database
      */
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
-            UserTransformerService service) {
+            UserExtractionService service) {
         this(authenticationManager, jwtConf, new HashSet<String>(), service);
     }
 
@@ -67,7 +67,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      *                         resource)
      */
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
-            @Nullable Set<String> lockedJwtToken, UserTransformerService service) {
+            @Nullable Set<String> lockedJwtToken, UserExtractionService service) {
         super(authenticationManager);
         confValues = jwtConf;
         this.userTransformer = service;

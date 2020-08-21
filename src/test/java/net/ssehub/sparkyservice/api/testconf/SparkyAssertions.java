@@ -15,7 +15,7 @@ public class SparkyAssertions {
         assertAll(
                 () -> assertEquals(dto1.username, dto2.username),
                 () -> assertEquals(dto1.realm, dto2.realm),
-                () -> assertEquals(dto1.settings.email_address, dto2.settings.email_address)
+                () -> assertEquals(dto1.settings.emailAddress, dto2.settings.emailAddress)
             );
     }
 
@@ -30,7 +30,7 @@ public class SparkyAssertions {
                 () -> assertEquals(dto1.username, dto2.username),
                 () -> assertEquals(dto1.realm, dto2.realm),
                 () -> assertEquals(dto1.role, dto2.role, "Role not correctly changed or transformed"), 
-                () -> assertEquals(dto1.settings.email_address, dto2.settings.email_address),
+                () -> assertEquals(dto1.settings.emailAddress, dto2.settings.emailAddress),
                 () -> assertEquals(dto1.expirationDate, dto2.expirationDate),
                 () -> assertEquals(dto1.fullName, dto2.fullName)
             );

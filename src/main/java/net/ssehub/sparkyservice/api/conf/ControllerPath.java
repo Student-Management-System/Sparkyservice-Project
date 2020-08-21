@@ -1,5 +1,10 @@
 package net.ssehub.sparkyservice.api.conf;
 
+/**
+ * Provides controller paths. They define a path where a controller or resource is located at. 
+ * 
+ * @author marcel
+ */
 public final class ControllerPath {
     public static final String GLOBAL_PREFIX = "/api/v1";
     public static final String HEARTBEAT = GLOBAL_PREFIX + "/heartbeat"; 

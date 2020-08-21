@@ -93,7 +93,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     @Override
     @Nonnull
     public User getJpa() {
-        var jpaUser = new User(getUsername(), null, UserRealm.LDAP, isEnabled(), getRole());
+        var jpaUser = new User(getUsername(), UserRealm.LDAP, isEnabled(), getRole());
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);
@@ -113,7 +113,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
 
     @Override
     public boolean equals(Object object) {
-       Optional<LdapUser> optDn = Optional.ofNullable(object).flatMap(obj -> super.equalsCheck(obj, this));
+        Optional<LdapUser> optDn = Optional.ofNullable(object).flatMap(obj -> super.equalsCheck(obj, this));
         if (dn == null) {
             return optDn.map(u -> u.getDn() == null).orElse(false);
         } else {

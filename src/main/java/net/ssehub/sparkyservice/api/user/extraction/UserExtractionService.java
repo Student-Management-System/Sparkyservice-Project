@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.transformation;
+package net.ssehub.sparkyservice.api.user.extraction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,11 +14,11 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 
 /**
- * User information transformation. Extends := storage operation!
+ * Provides extraction methods to create a user object from other information.
  * 
  * @author marcel
  */
-public interface UserTransformerService {
+public interface UserExtractionService {
 
     /**
      * Converts a given {@link UserDetails} to {@link User}. May perform
@@ -26,6 +26,7 @@ public interface UserTransformerService {
      * supported implementation: 
      * <ul><li> anything which extends from {@link SparkyUser}
      * </li><li> {@link org.springframework.security.core.userdetails.User}
+     * </ul>
      * 
      * @param details typically provided by spring security during authentication
      *                process
@@ -34,7 +35,8 @@ public interface UserTransformerService {
      *                               and the user could not loaded from the data
      *                               storage
      */
-    @Nonnull SparkyUser extendFromUserDetails(@Nullable UserDetails details) throws UserNotFoundException;
+    @Nonnull 
+    SparkyUser extractAndRefresh(@Nullable UserDetails details) throws UserNotFoundException;
 
     /**
      * Use the information from the given principal object in order to return a full user object. 
@@ -44,7 +46,8 @@ public interface UserTransformerService {
      * @return SparkyUser which belongs to the given principal
      * @throws UserNotFoundException If the user is not found in this application (database or cache)
      */
-    @Nonnull SparkyUser extendFromSparkyPrincipal(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
+    @Nonnull
+    SparkyUser extendAndRefresh(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
 
     /**
      * Tries to extend the information from authentication to create a user object. 
@@ -53,11 +56,12 @@ public interface UserTransformerService {
      * Principals in general can contain an instance of {@link SparkysAuthPrincipal} or a {@link UserDetails}. 
      * 
      * @param auth
-     * @return 
+     * @return User from the authentication service. All information are verified by a database
      * @throws MissingDataException If the principal of the auth is a supported implementation but does not hold enough 
      *                              information.
      */
-    @Nonnull SparkyUser extendFromAuthentication(@Nullable Authentication auth);
+    @Nonnull 
+    SparkyUser extractAndRefresh(@Nullable Authentication auth);
 
     /**
      * Tries to extend the information of the given data transfer object in order to create a user. 
@@ -67,7 +71,8 @@ public interface UserTransformerService {
      * @throws MissingDataException Is thrown if to less information are available for extended the DTO to a user
      * @see AbstractSparkyUserFactory#create(UserDto) Factory Method with user DTO
      */
-    @Nonnull SparkyUser extendFromUserDto(@Nullable UserDto user);
+    @Nonnull
+    SparkyUser extractAndRefresh(@Nullable UserDto user);
 
     /**
      * Tries to extract information from an authentication object and create an usable {@link SparkyUser} of it. 
@@ -75,8 +80,9 @@ public interface UserTransformerService {
      * any storage operations. 
      * 
      * @param auth
-     * @return
+     * @return User extracted from the authentication (without validating information from a storage)
      * @throws MissingDataException
      */
-    @Nonnull SparkyUser extractFromAuthentication(@Nullable Authentication auth);
+    @Nonnull
+    SparkyUser extract(@Nullable Authentication auth);
 }
