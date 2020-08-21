@@ -93,7 +93,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * @return Token object with the values of the JWT token
      */
     private @Nullable UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        var jwt = request.getHeader(confValues.getHeader());  
+        String header = confValues.getHeader();
+        var jwt = request.getHeader(header);  
         Predicate<String> isNotLocked = token -> !lockedJwtToken.stream().anyMatch(token::contains); //wildcard
         Optional<UsernamePasswordAuthenticationToken> optTokenObj = Optional.ofNullable(jwt)
             .filter(isNotLocked)
