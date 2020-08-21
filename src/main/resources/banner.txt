@@ -6,6 +6,6 @@
        |_|                    |___/                                    
 
 ====================================================
-${Ansi.RED} :: Spring Boot${spring-boot.formatted-version} :: ${Ansi.DEFAULT}
-${Ansi.RED} :: SparkyService  (API Version: ${springdoc.version}) :: ${Ansi.DEFAULT}
-
+${Ansi.GREEN} :: Spring Boot${spring-boot.formatted-version} :: ${Ansi.DEFAULT}
+${Ansi.GREEN} :: SparkyService API (v${pom.version}) :: ${Ansi.DEFAULT}
+${Ansi.BLUE} :: Build Date: ${timestamp} :: ${Ansi.DEFAULT}
