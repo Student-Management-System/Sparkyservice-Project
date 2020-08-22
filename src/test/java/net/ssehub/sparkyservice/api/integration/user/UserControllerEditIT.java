@@ -129,11 +129,6 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
      * @throws Exception
      */
     @IntegrationTest
-    @Disabled /* An AccessViolationException is thrown which leads to a 403 HTTP Code which is correct. But spring
-               * seems to take interpret this exception as unwanted (though it is handled correctly by an exception
-               * handler) and mark this test as failed. 
-               * TODO @MARCEL fix it
-               */
     // Mocked user must NOT match with values from EditUserDto.json.txt
     @WithUserDetails(value = "testuser123", userDetailsServiceBeanName = "defaultUserService")
     public void editOtherUsersNegativeTest() throws Exception {

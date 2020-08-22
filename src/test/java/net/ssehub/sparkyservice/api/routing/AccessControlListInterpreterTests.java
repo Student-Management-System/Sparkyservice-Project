@@ -80,9 +80,16 @@ public class AccessControlListInterpreterTests {
         );
     }
 
+    /**
+     * Tests if a user is allowed to pass / Test if the acl is disabled when:<br>
+     * the acl configuration is missing but the path is configured. 
+     * The default setting should be, allow all connections and all users.
+     * 
+     * @param currentPath
+     */
     @ParameterizedTest
     @ValueSource(strings = {CONFIGURED_PATH, ""})
-    @DisplayName("Test that ACL is disabled when no ACL defined and all users allowed")
+    @DisplayName("Test user is allowed when path configured but acl-conf missing")
     public void aclFailesWhenMissingConfigurationEntry(String currentPath) {
         var routes = new TreeMap<String, String>();
         routes.put(CONFIGURED_PATH + ".url", "https://google.com");
@@ -128,7 +135,7 @@ public class AccessControlListInterpreterTests {
      * When the ACL is configured with usernames, a user which is not on it, shouldn't be allowed.
      */
     @Test
-    @DisplayName("Test is allowed when it's configured")
+    @DisplayName("Test user is not allowed to access")
     public void isUserNameAllowedNegativeTest() {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, CONFIGURED_PATH);
         assumeTrue(interpreter.isAclEnabled(), "ACL is enabled but interpreter says it's not");

@@ -123,7 +123,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         } else if (returnStatus == HttpStatus.UNAUTHORIZED) {
             message = "Not authorized. Please use Proxy-Authorization header for authorization";
         }
-        String errorJson = new ErrorDtoBuilder().newError(message, returnStatus, ctx.getRequest().getContextPath())
+        String errorJson = new ErrorDtoBuilder().newError(message, returnStatus, (String) ctx.get("proxy"))
                 .buildAsJson();
         ctx.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
         ctx.setResponseBody(errorJson);

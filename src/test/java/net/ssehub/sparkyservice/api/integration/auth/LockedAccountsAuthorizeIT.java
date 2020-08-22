@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -107,7 +108,6 @@ public class LockedAccountsAuthorizeIT {
         @Primary
         @Order(Ordered.HIGHEST_PRECEDENCE)
         public ServiceAccStorageService earlyService() {
-            System.out.println("CALL EXT");
             var set = new HashSet<User>();
             set.add(testUser.getJpa());
             when(mockedRepository.findByRole(UserRole.SERVICE)).thenReturn(set);
@@ -136,10 +136,6 @@ public class LockedAccountsAuthorizeIT {
      * @throws Exception
      */
     @IntegrationTest
-    /*
-     * actually the test works when no integrations test run in beforehand. TODO fix this :) 
-     */
-    @Disabled 
     public void routingJwtLockedTest() throws Exception {
         String jwtToken = testUser.getSettings().getPayload();
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
@@ -161,6 +157,7 @@ public class LockedAccountsAuthorizeIT {
      */
     @IntegrationTest
     public void routingJwtNonLockedTest() throws Exception {
+        testUser.setRole(UserRole.ADMIN); // any information change to get a different JWT.
         String jwtToken = JwtAuth.createJwtToken(testUser, jwtConf);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
@@ -172,11 +169,12 @@ public class LockedAccountsAuthorizeIT {
     }
 
     /**
-     * Tests if a locked JWT of a service account can't authorize normally.
+     * Tests if a locked JWT of a service account can't authorize normally via {@link JwtAuthorizationFilter}.
      * 
      * @throws Exception
      */
     @IntegrationTest
+    @DisplayName("Test that user can't access with a locked token in normal Authorization")
     public void nonAuthorizeLockedJwtTest() throws Exception {
         String jwtToken = testUser.getSettings().getPayload();
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
