@@ -92,7 +92,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
         super(userName, role);
         setEnabled(isActive);
         this.passwordEntity = passwordEntity;
-        log.debug("New LocalUserDetails created.");
+        log.trace("New LocalUserDetails created: {}@LOCAL", userName);
     }
 
     /**
@@ -190,6 +190,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);
+        jpaUser.setFullName(fullname);
         return jpaUser;
     }
 
@@ -210,7 +211,6 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
                 break; 
             }
         }
-
     }
 
     /**

@@ -97,6 +97,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);
+        jpaUser.setFullName(fullname);
         return jpaUser;
     }
 
