@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Timeout;
  */
 @Test
 @Retention(value = RetentionPolicy.RUNTIME)
-@Timeout(300)
+@Timeout(180)
 public @interface IntegrationTest {
     
 }
