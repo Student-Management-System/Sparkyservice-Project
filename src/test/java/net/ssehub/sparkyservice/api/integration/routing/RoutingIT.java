@@ -3,6 +3,7 @@ package net.ssehub.sparkyservice.api.integration.routing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,7 +15,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import net.ssehub.sparkyservice.api.auth.JwtAuth;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
@@ -42,6 +43,9 @@ public class RoutingIT {
 
     @Autowired
     private JwtSettings jwtConf; 
+
+    @Autowired
+    private JwtTokenService jwtService;
 
     @Autowired
     private MockMvc mvc;
@@ -82,7 +86,7 @@ public class RoutingIT {
     @IntegrationTest
     public void authorizedProtectedRouteTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("user", "", UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
+        String jwtToken = jwtService.createFor(user);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -100,7 +104,7 @@ public class RoutingIT {
     @IntegrationTest
     public void authenticatedProtectedRouteTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("anyUser", "", UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtToken(user, jwtConf);
+        String jwtToken = jwtService.createFor(user);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -117,10 +121,11 @@ public class RoutingIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DisplayName("Mutli user ACL on protected route test")
     public void authorizedListProtectedRouteTest() throws Exception {
         var user1 = LocalUserDetails.newLocalUser("user1", "", UserRole.DEFAULT);
         var user2 = LocalUserDetails.newLocalUser("user2", "", UserRole.DEFAULT);
-        String jwtToken = JwtAuth.createJwtToken(user1, jwtConf);
+        String jwtToken = jwtService.createFor(user1);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -129,7 +134,7 @@ public class RoutingIT {
                    .accept(MediaType.ALL))
             .andExpect(status().is2xxSuccessful());
         
-        jwtToken = JwtAuth.createJwtToken(user2, jwtConf);
+        jwtToken = jwtService.createFor(user2);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(
@@ -140,7 +145,7 @@ public class RoutingIT {
 
         // Negative test to check if this mechanism still work even with a list.
         var user3 = LocalUserDetails.newLocalUser("user3", "", UserRole.DEFAULT);
-        jwtToken = JwtAuth.createJwtToken(user3, jwtConf); 
+        jwtToken = jwtService.createFor(user3);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
             .perform(

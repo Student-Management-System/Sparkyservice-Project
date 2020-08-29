@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth;
+package net.ssehub.sparkyservice.api.auth.jwt;
 
 /**
  * Exception for JWT token read errors.

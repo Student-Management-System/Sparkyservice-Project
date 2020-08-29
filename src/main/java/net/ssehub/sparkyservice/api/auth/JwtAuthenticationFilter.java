@@ -3,6 +3,7 @@ package net.ssehub.sparkyservice.api.auth;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -13,18 +14,21 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
+import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * A Filter which handles all authentication requests and actually handles the login.
@@ -33,25 +37,23 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtSettings jwtConf;
     private final UserStorageService userService;
-    private final Logger log = LoggerFactory.getLogger(JwtAuth.class);
+    private final JwtTokenService jwtService;
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
      * configuration. 
      * 
      * @param authenticationManager
-     * @param jwtConf
      * @param userSerivce
-     * @param transformator
      */
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf,
-                                   UserStorageService userSerivce, UserExtractionService transformator) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
+                                   UserStorageService userSerivce, JwtTokenService jwtService) {
         this.userService = userSerivce;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
-        this.jwtConf = jwtConf;
+        this.jwtService = jwtService;
     }
 
     /**
@@ -59,16 +61,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      */
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        var userDetails = JwtAuth.extractCredentialsFromHttpRequest(request);
+        var userDetails = extractCredentialsFromHttpRequest(request);
         var authentication = authenticationManager.authenticate(userDetails);
         assertSparkyUser(authentication);
         return authentication;
-        // in memory auth: principal=MemoryUser
-        // ldap auth: principal=LdapUser
-        // local: Principal=LocalUserDetails (vermutung)
-        //vermutlich beim authorization im principal:
-            //  sparkysauthprincipal
-            // oder spring user
     }
 
     /**
@@ -80,29 +76,32 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain, Authentication authentication) {
 
-        log.info("Successful authentication with JWT: {}@", authentication.getName());
+        LOG.info("Successful authentication with JWT: {}@", authentication.getName());
         var user = Optional.of(authentication)
             .map(a -> a.getPrincipal())
             .map(SparkyUser.class::cast);
         user.filter(u -> !userService.isUserInStorage(u))
             .ifPresent(userService::commit);
-        user.map(this::buildAuthenticatioInfoFromUser)
+        user.map(this::createTokenAndInfo)
             .ifPresent(dto -> setResponseValue(notNull(response), notNull(dto)));
     }
 
-    /**
-     * Builds an authentication DTO with the information provided by user object.
-     * 
-     * @param user - object which contains all necessary information.
-     * @return AuthenticationDTO currently without {@link TokenDto#expiration}
-     */
-    private @Nonnull AuthenticationInfoDto buildAuthenticatioInfoFromUser(@Nonnull SparkyUser user) {
+    @Nonnull
+    private AuthenticationInfoDto createTokenAndInfo(@Nonnull SparkyUser user) {
+        String jwt = jwtService.createFor(user);
+        Date expDate;
+        try {
+            expDate = jwtService.readJwtToken(jwt).getExpirationDate();
+        } catch (JwtTokenReadException e) {
+            throw new RuntimeException(e);
+        }
         var authDto = new AuthenticationInfoDto();
+        authDto.token.token = jwt;
+        authDto.token.expiration = DateUtil.toString(expDate);
         authDto.user = UserModificationService.from(user.getRole()).asDto(user);
-        authDto.token.token = JwtAuth.createJwtToken(user, jwtConf);
         return authDto;
     }
-
+    
     /**
      * Writes the given authentication information into the http response as JSON. 
      * 
@@ -110,14 +109,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param authDto Information which will be the return content
      */
     private void setResponseValue(@Nonnull HttpServletResponse response, @Nonnull AuthenticationInfoDto authDto) {
-        response.addHeader(jwtConf.getHeader(), jwtConf.getPrefix() + " " + authDto.token.token);
+        String httpHeader = jwtService.getJwtConf().getHeader();
+        String jwtPrefix = jwtService.getJwtConf().getPrefix();
+        response.addHeader(httpHeader, jwtPrefix + " " + authDto.token.token);
         response.setContentType("application/json; charset=UTF-8"); 
         try (var responseWriter = response.getWriter()) {
             String bodyDtoString = new ObjectMapper().writeValueAsString(authDto);
             responseWriter.write(bodyDtoString);
             responseWriter.flush();
         } catch (IOException e) {
-            log.warn("Authentication Header not written: Invalid json format.");
+            LOG.warn("Authentication Header not written: Invalid json format.");
         }
     }
 
@@ -134,5 +135,35 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             .map(SparkyUser.class::cast)
             .orElseThrow(() -> new RuntimeException("Spring authentication didn't provide a "
                     + "valid authentication object after authentication."));
+    }
+
+    /**
+     * Method reads the {@link CredentialsDto} from a given request and transform
+     * them into a AuthenticationToken.
+     * 
+     * @param request
+     * @return contains the username and password used for authentication
+     */
+    public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(
+            HttpServletRequest request) {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        boolean passwordAvailable = password != null && !password.isBlank();
+        LOG.debug("[HTTP Parameter] Username: " + username + " | Password available: " + passwordAvailable);
+        if (username == null && password == null) {
+            try {
+                CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class);
+                username = cred.username;
+                password = cred.password;
+                boolean avail = password != null && !password.isBlank();
+                LOG.debug("[HTTP Body] Username: " + username + " | Password available: " + avail);
+            } catch (MismatchedInputException e) {
+                LOG.debug("Credentials not avaiable in requests input stream");
+                // do nothing - is thrown on invalid values like null
+            } catch (java.io.IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return new UsernamePasswordAuthenticationToken(username, password);
     }
 }

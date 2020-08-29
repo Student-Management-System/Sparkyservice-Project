@@ -1,9 +1,8 @@
 package net.ssehub.sparkyservice.api.conf;
 
-import java.util.Set;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,9 +20,11 @@ import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
+import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
+import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -70,20 +71,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private String inMemoryUser;
     
     @Autowired
-    private JwtSettings jwtSettings;
-    
-    @Autowired
     private LocalLoginDetailsMapper localDetailsMapper;
 
     @Autowired
     private UserStorageService storageService;
     
     @Autowired
-    @Qualifier(SpringConfig.LOCKED_JWT_BEAN)
-    private Set<String> lockedJwtToken;
+    private JwtTokenService jwtService;
 
-    @Autowired
-    private UserExtractionService transformator;
+    @Autowired 
+    private JwtStorageService jwtStorageService;
 
     @Autowired
     private MemoryLoginDetailsService memoryDetailsService;
@@ -98,28 +95,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
              * They are probably supervised by Zuul.
              */
             //.antMatchers("/**").hasAnyRole(UserRole.SERVICE.name(), UserRole.ADMIN.name())
-            /*
-             * Secure own application: 
-             */
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
-            .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() // You must be authenticated by default
+            .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() //default setting
             .and()
                 .addFilter(
-                    new JwtAuthenticationFilter(authenticationManager(), jwtSettings, storageService, transformator)
+                    new JwtAuthenticationFilter(authenticationManager(), storageService, jwtService)
                 )
                 .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtSettings, lockedJwtToken, transformator)
+                    new JwtAuthorizationFilter(authenticationManager(), jwtService)
                 )
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        fillJwtCache();
+    }
 
+    private void fillJwtCache() {
+        final List<JwtToken> lockedJwtToken = jwtStorageService.findAll();
+        if (lockedJwtToken != null) {
+            JwtCache.initNewCache(lockedJwtToken, jwtStorageService);
+        }
     }
     
-    @Override // allow swagger 
+    @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/v3/api-docs/**", "/swagger-ui/**");
     }
@@ -142,13 +143,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 throw new Exception("Set recovery.password or disable the account");
             }
             auth.userDetailsService(memoryDetailsService);
-//            auth.inMemoryAuthentication().set
-//                .withUser(inMemoryUser)
-//                .password(passwordEncoder.encode(inMemoryPassword))
-//                .roles(UserRole.ADMIN.name())
-//                .and()
-//                .withUser(memUser));
-//                .password(passwordEncoder.encode(inMemoryPassword));
         }
     }
 

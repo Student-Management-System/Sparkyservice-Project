@@ -1,8 +1,10 @@
-package net.ssehub.sparkyservice.api.auth;
+package net.ssehub.sparkyservice.api.auth.jwt;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 
 /**
@@ -10,6 +12,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
  * 
  * @author marcel
  */
+@ParametersAreNonnullByDefault
 class AuthPrincipalImpl implements SparkysAuthPrincipal {
     private @Nonnull UserRealm realm;
 
@@ -31,6 +34,11 @@ class AuthPrincipalImpl implements SparkysAuthPrincipal {
             this.realm = UserRealm.UNKNOWN;
         }
         this.name = name;
+    }
+
+    public AuthPrincipalImpl(UserRealm realm, String name) {
+        this.name = name;
+        this.realm = realm;
     }
 
     @Override

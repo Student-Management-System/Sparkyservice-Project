@@ -18,12 +18,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthTools;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 
 /**
  * Filter which handles authorization with JWT token.
@@ -33,9 +35,7 @@ import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
-    private final JwtSettings confValues;
-    private final @Nonnull Set<String> lockedJwtToken;
-    private final UserExtractionService userTransformer;
+    private final JwtTokenService jwtService;
 
     /**
      * JWT Authorization filter for paths which are configured in the authentication manager. 
@@ -44,13 +44,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * authentication object. 
      * 
      * @param authenticationManager
-     * @param jwtConf - Contains all necessary JWT configurations
-     * @param service - Used to extends the information from the JWT token to be sure, all information matches with 
-     *                  the database
+     * @param service Jwt service used for decoding jwt tokens
      */
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
-            UserExtractionService service) {
-        this(authenticationManager, jwtConf, new HashSet<String>(), service);
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtTokenService service) {
+        this(authenticationManager, new HashSet<String>(), service);
     }
 
     /**
@@ -60,23 +57,18 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * authentication object. 
      * 
      * @param authenticationManager
-     * @param jwtConf - Contains all necessary JWT configurations
-     * @param service - Used to extends the information from the JWT token to be sure, all information matches with 
-     *                  the database
-     * @param lockedJwtToken - A set of token which are currently locked (they never can get access to the requested
-     *                         resource)
+     * @param service Jwt service used for decoding jwt tokens
      */
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtSettings jwtConf, 
-            @Nullable Set<String> lockedJwtToken, UserExtractionService service) {
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, 
+            @Nullable Set<String> lockedJwtToken, JwtTokenService service) {
         super(authenticationManager);
-        confValues = jwtConf;
-        this.userTransformer = service;
-        this.lockedJwtToken = notNull(Optional.ofNullable(lockedJwtToken).orElseGet(HashSet::new));
+        this.jwtService = service;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws IOException, ServletException {
+        LOG.debug("Requested URI: {}", request.getRequestURI());
         var authentication = getAuthentication(request);
         if (authentication == null) {
             filterChain.doFilter(request, response);
@@ -92,16 +84,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * @param request
      * @return Token object with the values of the JWT token
      */
-    private @Nullable UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        String header = confValues.getHeader();
-        var jwt = request.getHeader(header);  
-        Predicate<String> isNotLocked = token -> !lockedJwtToken.stream().anyMatch(token::contains); //wildcard
-        Optional<UsernamePasswordAuthenticationToken> optTokenObj = Optional.ofNullable(jwt)
-            .filter(isNotLocked)
-            .map(this::getTokenObject);
+    private @Nullable Authentication getAuthentication(HttpServletRequest request) {
+        String header = jwtService.getJwtConf().getHeader();
+        var jwt = request.getHeader(header);
+        Optional<Authentication> optTokenObj = Optional.ofNullable(jwt)
+            .map(this::getAuthenticationFromJwt);
         optTokenObj.ifPresentOrElse(
             token -> LOG.debug("Successful authorization of: {}", token.getName()),
-            () -> LOG.debug("Token not was not valid {}", jwt)
+            () -> LOG.info("Denied access to token: {}", jwt)
         );
         return optTokenObj.orElse(null);
     }
@@ -110,16 +100,16 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * Get information from JWT token. 
      * 
      * @param jwt
-     * @return Token with content described at {@link JwtAuth#readJwtToken(String, String)}
+     * @return Token with content described at {@link JwtAuthTools#readJwtToken(String, String)}
      */
-    private UsernamePasswordAuthenticationToken getTokenObject(@Nonnull String jwt) {
-        UsernamePasswordAuthenticationToken tokenObject = null;
+    private Authentication getAuthenticationFromJwt(@Nonnull String jwt) {
+        Authentication authentication = null;
         try {
-            tokenObject = JwtAuth.readJwtToken(jwt, confValues.getSecret(), userTransformer);
+            authentication = jwtService.readToAuthentication(jwt);
         } catch (JwtTokenReadException e1) {
-            LOG.info("Non valid JWT Token was provided for authorization: {}", jwt);
+            LOG.debug("Non valid JWT Token was provided for authorization: {}", jwt);
         }
-        return tokenObject;
+        return authentication;
     }
 }
 

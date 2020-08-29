@@ -258,7 +258,7 @@ public class User {
      * 
      * @return Authentication realm of the user
      */
-    public UserRealm getRealm() {
+    public @Nonnull UserRealm getRealm() {
         return realm;
     }
 

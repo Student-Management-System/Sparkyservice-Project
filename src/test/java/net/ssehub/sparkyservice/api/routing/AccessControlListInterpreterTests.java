@@ -154,11 +154,21 @@ public class AccessControlListInterpreterTests {
     }
 
     /**
+     * Tests if the correct configured path is returned.
+     */
+    @Test
+    @DisplayName("Path with trailing slash test")
+    public void pathTestWithSlash() {
+        var interpreter = new AccessControlListInterpreter(zuulRoutes, "/test/");
+        assertEquals("test", interpreter.getConfiguredPath());
+    }
+
+    /**
      * When multiple paths are configured, the ACL interpreter should only read the configuration for one 
      * path at a time and only those users should be allowed to access them. 
      */
     @Test
-    @DisplayName("Test if the current path option works")
+    @DisplayName("User allowed for multiple configured paths test")
     public void userNameAllowedForDifferentPathTest() {
         zuulRoutes.getRoutes().put("otherpath.url", "https://google.com");
         zuulRoutes.getRoutes().put("otherpath.acl", "user@MEMORY");
@@ -176,4 +186,17 @@ public class AccessControlListInterpreterTests {
         );
     }
 
+    @Test
+    @DisplayName("A path with an absolute path and not just the configured route test")
+    public void aclEnabledForLongPath() {
+        var interpreter = new AccessControlListInterpreter(zuulRoutes, CONFIGURED_PATH + "/other/test/path/");
+        assumeTrue(interpreter.isAclEnabled(), "ACL is enabled but interpreter says it's not");
+    }
+
+    @Test
+    @DisplayName("A path with an absolute path and not just the configured route test")
+    public void aclEnablesdForLongPath() {
+        var interpreter = new AccessControlListInterpreter(zuulRoutes, CONFIGURED_PATH + "/test");
+        assumeTrue(interpreter.isAclEnabled(), "ACL is enabled but interpreter says it's not");
+    }
 }

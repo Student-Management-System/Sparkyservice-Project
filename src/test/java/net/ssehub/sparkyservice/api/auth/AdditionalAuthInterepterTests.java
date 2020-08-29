@@ -3,37 +3,49 @@ package net.ssehub.sparkyservice.api.auth;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Base64;
-
 import javax.annotation.Nonnull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
+import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 
-public class AuthenticationReaderTests {
+/**
+ * Provides test cases for {@link AdditionalAuthInterpreter}.
+ * 
+ * @author marcel
+ */
+@ExtendWith(SpringExtension.class)
+public class AdditionalAuthInterepterTests {
     private static final String USER_NAME = "testuser";
     
     @Nonnull
-    private final JwtSettings confValues = new JwtSettings();
+    private final JwtSettings confValues;
 
+    @Nonnull
+    private final JwtTokenService jwtTokenService;
+
+    @MockBean
+    private JwtRepository mockedJwtRepo;
+    
     private String jwtToken; 
 
-    public AuthenticationReaderTests() {
-        var secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-        String secretString = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        ReflectionTestUtils.setField(confValues, "secret", secretString);
-        ReflectionTestUtils.setField(confValues, "type", "Bearer");
-        ReflectionTestUtils.setField(confValues, "issuer", "TestUnit");
-        ReflectionTestUtils.setField(confValues, "audience", "Y");
+    /**
+     * Setup jwt settings.
+     */
+    public AdditionalAuthInterepterTests() {
+        confValues = UnitTestDataConfiguration.sampleJwtConf();
+        this.jwtTokenService = new JwtTokenService(confValues);
     }
 
     /**
@@ -42,7 +54,7 @@ public class AuthenticationReaderTests {
     @BeforeEach
     public void setUpConfValues() {
         var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create(USER_NAME, null, UserRole.ADMIN, true);
-        this.jwtToken = JwtAuth.createJwtToken(user, confValues);
+        this.jwtToken = jwtTokenService.createFor(user);
     }
 
     /**
@@ -51,18 +63,17 @@ public class AuthenticationReaderTests {
     @Test
     @DisplayName("Test if token IDENT is extracted successful")
     public void positivTokenReturnTest() {
-        var reader = new AuthenticationReader(confValues, jwtToken);
+        var reader = new AdditionalAuthInterpreter(jwtTokenService, jwtToken);
         assertAll(
             () -> assertTrue(reader.getAuthenticatedUserIdent().isPresent()),
-            () -> assertTrue(
-                    (USER_NAME + "@ldap").equalsIgnoreCase(reader.getAuthenticatedUserIdent().get()))
-         );
+            () -> assertTrue((USER_NAME + "@ldap").equalsIgnoreCase(reader.getAuthenticatedUserIdent().get()))
+        );
     }
 
     @Test
-    @DisplayName("Testing authentication reader null token")
+    @DisplayName("Authentication with null as header test")
     public void nullHeaderTest() {
-        var reader = new AuthenticationReader(confValues, null);
+        var reader = new AdditionalAuthInterpreter(jwtTokenService, null);
         assertTrue(reader.getAuthenticatedUserIdent().isEmpty(), "Actually there shouldn't be an authenticated user");
     }
 }

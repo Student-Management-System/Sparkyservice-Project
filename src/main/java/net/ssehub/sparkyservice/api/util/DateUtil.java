@@ -2,12 +2,15 @@ package net.ssehub.sparkyservice.api.util;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Util class for dates. Through that, we can have a consistent date handling in the whole project.
@@ -63,9 +66,26 @@ public final class DateUtil {
     public @Nonnull static LocalDate toLocalDate(@Nonnull java.util.Date date) {
         return notNull(
             Optional.of(date)
-            .map(d -> d.toInstant())
-            .map(LocalDate::from)
-            .get()
+                .map(java.util.Date::toInstant)
+                .map(instant -> instant.atZone(ZoneId.systemDefault()))
+                .map(ZonedDateTime::toLocalDate)
+                .get()
+        );
+    }
+
+    /**
+     * Converts a date to a string in the format: 
+     * <code> MM/dd/yyyy HH:mm:ss </code>.
+     * 
+     * @param expDate Desired date
+     * @return the desired date as String
+     */
+    public static @Nonnull String toString(@Nullable Date expDate) {
+        return notNull(
+            Optional.of("MM/dd/yyyy HH:mm:ss")
+                .map(SimpleDateFormat::new)
+                .map(dateFormat -> dateFormat.format(expDate))
+                .get()
         );
     }
 }

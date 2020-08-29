@@ -2,16 +2,14 @@ package net.ssehub.sparkyservice.api.util;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * A collection of small util methods.
@@ -34,18 +32,19 @@ public class SparkyUtil {
     }
 
     /**
-     * Converts a date to a string in the format: 
-     * <code> MM/dd/yyyy HH:mm:ss </code>.
+     * Converts a Map to a set based on their entrys.
      * 
-     * @param expDate Desired date
-     * @return the desired date as String
+     * @param <T> - Entrys of the map which will be the entrys of the list
+     * @param map
+     * @return Set represents the entrys of a map
      */
-    public static @Nonnull String expirationDateAsString(@Nullable Date expDate) {
+    public static @Nonnull <T> Set<T> toSet(@Nonnull final Map<?, T> map) {
         return notNull(
-            Optional.of("MM/dd/yyyy HH:mm:ss")
-                .map(SimpleDateFormat::new)
-                .map(dateFormat -> dateFormat.format(expDate))
-                .get()
-            );
+            map.entrySet()
+            .stream()
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toSet())
+        );
     }
+    
 }
