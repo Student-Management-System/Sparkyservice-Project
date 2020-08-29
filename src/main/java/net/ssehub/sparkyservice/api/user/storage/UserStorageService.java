@@ -33,8 +33,7 @@ public interface UserStorageService {
     /**
      * Creates a new entry in the storage for the given user.
      * 
-     * @param <T>
-     * @param user
+     * @param username
      * @return The created and saved user
      */
     @Secured(UserRole.FullName.ADMIN)

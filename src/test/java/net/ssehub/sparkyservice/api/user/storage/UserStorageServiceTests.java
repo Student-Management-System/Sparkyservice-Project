@@ -146,7 +146,8 @@ public class UserStorageServiceTests {
     public void findAllUserInRealmTypeTest() {
         when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(jpaUser.get()));
         var userList = userService.findAllUsersInRealm(USER_REALM);
-        var castedUser = UserFactoryProvider.getFactory(USER_REALM).create(jpaUserList.get().get(0));
+        @SuppressWarnings("null") var castedUser = 
+                UserFactoryProvider.getFactory(USER_REALM).create(jpaUserList.get().get(0));
         assertAll(
             () -> assertEquals(1, userList.size()),
             () -> assertTrue(user.equals(castedUser))

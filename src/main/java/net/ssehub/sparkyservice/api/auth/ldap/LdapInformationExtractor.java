@@ -40,13 +40,11 @@ class LdapInformationExtractor {
     @Nullable
     String getFullname() {
         Attribute fullnameAttr = ldapContext.getAttributes().get("displayname");
-        String fullname;
+        String fullname = null;
         try {
             if (fullnameAttr != null) {
                 fullname = (String) fullnameAttr.get();
-            } else {
-                fullname = null;
-            }
+            } 
         } catch (NamingException e) {
             e.printStackTrace();
             fullname = null;

@@ -13,3 +13,4 @@ src/main/resources/application-release.properties
 .project
 .metadata
 /app.log
+/.checkstyle
