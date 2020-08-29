@@ -17,11 +17,17 @@ public interface SparkysAuthPrincipal extends AuthenticatedPrincipal {
     @Override
     @Nonnull String getName();
     
-    
     /**
      * The realm where the users is a member of. 
      * 
      * @return Users current realm
      */
     @Nonnull UserRealm getRealm();
+
+    /**
+     * Realm and string in a way together to identify them afterwards
+     * 
+     * @return Can be used as identifier
+     */
+    @Nonnull String asString();
 }

@@ -15,7 +15,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthTools;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
@@ -101,10 +100,8 @@ public class AdditionalAuthInterpreter {
      * @return fullIdentName
      */
     private @Nonnull String getUserIdentifier(Authentication auth) {
-        String name = auth.getName();
         var spPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
-        UserRealm realm = spPrincipal.getRealm();
-        return name + "@" + realm.name();
+        return spPrincipal.asString();
     }
 
     /**

@@ -78,6 +78,12 @@ public class JwtToken {
             public String getName() {
                 return jpaTokenObj.getUser().getUserName();
             }
+
+            @Override
+            @Nonnull
+            public String asString() {
+                return jpaTokenObj.getUser().getUserName() + "@" + jpaTokenObj.getUser().getRealm();
+            }
         };
         this.remainingRefreshes = jpaTokenObj.getRemainingRefreshes();
         this.locked = jpaTokenObj.isLocked();

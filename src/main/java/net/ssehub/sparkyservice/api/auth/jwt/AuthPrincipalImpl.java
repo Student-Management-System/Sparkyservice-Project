@@ -36,6 +36,12 @@ class AuthPrincipalImpl implements SparkysAuthPrincipal {
         this.name = name;
     }
 
+    /**
+     * .
+     * @param realm 
+     * @param name
+     * @see #AuthPrincipalImpl(String, String)
+     */
     public AuthPrincipalImpl(UserRealm realm, String name) {
         this.name = name;
         this.realm = realm;
@@ -49,6 +55,11 @@ class AuthPrincipalImpl implements SparkysAuthPrincipal {
     @Override
     public @Nonnull String getName() {
         return name;
+    }
+
+    @Override
+    public @Nonnull String asString() {
+        return getName() + "@" + getRealm();
     }
 
 }

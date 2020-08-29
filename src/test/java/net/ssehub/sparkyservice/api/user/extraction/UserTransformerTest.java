@@ -30,8 +30,6 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.LocalUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
@@ -49,6 +47,12 @@ public class UserTransformerTest {
         @Override
         public @Nonnull UserRealm getRealm() {
             return UserRealm.LOCAL;
+        }
+
+        @Override
+        @Nonnull
+        public String asString() {
+            return "";
         }
     }
 
