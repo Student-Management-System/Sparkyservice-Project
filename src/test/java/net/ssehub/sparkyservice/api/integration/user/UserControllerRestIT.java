@@ -133,7 +133,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     }
 
     /**
-     * Security test for {@link UserController#addLocalUser(net.ssehub.sparkyservice.api.user.dto.NewUserDto)}. 
+     * Security test for {@link UserController#createLocalUser(net.ssehub.sparkyservice.api.user.dto.NewUserDto)}. 
      * Tests if the access is denied for non-admin users which tries to add a new local user. 
      * 
      * @throws Exception

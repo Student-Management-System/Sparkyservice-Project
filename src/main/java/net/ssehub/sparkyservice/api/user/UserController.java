@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -77,7 +78,7 @@ public class UserController {
     @PutMapping(ControllerPath.USERS_PUT)
     @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
-    public UserDto addLocalUser(@RequestBody @NotNull @Nonnull String username) throws UserEditException {
+    public UserDto createLocalUser(@RequestParam @NotNull @Nonnull String username) throws UserEditException {
         try {
             LocalUserDetails newUser = storageService.addUser(username);
             log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
