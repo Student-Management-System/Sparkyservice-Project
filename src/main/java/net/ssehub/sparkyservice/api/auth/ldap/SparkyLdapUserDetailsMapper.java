@@ -43,16 +43,17 @@ public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapp
             Collection<? extends GrantedAuthority> authorities) {
         // we don't want LDAP Authroties here so we don't use them
         var ldapUser = new LdapUserFactory().create(username, null, UserRole.DEFAULT /* maybe change later */, true);
+        if (ctx != null) {
+            var ldapInfoExtractor = new LdapInformationExtractor(ctx);
+            ldapUser.setExpireDate(ldapInfoExtractor.getExpirationDate());
+            ldapUser.setFullname(ldapInfoExtractor.getFullname());
+            ldapUser.getSettings().setEmail_address(ldapInfoExtractor.getEmail());
+        }
         if (storageService.isUserInStorage(ldapUser)) {
             ldapUser = (LdapUser) storageService.refresh(ldapUser);
         } else {
             storageService.commit(ldapUser);
         } 
-        if (ctx != null) {
-            var ldapInfoExtractor = new LdapInformationExtractor(ctx);
-            ldapUser.setExpireDate(ldapInfoExtractor.getExpirationDate());
-            ldapUser.setFullname(ldapInfoExtractor.getFullname());
-        }
         return ldapUser;
     }
 

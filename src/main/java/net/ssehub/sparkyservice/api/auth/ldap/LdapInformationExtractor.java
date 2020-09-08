@@ -40,16 +40,39 @@ class LdapInformationExtractor {
     @Nullable
     String getFullname() {
         Attribute fullnameAttr = ldapContext.getAttributes().get("displayname");
-        String fullname = null;
+        return getValue(fullnameAttr);
+    }
+
+    /**
+     * Email from LDAP response.
+     * 
+     * @return Mail field from ldap
+     */
+    @Nullable
+    String getEmail() {
+        Attribute emailAttr = ldapContext.getAttributes().get("mail");
+        return getValue(emailAttr);
+        
+    }
+
+    /**
+     * Extracts a value from a given attribute.
+     * 
+     * @param attribute Attribute which holds a value
+     * @return The content of the attribute
+     */
+    @Nullable
+    private String getValue(Attribute attribute) {
+        String entry = null;
         try {
-            if (fullnameAttr != null) {
-                fullname = (String) fullnameAttr.get();
+            if (attribute != null) {
+                entry = (String) attribute.get();
             } 
         } catch (NamingException e) {
             e.printStackTrace();
-            fullname = null;
+            entry = null;
         }
-        return fullname; 
+        return entry; 
     }
 
     /**

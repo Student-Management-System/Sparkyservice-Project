@@ -32,20 +32,16 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
     @Override
     @Nonnull
     public LdapUser create(User jpaUser) {
-        var sparkyUser = create(jpaUser.getUserName(), null, jpaUser.getRole(), jpaUser.isActive());
-        var expireDate = jpaUser.getExpirationDate().map(d -> d.toLocalDate()).orElse(null);
-        sparkyUser.setExpireDate(expireDate);
-        sparkyUser.setSettings(jpaUser.getProfileConfiguration());
-        sparkyUser.databaseId = jpaUser.getId();
-        return sparkyUser;
+        return new LdapUser(jpaUser);
     }
 
     /**
      * Implementation of {@link SparkyUser} for {@link UserRealm#LDAP}. 
      * Specials:<br>
-     * <ul> <li>  Doesn't contains a password and can't change a password
+     * 
+     * <ul><li>  Doesn't contains a password and can't change a password
      * </li><li>  Provides a DN which can used by an {@link AuthenticationManager}
-     * </ul>
+     * </li></ul>
      * 
      * @param username - Mandatory
      * @param password - Is ignored

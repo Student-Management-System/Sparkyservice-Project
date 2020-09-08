@@ -64,6 +64,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
         databaseId = jpaUser.getId();
         jpaUser.getExpirationDate().map(DateUtil::toLocalDate).ifPresent(this::setExpireDate);
         this.setSettings(jpaUser.getProfileConfiguration());
+        this.setFullname(jpaUser.getFullName());
     }
 
     /**
