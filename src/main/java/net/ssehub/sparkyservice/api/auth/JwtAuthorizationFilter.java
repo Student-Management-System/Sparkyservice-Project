@@ -1,12 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,20 +42,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * @param service Jwt service used for decoding jwt tokens
      */
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtTokenService service) {
-        this(authenticationManager, new HashSet<String>(), service);
-    }
-
-    /**
-     * JWT Authorization filter for paths which are configured in the authentication manager. 
-     * It reads a JWT token from {@link JwtSettings#getHeader()} and tries to authorize the user. 
-     * When the token is valid, the user is granted access to the requested a the user object is stored in the 
-     * authentication object. 
-     * 
-     * @param authenticationManager
-     * @param service Jwt service used for decoding jwt tokens
-     */
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, 
-            @Nullable Set<String> lockedJwtToken, JwtTokenService service) {
         super(authenticationManager);
         this.jwtService = service;
     }

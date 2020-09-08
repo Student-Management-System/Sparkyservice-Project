@@ -103,7 +103,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() //default setting
             .and()
                 .addFilter(
-                    new JwtAuthenticationFilter(authenticationManager(), storageService, jwtService)
+                    new JwtAuthenticationFilter(authenticationManager(), jwtService)
                 )
                 .addFilter(
                     new JwtAuthorizationFilter(authenticationManager(), jwtService)
@@ -113,6 +113,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         fillJwtCache();
     }
 
+    /**
+     * Fills the {@link JwtCache} with initial values from the database. It stores all JWT token.
+     */
     private void fillJwtCache() {
         final List<JwtToken> lockedJwtToken = jwtStorageService.findAll();
         if (lockedJwtToken != null) {

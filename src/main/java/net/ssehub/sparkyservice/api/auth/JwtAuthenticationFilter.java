@@ -27,7 +27,6 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
@@ -36,21 +35,18 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  */
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private final AuthenticationManager authenticationManager;
-    private final UserStorageService userService;
-    private final JwtTokenService jwtService;
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenService jwtService;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
      * configuration. 
      * 
      * @param authenticationManager
-     * @param userSerivce
+     * @param jwtService
      */
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
-                                   UserStorageService userSerivce, JwtTokenService jwtService) {
-        this.userService = userSerivce;
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService) {
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.jwtService = jwtService;
@@ -80,12 +76,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         var user = Optional.of(authentication)
             .map(a -> a.getPrincipal())
             .map(SparkyUser.class::cast);
-        user.filter(u -> !userService.isUserInStorage(u))
-            .ifPresent(userService::commit);
         user.map(this::createTokenAndInfo)
             .ifPresent(dto -> setResponseValue(notNull(response), notNull(dto)));
     }
 
+    /**
+     * Creates an DTO which holds all information of the user the given (authenticated) user and generates an JWT
+     * token for this user. The generated token can be used for authorization. 
+     * 
+     * @param user
+     * @return DTO with user information and generated JWT token
+     */
     @Nonnull
     private AuthenticationInfoDto createTokenAndInfo(@Nonnull SparkyUser user) {
         String jwt = jwtService.createFor(user);
