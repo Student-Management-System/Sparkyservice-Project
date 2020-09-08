@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.testconf;
 
+import java.time.LocalDate;
 import java.util.Base64;
 
 import javax.annotation.Nonnull;
@@ -12,7 +13,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
+import net.ssehub.sparkyservice.api.user.UserService;
+import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
+import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.ServiceAccStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
@@ -36,6 +42,15 @@ public class UnitTestDataConfiguration {
     public UserStorageService userStorageService() {
         return new UserStorageImpl();
     } 
+
+    /**
+     * .
+     * @return UserService
+     */
+    @Bean
+    public UserService userService() {
+        return new UserService();
+    }
 
     /**
      * .
@@ -75,5 +90,32 @@ public class UnitTestDataConfiguration {
         jwtConf.setIssuer("TEST");
         jwtConf.setType("Bearer");
         return jwtConf;
+    }
+
+    public static final String NEW_PASSWORD = "testPassword";
+    public static final String OLD_PASSWORD = "oldPw123";
+    public static final String USER_EMAIL = "info@test";
+    public static final String PAYLOAD = "testPayload";
+    public static final String USER_NAME = "user";
+    public static final LocalDate EXP_DATE = LocalDate.now().plusDays(2);
+    /**
+     * Creates a simple and complete {@link UserDto} object for testing purposes.
+     * 
+     * @return complete testing dto
+     */
+    public static @Nonnull UserDto createExampleDto() {
+        var editUserDto = new UserDto();
+        editUserDto.username = USER_NAME;
+        editUserDto.realm = UserRealm.UNKNOWN;
+        editUserDto.passwordDto = new ChangePasswordDto();
+        editUserDto.passwordDto.newPassword = NEW_PASSWORD;
+        editUserDto.passwordDto.oldPassword = OLD_PASSWORD;
+        editUserDto.settings = new SettingsDto();
+        editUserDto.settings.payload = PAYLOAD;
+        editUserDto.settings.emailAddress = USER_EMAIL;
+        editUserDto.settings.emailReceive = true;
+        editUserDto.settings.wantsAi = true;
+        editUserDto.expirationDate = EXP_DATE;
+        return editUserDto;
     }
 }

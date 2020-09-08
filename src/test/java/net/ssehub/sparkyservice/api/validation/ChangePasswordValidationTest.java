@@ -1,12 +1,10 @@
 package net.ssehub.sparkyservice.api.validation;
 
+import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.time.LocalDate;
-
-import javax.annotation.Nonnull;
 import javax.validation.Validation;
 import javax.validation.constraints.NotNull;
 
@@ -14,10 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 
 /**
  * Validation test for {@link UserDto} and {@link UserDto.ChangePasswordDto}.
@@ -25,33 +20,6 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
  * @author marcel
  */
 public class ChangePasswordValidationTest {
-
-    private static final String NEW_PASSWORD = "testPassword";
-    private static final String OLD_PASSWORD = "oldPw123";
-    private static final String USER_EMAIL = "info@test";
-    private static final String PAYLOAD = "testPayload";
-    private static final LocalDate EXP_DATE = LocalDate.now().plusDays(2);
-
-    /**
-     * Creates a simple and complete {@link UserDto} object for testing purposes.
-     * 
-     * @return complete testing dto
-     */
-    public static @Nonnull UserDto createExampleDto() {
-        var editUserDto = new UserDto();
-        editUserDto.username = "user";
-        editUserDto.realm = UserRealm.UNKNOWN;
-        editUserDto.passwordDto = new ChangePasswordDto();
-        editUserDto.passwordDto.newPassword = NEW_PASSWORD;
-        editUserDto.passwordDto.oldPassword = OLD_PASSWORD;
-        editUserDto.settings = new SettingsDto();
-        editUserDto.settings.payload = PAYLOAD;
-        editUserDto.settings.emailAddress = USER_EMAIL;
-        editUserDto.settings.emailReceive = true;
-        editUserDto.settings.wantsAi = true;
-        editUserDto.expirationDate = EXP_DATE;
-        return editUserDto;
-    }
 
     /**
      * Tests if the {@link #createExampleDto()} returns a valid dto object.<br>

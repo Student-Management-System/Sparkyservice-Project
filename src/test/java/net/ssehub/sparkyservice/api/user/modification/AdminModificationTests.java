@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
 import static net.ssehub.sparkyservice.api.testconf.SparkyAssertions.assertDtoValuesEquals;
+import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +25,6 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
-import net.ssehub.sparkyservice.api.validation.ChangePasswordValidationTest;
 
 //checkstyle: stop exception type check
 /**
@@ -70,7 +70,7 @@ public class AdminModificationTests {
      */
     @Test
     public void changePasswordFromDtoTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         LocalUserDetails user = constructor.newInstance();
         userDto.passwordDto.newPassword = "hallo123";
 
@@ -87,7 +87,7 @@ public class AdminModificationTests {
     @Test
     public void changePasswordFromNull() throws Exception {
         LocalUserDetails user = constructor.newInstance();
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         assertAll(
             () -> assertDoesNotThrow(() -> modificationService.update(user, null)),
             () -> assertDoesNotThrow(() -> modificationService.update(null, userDto)),
@@ -102,7 +102,7 @@ public class AdminModificationTests {
      */
     @Test
     public void changeUserValuesTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         userDto.role = UserRole.DEFAULT;
         userDto.realm = UserRealm.LOCAL;
         LocalUserDetails user = constructor.newInstance();
@@ -130,7 +130,7 @@ public class AdminModificationTests {
      */
     @Test
     public void mandatoryRoleTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         userDto.role = null;
         LocalUserDetails user = constructor.newInstance();
         user.setRole(UserRole.DEFAULT);
@@ -147,7 +147,7 @@ public class AdminModificationTests {
      */
     @Test
     public void userAsDtoTest() throws Exception {
-        var testDto = ChangePasswordValidationTest.createExampleDto();
+        var testDto = createExampleDto();
         testDto.role = UserRole.ADMIN;
         testDto.realm = UserRealm.LOCAL;
         var testUserFromDto = UserFactoryProvider.getFactory(UserRealm.LOCAL).create(testDto);

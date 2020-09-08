@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
+import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +20,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.validation.ChangePasswordValidationTest;
 
 //checkstyle: stop exception type check
 /**
@@ -80,7 +80,7 @@ public class DefaultModificationTests {
 
     @Test
     public void changePasswordPositiveTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         LocalUserDetails user = constructor.newInstance();
         user.encodeAndSetPassword("oldPw");
         userDto.passwordDto.newPassword = "hallo123";
@@ -93,7 +93,7 @@ public class DefaultModificationTests {
 
     @Test
     public void changePasswordConditionTest() throws Exception {
-        var userDto = ChangePasswordValidationTest.createExampleDto();
+        var userDto = createExampleDto();
         LocalUserDetails user = constructor.newInstance();
         user.encodeAndSetPassword("oldPw");
         userDto.passwordDto.newPassword = "hallo123";
