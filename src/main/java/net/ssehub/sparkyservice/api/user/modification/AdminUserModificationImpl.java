@@ -41,16 +41,16 @@ class AdminUserModificationImpl implements UserModificationService {
         if (user != null && userDto != null) {
             final SettingsDto localDtoSettings = userDto.settings;
             final var pwDto = userDto.passwordDto;
+            user.setUsername(userDto.username);
+            user.setExpireDate(userDto.expirationDate);
+            user.setFullname(userDto.fullName);
+            user.setRole(userDto.role);
+            user.getSettings().setPayload(userDto.settings.payload);
+            if (pwDto != null) {
+                user.updatePassword(pwDto, UserRole.ADMIN);                    
+            }
             if (localDtoSettings != null) {
-                user.setUsername(userDto.username);
-                if (pwDto != null) {
-                    user.updatePassword(pwDto, UserRole.ADMIN);                    
-                }
-                user.setExpireDate(userDto.expirationDate);
-                user.setFullname(userDto.fullName);
-                user.setRole(userDto.role);
                 DefaultUserModificationImpl.applyPersonalSettingsDto(user, localDtoSettings);
-                user.getSettings().setPayload(userDto.settings.payload);
             }
         }
     }
