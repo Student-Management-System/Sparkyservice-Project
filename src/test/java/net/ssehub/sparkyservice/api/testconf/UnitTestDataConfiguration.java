@@ -1,10 +1,14 @@
 package net.ssehub.sparkyservice.api.testconf;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.time.LocalDate;
 import java.util.Base64;
 
 import javax.annotation.Nonnull;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -12,6 +16,8 @@ import org.springframework.context.annotation.Primary;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
+import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
@@ -42,15 +48,6 @@ public class UnitTestDataConfiguration {
     public UserStorageService userStorageService() {
         return new UserStorageImpl();
     } 
-
-    /**
-     * .
-     * @return UserService
-     */
-    @Bean
-    public UserService userService() {
-        return new UserService();
-    }
 
     /**
      * .

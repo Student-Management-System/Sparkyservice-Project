@@ -45,15 +45,16 @@ public class AuthenticationService {
             return createAuthenticationInfoDto(auth);
         }
     }
-    
+
     /**
      * This method will throw something and shows the reason why the authorization through JWT token failed.
+     * 
      * @param request
      * @throws JwtTokenReadException
      */
     private void checkWrongAuthenticationStatusCause(HttpServletRequest request) throws JwtTokenReadException {
         var jwtToken = request.getHeader(jwtService.getJwtConf().getHeader());
-        jwtService.readJwtToken(jwtToken); 
+        jwtService.readRefreshToAuthentication(jwtToken, userExtractor); 
     }
 
     private AuthenticationInfoDto createAuthenticationInfoDto(Authentication auth) {
