@@ -39,6 +39,7 @@ import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserController;
+import net.ssehub.sparkyservice.api.user.UserController.UsernameDto;
 import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
@@ -97,11 +98,12 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void securityAddUserAdminAccessTest() throws Exception {
-        String username = "testuser";
+        UsernameDto username = new UsernameDto();
+        username.username = "testuser";
         this.mvc
             .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content(username)
+                    .content(new ObjectMapper().writeValueAsString(username))
                     .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isCreated());
     }
@@ -116,11 +118,12 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void addUserAdminSuccessTest() throws Exception {
-        String username = "testuser";
+        UsernameDto username = new UsernameDto();
+        username.username = "testuser";
         MvcResult result = this.mvc
             .perform(put(ControllerPath.USERS_PUT)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(username)
+            .content(new ObjectMapper().writeValueAsString(username))
             .accept(MediaType.APPLICATION_JSON))
             .andReturn();
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
@@ -141,11 +144,12 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "nonAdminUser", roles = "DEFAULT")
     public void securityAddUserNonAdminTest() throws Exception {
-        String username = "testuser";
+        UsernameDto username = new UsernameDto();
+        username.username = "testuser";
         this.mvc
             .perform(put(ControllerPath.USERS_PUT)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content(username)
+                    .content(new ObjectMapper().writeValueAsString(username))
                     .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isForbidden());
     }

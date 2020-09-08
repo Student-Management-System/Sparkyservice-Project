@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -54,7 +54,19 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
  */
 @RestController
 @Tag(name = "user-controller", description = "Controller for user managment")
+
 public class UserController {
+
+    /**
+     * Gives the username of a user especially for new users.
+     * 
+     * @author marcel
+     */
+    //checkstyle: stop visibility modifier check
+    public static class UsernameDto {
+        @NotBlank
+        public String username;
+    }
 
     private Logger log = LoggerFactory.getLogger(UserController.class);
 
@@ -70,17 +82,17 @@ public class UserController {
     /**
      * Creates a new user in the LOCAL realm. 
      * 
-     * @param username - Unique username in LOCAL
+     * @param dto - DTO with unique username which will be created in {@link UserRealm#LOCAL}
      * @return created User as DTO
      * @throws UserEditException
      */
     @Operation(summary = "Adds a new local user", security = { @SecurityRequirement(name = "bearer-key") })
-    @PutMapping(ControllerPath.USERS_PUT)
+    @PutMapping(value = ControllerPath.USERS_PUT, consumes = { "application/json" })
     @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
-    public UserDto createLocalUser(@RequestParam @NotNull @Nonnull String username) throws UserEditException {
+    public UserDto createLocalUser(@RequestBody @NotNull @Nonnull UsernameDto dto) throws UserEditException {
         try {
-            LocalUserDetails newUser = storageService.addUser(username);
+            LocalUserDetails newUser = storageService.addUser(dto.username);
             log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
             return UserModificationService.from(UserRole.ADMIN).asDto(newUser);
         } catch (DuplicateEntryException e) {
@@ -116,7 +128,8 @@ public class UserController {
             SparkyUser targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
             util.update(targetUser, userDto);
             storageService.commit(targetUser);
-            return util.asDto(targetUser);
+            var editedUser = storageService.refresh(targetUser);
+            return util.asDto(editedUser);
         } else {
             log.info("User {}@{} tries to modify the data of other user without admin privileges",
                     authenticatedUser.getUsername(), authenticatedUser.getRealm());
