@@ -62,13 +62,22 @@ public interface UserStorageService {
     @Nonnull
     List<SparkyUser> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
 
+    /**
+     * Finds a specific user by name and realm.
+     * 
+     * @param username
+     * @param realm
+     * @return Specific user
+     * @throws UserNotFoundException
+     */
     @Nonnull
-    SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) throws UserNotFoundException;
+    SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
+        throws UserNotFoundException;
 
     /**
      * A list with all users in the data storage. Never null but may be empty.
      * 
-     * @return
+     * @return All storage users
      */
     @Secured(UserRole.FullName.ADMIN)
     @Nonnull
@@ -104,7 +113,7 @@ public interface UserStorageService {
      * Find all users in a given realm (without pagination). Only admins are allowed to do this.
      * 
      * @param realm
-     * @return
+     * @return List of users in the given realm
      */
     @Secured(UserRole.FullName.ADMIN)
     List<SparkyUser> findAllUsersInRealm(UserRealm realm);
@@ -116,6 +125,7 @@ public interface UserStorageService {
      * @return New object with values from a storage
      * @throws UserNotFoundException
      */
+    @Nonnull
     default SparkyUser refresh(SparkyUser user) throws UserNotFoundException {
         return this.findUserByNameAndRealm(user.getUsername(), user.getRealm());
     }

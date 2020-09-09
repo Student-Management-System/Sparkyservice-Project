@@ -64,7 +64,6 @@ public class JwtTokenServiceTests {
     }
 
     @BeforeEach
-    @SuppressWarnings("null")
     public void setupJwtService() {
         userStorageService.commit(testUser);
         assertTrue(jwtStorageService != null, "Test setup failed");
@@ -75,7 +74,6 @@ public class JwtTokenServiceTests {
     @Test
     @DisplayName("Disabling JWT by JIT test")
     public void disableJwtTest() throws JwtTokenReadException {
-        boolean te = userStorageService.isUserInStorage(testUser);
         var testUser = notNull(
             userStorageService.findUsersByUsername(this.testUser.getUsername()).get(0)
         );
