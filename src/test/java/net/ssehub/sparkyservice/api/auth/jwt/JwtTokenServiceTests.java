@@ -4,7 +4,6 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -21,9 +20,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -32,9 +28,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
-import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.testconf.JwtTestBeanConf;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LdapUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -47,28 +43,10 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  */
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@ContextConfiguration(classes = {UnitTestDataConfiguration.class, JwtTokenServiceTests.TestConf.class})
+@ContextConfiguration(classes = {UnitTestDataConfiguration.class, JwtTestBeanConf.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
-@EnableJpaRepositories("net.ssehub.sparkyservice.api")
 @ExtendWith(SpringExtension.class)
 public class JwtTokenServiceTests {
-
-    /**
-     * Provides bean 
-     * @author marcel
-     */
-    @TestConfiguration
-    static class TestConf {
-        @Autowired private JwtRepository repo;
-        @Autowired private UserStorageService userStorageServ;
-        
-        @Bean
-        public JwtStorageService tokenService() {
-            assertNotNull(repo);
-            assertNotNull(userStorageServ);
-            return new JwtStorageService(notNull(repo), notNull(userStorageServ));
-        }
-    }
 
     private JwtTokenService jwtTokenService;
 

@@ -170,7 +170,7 @@ public class JwtTokenService {
      * @return Springs authentication token
      */
     @Nonnull
-    public Authentication readRefreshToAuthentication(String jwtString, UserExtractionService service) 
+    public Authentication readRefreshToAuthentication(@Nullable String jwtString, UserExtractionService service) 
             throws JwtTokenReadException {
         var authenticationObject = readToAuthentication(jwtString);
         try {

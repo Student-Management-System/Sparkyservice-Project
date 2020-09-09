@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.api.user;
 
-import java.util.List;
-import java.util.function.Predicate;
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletContext;
@@ -39,9 +38,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserEditException;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -67,17 +64,17 @@ public class UserController {
         @NotBlank
         public String username;
     }
-
+    
     private Logger log = LoggerFactory.getLogger(UserController.class);
-
+    
     @Autowired
-    private ServletContext servletContext;
+    private UserService userService;
 
     @Autowired
     private UserStorageService storageService;
 
     @Autowired
-    private UserExtractionService transformerService;
+    private ServletContext servletContext;
 
     /**
      * Creates a new user in the LOCAL realm. 
@@ -91,116 +88,110 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto createLocalUser(@RequestBody @NotNull @Nonnull UsernameDto dto) throws UserEditException {
-        try {
-            LocalUserDetails newUser = storageService.addUser(dto.username);
-            log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
-            return UserModificationService.from(UserRole.ADMIN).asDto(newUser);
-        } catch (DuplicateEntryException e) {
-            log.debug("No user added: Duplicate entry");
-            throw(e);
-        }
+        log.trace("Request for creating a local user");
+        // notNull because the dto is provided via spring with NotNull
+        // as runtime validation.
+        String username = notNull(dto.username); 
+        return userService.createLocalUser(username);
     }
 
+    /**
+     * Edits a user with the given DTO - User must be authorized. 
+     * 
+     * @param userDto
+     * @param auth Holds authentication information - is necessary in order to decide if the target can be modified with
+     *             permissions of the authorized user
+     * @return Edited user as DTO
+     * @throws UserNotFoundException
+     * @throws MissingDataException
+     */
     @Operation(summary = "Edits users (in any realm)", description = "Edit and return the new user", 
-            security = { @SecurityRequirement(name = "bearer-key") })
+        security = { @SecurityRequirement(name = "bearer-key") })
     @PatchMapping(value = ControllerPath.USERS_PATCH, consumes = { "application/json" })
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses(value = { 
-            @ApiResponse(responseCode = "200", description = "User edit was successful", 
-                content = @Content(schema = @Schema(implementation = UserDto.class))),
-            @ApiResponse(responseCode = "403", description = "Current user is not authorized to edit this user", 
-                content = @Content),
-            @ApiResponse(responseCode = "401", description = "Current user is not authenticated", 
-                content = @Content),
-            @ApiResponse(responseCode = "404", description = "The edit target was not found", 
-                content = @Content),
-        })
+        @ApiResponse(responseCode = "200", description = "User edit was successful", 
+            content = @Content(schema = @Schema(implementation = UserDto.class))),
+        @ApiResponse(responseCode = "403", description = "Current user is not authorized to edit this user", 
+            content = @Content),
+        @ApiResponse(responseCode = "401", description = "Current user is not authenticated", content = @Content),
+        @ApiResponse(responseCode = "404", description = "The edit target was not found", content = @Content),
+    })
     @Secured({ UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN })
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
             throws UserNotFoundException, MissingDataException {
-
-        SparkyUser authenticatedUser = transformerService.extract(auth);
-        Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username) 
-                && user.getRealm().equals(userDto.realm);
-        UserModificationService util = UserModificationService.from(authenticatedUser.getRole());
-
-        if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
-            SparkyUser targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
-            util.update(targetUser, userDto);
-            storageService.commit(targetUser);
-            var editedUser = storageService.refresh(targetUser);
-            return util.asDto(editedUser);
-        } else {
-            log.info("User {}@{} tries to modify the data of other user without admin privileges",
-                    authenticatedUser.getUsername(), authenticatedUser.getRealm());
-            log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
-            throw new AccessDeniedException("Not allowed to modify other users data");
-        }
-//        var authority = (GrantedAuthority) auth.getAuthorities().toArray()[0];
-//        User editTargetUser = null;
-//        if (UserRole.ADMIN.getEnum(authority.getAuthority()) == UserRole.ADMIN) {
-//            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
-//            User.adminUserDtoEdit(editTargetUser, userDto);
-//        } else if (selfEdit) {
-//            editTargetUser = userService.findUserByNameAndRealm(userDto.username, userDto.realm);
-//            User.defaultUserDtoEdit(editTargetUser, userDto);
-//        } else {
-//            log.info("User {}@{} tries to modify the data of other user without admin privileges",
-//                    authenticatedUser.getUserName(), authenticatedUser.getRealm());
-//            log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
-//            throw new AccessDeniedException("Not allowed to modify other users data");
-//        }
-//        userService.storeUser(editTargetUser);
-//        return editTargetUser.asDto();
+        log.trace("Request for creating editing a user");
+        return userService.modifyUser(userDto, auth);
     }
 
-    @Operation(summary = "Gets all users from all realms", security = { @SecurityRequirement(name = "bearer-key") })
+    /**
+     * Returnes all user from a persistent storage (those which aren't in a persistent storage, can't be returned here
+     * e.g. memory realm users).
+     * 
+     * @return Array of user DTOs from all supported realms
+     */
+    @Operation(summary = "Gets all users from all supported realms", 
+        security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_GET_ALL)
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsers() {
         var list = storageService.findAllUsers();
-        return userListToDtoList(list);
+        return UserService.userListToDtoList(list);
     }
 
+    /**
+     * Get all user from a specific realm which are in a persistent storage. Some realms may be unsupported.
+     * 
+     * @param realm
+     * @return DTO array with information of all users in a specific realm
+     */
     @Operation(summary = "Gets all users from a single realm", security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}")
     @Secured(UserRole.FullName.ADMIN)
     public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
         var list = storageService.findAllUsersInRealm(realm);
-        return userListToDtoList(list);
+        return UserService.userListToDtoList(list);
     }
 
-    private static UserDto[] userListToDtoList(List<SparkyUser> userList) {
-        var util = UserModificationService.from(UserRole.ADMIN);
-        return userList.stream().map(util::asDto).toArray(size -> new UserDto[size]);
-    }
-
+    /**
+     * Searches a specific user in the database and returns (a subset) of information. 
+     * 
+     * @param realm
+     * @param username
+     * @param auth
+     * @return Information about the requested user - maybe they are not complete
+     * @throws MissingDataException
+     */
     @Operation(summary = "Gets a unique user", security = { @SecurityRequirement(name = "bearer-key") })
-    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Return user"),
-            @ApiResponse(responseCode = "403", description = "User is not authorized"),
-            @ApiResponse(responseCode = "401", description = "User is not authenticated "),
-            @ApiResponse(responseCode = "404", description = "The desired user or realm was not found") })
+    @ApiResponses(value = { 
+        @ApiResponse(responseCode = "200", description = "Return user"),
+        @ApiResponse(responseCode = "403", description = "User is not authorized"),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated "),
+        @ApiResponse(responseCode = "404", description = "The desired user or realm was not found") 
+    })
     @GetMapping(ControllerPath.USERS_GET_SINGLE)
-    public UserDto getSingleUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
+    public UserDto getUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
             Authentication auth) throws MissingDataException {
-
-        SparkyUser authenticatedUser = transformerService.extract(auth);
-        if (authenticatedUser.getRole() != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
-            log.info("The user \" {} \" tried to access not allowed user data", username);
-            throw new AccessDeniedException("Modifying this user is not allowed.");
-        }
-        var user = storageService.findUserByNameAndRealm(username, realm);
-        return UserModificationService.from(authenticatedUser.getRole()).asDto(user);
+        log.trace("Request for searching a user: {}@{}", username, realm);
+        return userService.searchForSingleUser(realm, username, auth);
     }
 
+    /**
+     * Removes a user from database.When the realm is not supported for delete operations, no user is deleted.
+     * 
+     * @param realm
+     * @param username
+     */
     @Operation(summary = "Deletes a user", security = { @SecurityRequirement(name = "bearer-key") })
     @DeleteMapping(ControllerPath.USERS_DELETE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Secured(UserRole.FullName.ADMIN)
-    @ApiResponses(value = { @ApiResponse(responseCode = "204", description = "User deleted"),
-            @ApiResponse(responseCode = "403", description = "User is not authorized"),
-            @ApiResponse(responseCode = "401", description = "User is not authenticated "),
-            @ApiResponse(responseCode = "404", description = "The desired user was not found") })
+    @ApiResponses(value = { 
+        @ApiResponse(responseCode = "204", description = "User deleted"),
+        @ApiResponse(responseCode = "403", description = "User is not authorized"),
+        @ApiResponse(responseCode = "401", description = "User is not authenticated "),
+        @ApiResponse(responseCode = "404", description = "The desired user was not found") 
+    })
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
         storageService.deleteUser(username, realm);
     }
@@ -219,6 +210,7 @@ public class UserController {
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit. 
+     * 
      * @param ex
      * @return ErrorDTO with all collected information about the error
      */
@@ -231,17 +223,31 @@ public class UserController {
 
     /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit.
+     * 
      * @param ex
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.CONFLICT)
-    @ExceptionHandler({UserEditException.class, DuplicateEntryException.class })
-    public ErrorDto handleUserEditException(UserEditException ex) {
+    @ExceptionHandler(DuplicateEntryException.class)
+    public ErrorDto handleDuplicateEntryException(UserEditException ex) {
         return new ErrorDtoBuilder().newError(null, HttpStatus.CONFLICT, servletContext.getContextPath()).build();
     }
 
     /**
+     * Exception handler for editiation problems. Return status is 400 BAD REQUEST. 
+     * 
+     * @param ex
+     * @return ErrorDto with all collectable information
+     */
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(UserEditException.class)
+    public ErrorDto handleUserEditException(UserEditException ex) {
+        return new ErrorDtoBuilder().newError(null, HttpStatus.BAD_REQUEST, servletContext.getContextPath()).build();
+    }
+
+    /**
      * Exception handler for {@link UserController} for exceptions which occur during user edit. 
+     * 
      * @param ex
      * @return ErrorDTO with all collected information about the error
      */
