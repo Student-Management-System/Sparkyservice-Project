@@ -124,20 +124,64 @@ abstract class AbstractSparkyUser implements SparkyUser {
         this.fullname = fullname;
     }
 
-    private boolean equals(AbstractSparkyUser user) {
-        String localFullname = fullname;
-        try {
-            boolean isEqual = user.isEnabled == isEnabled;
-            isEqual &= user.role.equals(role);
-            isEqual &= user.getExpireDate().equals(expirationDate);
-            isEqual &= user.getSettings().equals(getSettings());
-            isEqual &= user.username.equals(username);
-            isEqual &= user.databaseId == databaseId;
-            isEqual &= localFullname == null ? user.fullname == null : localFullname.equals(user.fullname);
-            return isEqual;
-        } catch (NullPointerException e) {
+    /**
+     * Generated equals method.
+     * 
+     * @param obj
+     * @return <code>true</code> when fields of this abstract class are equal
+     */
+    @SuppressWarnings("null")
+    private boolean isEquals(Object obj) {
+        var localSettings = settings;
+        var localFullname = fullname;
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
             return false;
         }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AbstractSparkyUser other = (AbstractSparkyUser) obj;
+        if (databaseId != other.databaseId) {
+            return false;
+        }
+        if (expirationDate == null) {
+            if (other.expirationDate != null) {
+                return false;
+            }
+        } else if (!expirationDate.equals(other.expirationDate)) {
+            return false;
+        }
+        if (localFullname == null) {
+            if (other.fullname != null) {
+                return false;
+            }
+        } else if (!localFullname.equals(other.fullname)) {
+            return false;
+        }
+        if (isEnabled != other.isEnabled) {
+            return false;
+        }
+        if (role != other.role) {
+            return false;
+        }
+        if (localSettings == null) {
+            if (other.settings != null) {
+                return false;
+            }
+        } else if (!localSettings.equals(other.settings)) {
+            return false;
+        }
+        if (username == null) {
+            if (other.username != null) {
+                return false;
+            }
+        } else if (!username.equals(other.username)) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -165,7 +209,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
         return (Optional<T>) Optional.ofNullable(object)
                 .filter(classInstance.getClass()::isInstance)
                 .map(classInstance.getClass()::cast)
-                .filter(this::equals);
+                .filter(this::isEquals);
     }
 
     /**
