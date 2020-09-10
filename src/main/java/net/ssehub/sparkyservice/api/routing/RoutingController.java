@@ -28,20 +28,22 @@ public class RoutingController {
      * @param path
      */
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
+    @ApiResponses(value = { 
+        @ApiResponse(responseCode = "2XX", description = "forwarded to the target"),
+        @ApiResponse(responseCode = "403", description = "User is not authorized to access path"),
+        @ApiResponse(responseCode = "401", description = "This path is protected. User needs to authenticate ") 
+    })
     @GetMapping(value = "{path}")
     @Secured(UserRole.FullName.SERVICE)
-    @ResponseStatus(code = HttpStatus.NOT_IMPLEMENTED)
-    @ApiResponses(value = { @ApiResponse(responseCode = "2XX", description = "forwarded to the target"),
-            @ApiResponse(responseCode = "403", description = "User is not authorized to access path"),
-            @ApiResponse(responseCode = "401", description = "This path is protected. User needs to authenticate ") })
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
     public void route(@PathVariable("path") String path) {}
 
     /**
      * Hearbeat - gives a simple live sign.
      */
     @Operation(description = "Checks if the and API is reachable under /api/v0")
+    @ApiResponse(responseCode = "204", description = "Status is up - No content to send")
     @GetMapping(value = ControllerPath.HEARTBEAT)
     @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    @ApiResponse(responseCode = "204", description = "Status is up - No content to send")
     public void isAlive() {}
 }
