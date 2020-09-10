@@ -147,11 +147,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
         if (databaseId != other.databaseId) {
             return false;
         }
-        if (expirationDate == null) {
-            if (other.expirationDate != null) {
-                return false;
-            }
-        } else if (!expirationDate.equals(other.expirationDate)) {
+        if (!expirationDate.equals(other.expirationDate)) {
             return false;
         }
         if (localFullname == null) {
@@ -174,11 +170,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
         } else if (!localSettings.equals(other.settings)) {
             return false;
         }
-        if (username == null) {
-            if (other.username != null) {
-                return false;
-            }
-        } else if (!username.equals(other.username)) {
+        if (!username.equals(other.username)) {
             return false;
         }
         return true;
