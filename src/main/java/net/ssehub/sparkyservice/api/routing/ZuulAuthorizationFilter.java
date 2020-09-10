@@ -3,6 +3,7 @@ package net.ssehub.sparkyservice.api.routing;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,7 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 public class ZuulAuthorizationFilter extends ZuulFilter {
 
     public static final String PROXY_AUTH_HEADER = "Proxy-Authorization";
+
     @Nonnull
     private static Logger log = notNull(LoggerFactory.getLogger(ZuulAuthorizationFilter.class));
 
@@ -53,6 +55,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     @Override
     public boolean shouldFilter() {
         log.trace("Incoming request");
+        allowAuthorizationHeader();
         boolean contextValid = getProxyPath() != null;
         if (zuulRoutes == null || zuulRoutes.getRoutes() == null) { 
             zuulRoutes = emergencyConfLoad();
@@ -109,6 +112,20 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
             proxyPath = RequestContext.getCurrentContext().getRequest().getPathInfo();
         }
         return proxyPath;
+    }
+
+    /**
+     * Allow authorization header while proxying a request.
+     * This is necessary because the zuul config "sensitiveHeaders" is not working properly.
+     * 
+     * @see https://stackoverflow.com/questions/36359915/
+     *  authorization-header-not-passed-by-zuulproxy-starting-with-brixton-rc1
+     */
+    public void allowAuthorizationHeader() {
+        var ctx = RequestContext.getCurrentContext();
+        // Alter ignored headers as per: https://gitter.im/spring-cloud/spring-cloud?at=56fea31f11ea211749c3ed22
+        @SuppressWarnings("unchecked") Set<String> headers = (Set<String>) ctx.get("ignoredHeaders");
+        headers.remove("authorization");
     }
 
     /**

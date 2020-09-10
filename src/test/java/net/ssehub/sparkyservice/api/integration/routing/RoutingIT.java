@@ -1,10 +1,20 @@
 package net.ssehub.sparkyservice.api.integration.routing;
 
+import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockserver.client.server.MockServerClient;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +50,7 @@ public class RoutingIT {
     public static final String PROTECTED_LIST_ROUTE = "/testroutesecure2";
     private static final String FREE_ROUTE = "/testroutefree";
     private static final String PROTECTED_ROUTE = "/testroutesecure/heartbeat";
+    private static final String EXPECTATION_HEADER_ROUTE = "/authvalidation";
 
     @Autowired
     private JwtSettings jwtConf; 
@@ -49,6 +60,58 @@ public class RoutingIT {
 
     @Autowired
     private MockMvc mvc;
+    private static ClientAndServer mockServer;
+
+    @BeforeAll
+    public static void startServer() {
+        mockServer = ClientAndServer.startClientAndServer(1080);
+    }
+ 
+    @AfterAll
+    public static void stopServer() { 
+        mockServer.stop();
+    }
+    private static final String EXAMPLE_JWT = "Bearer abcdefgh";
+
+    /**
+     * Mocked http server with a listen route on /authvalidation on 127.0.0.1:1080 - maybe configure this route
+     * in test-routing.properties to use it in this test class. <br>
+     * When the expected route is called it will return an 302 otherwise an 404. 
+     */
+    private void createExpectationForValidAuthHeader() {
+        new MockServerClient("127.0.0.1", 1080)
+          .when(
+            request()
+              .withMethod("GET")
+              .withPath("/authvalidation")
+              .withHeader("\"Content-type\", \"application/json\"")
+              .withHeader(HttpHeaders.AUTHORIZATION, EXAMPLE_JWT),
+              exactly(1))
+                .respond(
+                  response()
+                    .withStatusCode(302)
+                    .withHeaders(
+                      new Header("Content-Type", "application/json; charset=utf-8"),
+                      new Header("Cache-Control", "public, max-age=86400"))
+                    .withBody("{ message: 'incorrect authorization header }")
+                    .withDelay(TimeUnit.SECONDS,1)
+                );
+    }
+
+    /**
+     * Tests if the authorization header is preserverd and forwared when using the routing filter.
+     * 
+     * @throws Exception
+     */
+    @IntegrationTest
+    public void preserveAuthHeaderWhileRoutingTest() throws Exception {
+        createExpectationForValidAuthHeader();
+        mvc.perform(
+            get(EXPECTATION_HEADER_ROUTE)
+                .header(HttpHeaders.AUTHORIZATION,  EXAMPLE_JWT)
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isFound());
+    }
 
     /**
      * Test if a non authenticated user is forwarded when the path is not protected.
