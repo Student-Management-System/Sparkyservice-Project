@@ -54,7 +54,7 @@ public class AuthenticationService {
      */
     private void checkWrongAuthenticationStatusCause(HttpServletRequest request) throws JwtTokenReadException {
         var jwtToken = request.getHeader(jwtService.getJwtConf().getHeader());
-        jwtService.readRefreshToAuthentication(jwtToken, userExtractor); 
+        jwtService.readJwtToken(jwtToken); 
     }
 
     private AuthenticationInfoDto createAuthenticationInfoDto(Authentication auth) {

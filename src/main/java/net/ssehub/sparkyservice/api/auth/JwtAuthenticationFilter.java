@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     /**
      * {@inheritDoc}.
-     * The principal (accessable through {@link Authentication#getPrincipal()} of this authentication always contains 
+     * The principal (accessible through {@link Authentication#getPrincipal()} of this authentication always contains 
      * the authenticated {@link SparkyUser}.
      */
     @Override
