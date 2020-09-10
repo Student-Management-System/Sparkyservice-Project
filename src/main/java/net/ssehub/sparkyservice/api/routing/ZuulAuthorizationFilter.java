@@ -125,7 +125,9 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         var ctx = RequestContext.getCurrentContext();
         // Alter ignored headers as per: https://gitter.im/spring-cloud/spring-cloud?at=56fea31f11ea211749c3ed22
         @SuppressWarnings("unchecked") Set<String> headers = (Set<String>) ctx.get("ignoredHeaders");
-        headers.remove("authorization");
+        if (headers != null) {
+            headers.remove("authorization");
+        }
     }
 
     /**
