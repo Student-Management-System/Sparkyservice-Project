@@ -100,7 +100,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
-            .antMatchers(ControllerPath.GLOBAL_PREFIX).authenticated() //default setting
             .and()
                 .addFilter(
                     new JwtAuthenticationFilter(authenticationManager(), jwtService)
