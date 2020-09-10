@@ -237,18 +237,39 @@ public class User {
         return profileConfiguration;
     }
     
+    /**
+     * Account expiration. After this date is reached, the user cannot login anymore.
+     * 
+     * @return Date of account expiration 
+     */
     public Optional<java.sql.Date> getExpirationDate() {
         return Optional.ofNullable(expirationTime);
     }
 
+    /**
+     * Sets the expiration date of this account. The user can login until the given date is reached.
+     * 
+     * @param expirationDate
+     */
     public void setExpirationDate(@Nullable java.sql.Date expirationDate) {
         this.expirationTime = expirationDate;
     }
 
+    /**
+     * .
+     * @param expirationDate
+     * @see #setExpirationDate(java.sql.Date)
+     */
     public void setExpirationDate(Optional<LocalDate> expirationDate) {
         this.expirationTime = expirationDate.map(java.sql.Date::valueOf).orElse(null);
     }
 
+    /**
+     * Personal profile configuration. The user or admin can configure the behaviour of this or other microservices 
+     * here (like desired e-mail address).
+     * 
+     * @param profileConfiguration User specific settings
+     */
     public void setProfileConfiguration(PersonalSettings profileConfiguration) {
         this.profileConfiguration = profileConfiguration;
     }

@@ -18,7 +18,7 @@ public interface UserModificationService {
      * @param role - The permissions of the utility
      * @return A utility for modifying and accessing users
      */
-     public static UserModificationService from(UserRole role) {
+    public static UserModificationService from(UserRole role) {
         UserModificationService util;
         switch(role) {
         case ADMIN:

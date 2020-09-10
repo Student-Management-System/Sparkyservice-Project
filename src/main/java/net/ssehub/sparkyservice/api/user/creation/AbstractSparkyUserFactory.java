@@ -10,7 +10,7 @@ import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
-    @ParametersAreNonnullByDefault
+@ParametersAreNonnullByDefault
 public interface AbstractSparkyUserFactory<T extends SparkyUser> {
 
     @Nonnull

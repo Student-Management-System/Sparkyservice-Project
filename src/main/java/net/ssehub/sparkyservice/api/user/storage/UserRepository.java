@@ -10,6 +10,11 @@ import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
 import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 
+/**
+ * Provides storage operations for {@link User}.
+ *
+ * @author marcel
+ */
 @Repository
 interface UserRepository extends CrudRepository<User, Integer> {
     Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
