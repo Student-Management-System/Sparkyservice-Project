@@ -113,10 +113,31 @@ public class AccessControlListInterpreter {
      * @return Same string without slash at start or at end
      */
     public static String removeSlash(String path) {
-        if (path.startsWith("/")) {
+        path = removeStartSlash(path);
+        return removeTrailingSlash(path);
+    }
+
+    /**
+     * Removes one or more slashes from the beginning of the given string when present.
+     * 
+     * @param path
+     * @return Same path without slashes at the beginning.
+     */
+    public static String removeStartSlash(String path) {
+        while (path.startsWith("/")) {
             path = path.substring(1, path.length());
         }
-        if (path.endsWith("/")) {
+        return path;
+    }
+
+    /**
+     * Removes one or more trailing slashes from the given path.
+     * 
+     * @param path
+     * @return Substring without trailing slashes
+     */
+    public static String removeTrailingSlash(String path) {
+        while (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
         return path;

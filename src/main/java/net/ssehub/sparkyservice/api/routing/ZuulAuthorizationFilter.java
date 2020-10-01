@@ -110,6 +110,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         if (proxyPath == null) { // (No idea why this is necessary some times)
             log.debug("Possible error: No proxy field available (trying to extract requested URI from request)");
             proxyPath = RequestContext.getCurrentContext().getRequest().getPathInfo();
+            proxyPath = AccessControlListInterpreter.removeStartSlash(proxyPath);
         }
         return proxyPath;
     }
@@ -140,6 +141,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         RequestContext ctx = RequestContext.getCurrentContext();
         HttpServletRequest request = ctx.getRequest();
         log.debug("{} request to {}", request.getMethod(), request.getRequestURL().toString());
+        log.debug("Forward target: {} or {}", ctx.get(FilterConstants.FORWARD_TO_KEY), ctx.get("routeHost"));
         return request;
     }
     /**
