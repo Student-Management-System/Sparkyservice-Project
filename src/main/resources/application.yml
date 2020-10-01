@@ -1,0 +1,24 @@
+version: ${pom.version}
+build:
+    date: $timestamp}
+springdoc: # Todo remove patch version here
+    version: ${pom.version}
+
+spring:
+    profiles:
+        active: release
+    banner:
+        location: classpath:banner.txt
+
+zuul:
+    ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+    sensitive-headers: Cookie,Set-Cookie
+    
+logging:
+    level:
+        com:
+            zaxxer: 
+                hikari: OFF
+                
+                
+                
