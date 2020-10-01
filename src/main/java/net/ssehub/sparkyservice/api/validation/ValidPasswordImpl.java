@@ -3,7 +3,12 @@ package net.ssehub.sparkyservice.api.validation;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public final class ValidPasswordImpl implements ConstraintValidator<ValidPassword, String>{
+/**
+ * Provides an password check where the minimum characters must be 5. 
+ * 
+ * @author marcel
+ */
+public final class ValidPasswordImpl implements ConstraintValidator<ValidPassword, String> {
 
     @Override
     public boolean isValid(String rawPassword, ConstraintValidatorContext arg1) {
