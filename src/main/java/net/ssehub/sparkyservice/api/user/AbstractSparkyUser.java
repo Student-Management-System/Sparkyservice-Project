@@ -44,6 +44,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
      */
     public AbstractSparkyUser(@Nonnull String username, @Nonnull UserRole role) {
         this.username = username;
+        setUsername(username);
         this.role = role;
     }
     
@@ -84,12 +85,15 @@ abstract class AbstractSparkyUser implements SparkyUser {
     @Override
     @Nonnull
     public String getUsername() {
+
         return username;
     }
 
     @Override
     public void setUsername(String username) {
         if (username != null) {
+            username.trim();
+            username.toLowerCase();
             this.username = username;
         }
     }
