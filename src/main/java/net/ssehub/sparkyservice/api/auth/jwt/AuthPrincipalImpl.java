@@ -54,6 +54,8 @@ class AuthPrincipalImpl implements SparkysAuthPrincipal {
 
     @Override
     public @Nonnull String getName() {
+        name.toLowerCase();
+        name.trim();
         return name;
     }
 

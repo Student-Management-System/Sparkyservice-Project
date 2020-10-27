@@ -25,7 +25,7 @@ public interface SparkysAuthPrincipal extends AuthenticatedPrincipal {
     @Nonnull UserRealm getRealm();
 
     /**
-     * Realm and string in a way together to identify them afterwards
+     * Realm and string in a way together to identify them afterwards.
      * 
      * @return Can be used as identifier
      */
