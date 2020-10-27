@@ -92,9 +92,9 @@ abstract class AbstractSparkyUser implements SparkyUser {
     @Override
     public void setUsername(String username) {
         if (username != null) {
-            username.trim();
-            username.toLowerCase();
-            this.username = username;
+            username = username.trim();
+            username = username.toLowerCase();
+            this.username = notNull(username);
         }
     }
 
