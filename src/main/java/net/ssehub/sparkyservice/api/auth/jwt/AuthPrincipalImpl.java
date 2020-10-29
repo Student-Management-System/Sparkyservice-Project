@@ -1,7 +1,5 @@
 package net.ssehub.sparkyservice.api.auth.jwt;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -56,8 +54,6 @@ class AuthPrincipalImpl implements SparkysAuthPrincipal {
 
     @Override
     public @Nonnull String getName() {
-        name = notNull(name.toLowerCase());
-        name = notNull(name.trim());
         return name;
     }
 

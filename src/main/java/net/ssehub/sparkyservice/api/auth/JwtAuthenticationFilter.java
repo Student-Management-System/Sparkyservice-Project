@@ -154,7 +154,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         if (username == null && password == null) {
             try {
                 CredentialsDto cred = new ObjectMapper().readValue(request.getInputStream(), CredentialsDto.class);
-                username = cred.username;
+                username = cred.username.trim();
                 password = cred.password;
                 boolean avail = password != null && !password.isBlank();
                 LOG.debug("[HTTP Body] Username: " + username + " | Password available: " + avail);
