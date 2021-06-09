@@ -72,10 +72,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             FilterChain filterChain, Authentication authentication) {
 
         LOG.info("Successful authentication with JWT: {}@", authentication.getName());
-        var user = Optional.of(authentication)
+        Optional.of(authentication)
             .map(a -> a.getPrincipal())
-            .map(SparkyUser.class::cast);
-        user.map(this::createTokenAndInfo)
+            .map(SparkyUser.class::cast)
+            .map(this::createTokenAndInfo)
             .ifPresent(dto -> setResponseValue(notNull(response), notNull(dto)));
     }
 

@@ -202,10 +202,18 @@ public class JwtTokenService {
         return tokenString;
     }
 
+    /**
+     * Todo.
+     * @param token
+     */
     public void refresh(JwtToken token) {
         // TODO implement a refresh system? 
     }
 
+    /**
+     * Todo.
+     * @param jwtString
+     */
     public void refresh(String jwtString) {
         // TODO implement a refresh system ? 
     }

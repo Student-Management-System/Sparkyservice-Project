@@ -41,7 +41,7 @@ public class UserTransformerTest {
     static class TestPrincipal implements SparkysAuthPrincipal {
         @Override
         public @Nonnull String getName() {
-            return "testUser";
+            return "testuser";
         }
 
         @Override
@@ -69,7 +69,7 @@ public class UserTransformerTest {
     @Test
     public void extendFromSpringUserDetails() throws UserNotFoundException, MissingDataException {
         var authority = new SimpleGrantedAuthority(UserRole.FullName.ADMIN);
-        var userDetails = new org.springframework.security.core.userdetails.User("testUser", "testpass", Arrays.asList(authority));
+        var userDetails = new org.springframework.security.core.userdetails.User("testuser", "testpass", Arrays.asList(authority));
         SparkyUser extendedUser = transformer.extractAndRefresh(userDetails); // in reality this is maybe null!
         assertAll(
             () -> assertEquals("testuser", extendedUser.getUsername()),
@@ -79,9 +79,9 @@ public class UserTransformerTest {
 
     @Test
     public void extendFromSparkyPrincipalTest() {
-        var user = (SparkyUser) LocalUserDetails.newLocalUser("testUser", "test", UserRole.DEFAULT);
+        var user = (SparkyUser) LocalUserDetails.newLocalUser("testuser", "test", UserRole.DEFAULT);
         var optUser = Optional.ofNullable(user.getJpa());
-        when(mockedRepository.findByuserNameAndRealm("testUser", UserRealm.LOCAL)).thenReturn(optUser);
+        when(mockedRepository.findByuserNameAndRealm("testuser", UserRealm.LOCAL)).thenReturn(optUser);
         assertDoesNotThrow(() -> transformer.extendAndRefresh(new TestPrincipal()));
     }
 

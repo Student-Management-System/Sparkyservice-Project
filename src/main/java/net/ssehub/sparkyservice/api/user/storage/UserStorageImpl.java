@@ -64,10 +64,10 @@ public class UserStorageImpl implements UserStorageService {
          */
         @SafeVarargs
         public final boolean checkForUser(Function<SparkyUser, SparkyUser>... userSearchAction) {
-            var actionList = Stream.of(userSearchAction)
-                    .map(Function.identity())
-                    .collect(Collectors.toList());
-            return actionList.stream()
+            return Stream.of(userSearchAction)
+                .map(Function.identity())
+                .collect(Collectors.toList())
+                .stream()
                 .dropWhile(this::invokeSingleAction)
                 .count() > 0;
         }
@@ -138,13 +138,14 @@ public class UserStorageImpl implements UserStorageService {
      */
     @Override
     public @Nonnull List<SparkyUser> findUsersByUsername(@Nullable String username) {
-        Optional<List<User>> usersByName = repository.findByuserName(username);
         return notNull(
-             usersByName.orElseGet(ArrayList::new)
+            UserStorageImpl.validateUsername(username)
+                .flatMap(repository::findByuserName)
+                .orElseGet(ArrayList::new)
                 .stream()
                 .map(UserStorageImpl::transformUser)
                 .collect(Collectors.toList())
-        );
+            );
     }
 
     /**
@@ -153,10 +154,11 @@ public class UserStorageImpl implements UserStorageService {
     @Override
     public @Nonnull SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
             throws UserNotFoundException {
-        Optional<User> optUser = repository.findByuserNameAndRealm(username, realm);
-        SparkyUser user =  optUser.map(UserStorageImpl::transformUser).orElseThrow(
-            () -> new UserNotFoundException(username + "@" + realm + " not found in storage."));
-        return notNull(user);
+        return notNull(UserStorageImpl.validateUsername(username)
+            .flatMap(name -> repository.findByuserNameAndRealm(name, realm))
+            .map(UserStorageImpl::transformUser)
+            .orElseThrow(
+                () -> new UserNotFoundException(username + "@" + realm + " not found in storage.")));
     } 
 
     /**
@@ -232,4 +234,15 @@ public class UserStorageImpl implements UserStorageService {
             SparkyUtil.toList(notNull(list)).stream().map(UserStorageImpl::transformUser).collect(Collectors.toList())
         );
     }
+    
+    /**
+     * Validates a username.
+     * 
+     * @param username
+     * @return Optional of username - has content when valid
+     */
+    public static @Nonnull Optional<String> validateUsername(@Nullable String username) {
+        return notNull(Optional.ofNullable(username).map(String::toLowerCase));
+    }
+    
 }

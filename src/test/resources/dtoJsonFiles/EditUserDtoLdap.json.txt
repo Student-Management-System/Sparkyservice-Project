@@ -6,6 +6,6 @@
     "emailReceive": false,
     "wantsAi": true
   },
-  "username": "testuserLdap",
+  "username": "testuserldap",
   "role": "ADMIN"
 }

@@ -43,7 +43,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
      * @param role
      */
     public AbstractSparkyUser(@Nonnull String username, @Nonnull UserRole role) {
-        this.username = username;
+        this.username = username; //  needed because field is final
         setUsername(username);
         this.role = role;
     }

@@ -229,7 +229,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
                     .content(content)
                     .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
-        var editedUser = userService.findUserByNameAndRealm("testuserLdap", UserRealm.LDAP);
+        var editedUser = userService.findUserByNameAndRealm("testuserldap", UserRealm.LDAP);
         assertAll(
             () -> assertEquals(UserRole.ADMIN, editedUser.getRole()),
             () -> assertFalse(editedUser.getSettings().isEmail_receive())
