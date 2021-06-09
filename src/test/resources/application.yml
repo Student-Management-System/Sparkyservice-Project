@@ -1,2 +1,7 @@
-springdoc.version = 1
-logging.level.net.ssehub.sparkyservice = DEBUG
+springdoc:
+    version: 100
+loggin:
+    level:
+        net:
+            ssehub:
+                sparkyservice: debug
