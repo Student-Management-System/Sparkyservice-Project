@@ -167,9 +167,10 @@ public interface SparkyUser extends UserDetails {
     int hashCode();
     
     /**
-     * Returns the user object as DTO while respecting the permissions of the current user. 
+     * Returns the user object as DTO while respecting the permissions of the current user. Some information may be 
+     * omitted when this user hasn't full permissions. 
      * 
-     * @return
+     * @return This object as DTO
      */
     UserDto ownDto();
 }

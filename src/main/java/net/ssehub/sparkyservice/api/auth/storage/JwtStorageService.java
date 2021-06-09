@@ -75,7 +75,7 @@ public class JwtStorageService {
                     .collect(Collectors.toList());
             repo.saveAll(list);
         } catch (UserNotFoundException e) {
-           log.debug("Don't safe JWT token to storage for user.");
+            log.debug("Don't safe JWT token to storage for user.");
         }
     }
 

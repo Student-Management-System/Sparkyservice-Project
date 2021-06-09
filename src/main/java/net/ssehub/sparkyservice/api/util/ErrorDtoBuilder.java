@@ -31,12 +31,15 @@ public class ErrorDtoBuilder {
     }
 
     /**
+     * Creates a new error message dto.
+     * 
      * @param customMessage Own error message; when null, a default message is set
      * @param status The returned HttpStatus - this method builder does not the the response type!
      * @param path Served HTTP Path
      * @return this builder
      */
-    public @Nonnull ErrorDtoBuilder newError(@Nullable String customMessage, @Nonnull HttpStatus status, @Nullable String path) {
+    public @Nonnull ErrorDtoBuilder newError(@Nullable String customMessage, 
+            @Nonnull HttpStatus status, @Nullable String path) {
         message = customMessage;
         returnStatus = status;
         urlPath = path;
@@ -44,7 +47,7 @@ public class ErrorDtoBuilder {
     }
 
     /**
-     * Builds a new ErrorDto object
+     * Builds a new ErrorDto object.
      * 
      * @return Immutable ErrorDto which is never null
      */
@@ -55,7 +58,8 @@ public class ErrorDtoBuilder {
                 message = "Insufficient permission to access this location";
                 break;
             case UNAUTHORIZED:
-                message= "Protected path. Use authentication controller";
+                message = "Protected path. Use authentication controller";
+                break;
             default:
                 message = "No message";
                 break;
@@ -69,6 +73,7 @@ public class ErrorDtoBuilder {
      * was initialized
      * 
      * @param timestamp
+     * @return this
      */
     public @Nonnull ErrorDtoBuilder setTimestamp(@Nonnull HttpTimestamp timestamp) {
         this.timestamp = timestamp;

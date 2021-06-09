@@ -72,7 +72,7 @@ public class JpaJwtToken {
     /**
      * Identifies the JWT token. 
      * 
-     * @param jit not null nor empty
+     * @param jti not null nor empty
      */
     public void setJti(String jti) {
         if (jti.isBlank()) {

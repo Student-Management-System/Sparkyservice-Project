@@ -20,18 +20,21 @@ public enum UserRealm {
     },
     MEMORY {
         @Override
-        public
-        AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new MemoryUserFactory();
         }
     },
     UNKNOWN {
         @Override
-        public
-        AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
             throw new UnsupportedOperationException();
         }
     };
     
+    /**
+     * Returns a factory in order to create a {@link SparkyUser} matching a realm.  
+     * 
+     * @return Abstract Factory for creating users
+     */
     public abstract AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory();
 }
