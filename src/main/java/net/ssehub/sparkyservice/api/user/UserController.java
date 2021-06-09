@@ -33,8 +33,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;

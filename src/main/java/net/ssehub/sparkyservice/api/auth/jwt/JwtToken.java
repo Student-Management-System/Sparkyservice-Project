@@ -14,8 +14,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.token.JpaJwtToken;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 

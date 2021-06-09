@@ -18,6 +18,9 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
+
 /**
  * Represents a user with JPA annotations.
  *

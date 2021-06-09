@@ -22,12 +22,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Tests for {@link UserStorageService} implementation. This test class should use the same implementation bean which 
@@ -58,11 +57,11 @@ public class UserStorageServiceTests {
         var user1 = LocalUserDetails.newLocalUser(USER_NAME, USER_PW, UserRole.DEFAULT);
         var user1Jpa = user1.getJpa();
         user1Jpa.setId(1);
-        user1 = (LocalUserDetails) UserFactoryProvider.getFactory(USER_REALM).create(user1Jpa);
+        user1 = (LocalUserDetails) USER_REALM.getUserFactory().create(user1Jpa);
         this.user = user1;
         
         // To simulate a working database, user with the same name should be in different realms
-        var user2 = UserFactoryProvider.getFactory(UserRealm.LDAP).create(USER_NAME, null, UserRole.DEFAULT, false);
+        var user2 = UserRealm.LDAP.getUserFactory().create(USER_NAME, null, UserRole.DEFAULT, false);
         var user2Jpa = user2.getJpa();
         user2Jpa.setId(2);
         
@@ -147,7 +146,7 @@ public class UserStorageServiceTests {
         when(mockedRepository.findByRealm(USER_REALM)).thenReturn(Arrays.asList(jpaUser.get()));
         var userList = userService.findAllUsersInRealm(USER_REALM);
         @SuppressWarnings("null") var castedUser = 
-                UserFactoryProvider.getFactory(USER_REALM).create(jpaUserList.get().get(0));
+                USER_REALM.getUserFactory().create(jpaUserList.get().get(0));
         assertAll(
             () -> assertEquals(1, userList.size()),
             () -> assertTrue(user.equals(castedUser))

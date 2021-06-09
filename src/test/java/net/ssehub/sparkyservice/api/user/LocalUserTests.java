@@ -8,8 +8,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
 
 /**
  * Test class for {@link SparkyUser#equals(Object)} and {@link SparkyUser#hashCode()}.

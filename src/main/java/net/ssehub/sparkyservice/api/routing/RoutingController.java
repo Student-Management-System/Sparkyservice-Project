@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Informational controller for routing purposes.

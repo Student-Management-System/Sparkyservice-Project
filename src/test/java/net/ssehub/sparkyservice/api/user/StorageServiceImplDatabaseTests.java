@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
@@ -122,7 +119,7 @@ public class StorageServiceImplDatabaseTests {
 
     @Test
     public void findMultipleEntries() throws UserNotFoundException {
-        var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create(TEST_USER_NAME, null, UserRole.DEFAULT, true);
+        var user = UserRealm.LDAP.getUserFactory().create(TEST_USER_NAME, null, UserRole.DEFAULT, true);
         storageService.commit(user);
         var users = storageService.findUsersByUsername(TEST_USER_NAME);
         assertEquals(2, users.size());

@@ -7,8 +7,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Provides storage operations for {@link User}.

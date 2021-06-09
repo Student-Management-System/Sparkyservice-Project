@@ -10,8 +10,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-
 public class LocalUserPasswordEncodingTests {
       
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();

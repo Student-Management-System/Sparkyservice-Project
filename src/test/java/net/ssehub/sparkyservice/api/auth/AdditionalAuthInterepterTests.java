@@ -15,10 +15,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Provides test cases for {@link AdditionalAuthInterpreter}.
@@ -53,7 +52,7 @@ public class AdditionalAuthInterepterTests {
      */
     @BeforeEach
     public void setUpConfValues() {
-        var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create(USER_NAME, null, UserRole.ADMIN, true);
+        var user = UserRealm.LDAP.getUserFactory().create(USER_NAME, null, UserRole.ADMIN, true);
         this.jwtToken = jwtTokenService.createFor(user);
     }
 

@@ -7,16 +7,12 @@ import javax.annotation.Nullable;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
 /**
  * Provides Factory methods for {@link LocalUserDetails}.
  * 
  * @author marcel
- * @see UserFactoryProvider
  */
 public class LocalUserFactory implements AbstractSparkyUserFactory<LocalUserDetails> {
 

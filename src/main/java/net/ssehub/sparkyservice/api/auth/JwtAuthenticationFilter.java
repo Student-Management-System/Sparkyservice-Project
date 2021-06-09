@@ -26,7 +26,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
@@ -99,7 +98,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         var authDto = new AuthenticationInfoDto();
         authDto.token.token = jwt;
         authDto.token.expiration = DateUtil.toString(expDate);
-        authDto.user = UserModificationService.from(user.getRole()).asDto(user);
+        authDto.user = user.ownDto();
         return authDto;
     }
     

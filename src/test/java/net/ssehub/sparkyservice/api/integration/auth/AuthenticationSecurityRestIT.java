@@ -37,11 +37,11 @@ import net.ssehub.sparkyservice.api.auth.AuthController;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 

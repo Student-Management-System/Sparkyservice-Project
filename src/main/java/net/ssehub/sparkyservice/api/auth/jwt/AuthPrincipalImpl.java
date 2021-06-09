@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRealm;
 
 /**
  * Implementation of {@link SparkysAuthPrincipal}.

@@ -32,17 +32,15 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserController;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.UserController.UsernameDto;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -73,7 +71,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
      * @return a Testuser which is in storage
      */
     private static SparkyUser createTestUserInStorage(UserStorageService service) {
-        var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create("testuser", null, UserRole.DEFAULT, true);
+        var user = UserRealm.LDAP.getUserFactory().create("testuser", null, UserRole.DEFAULT, true);
         service.commit(user);
         assumeTrue(service.isUserInStorage(user));
         return user;
@@ -162,7 +160,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "DEFAULT")
     public void securityNonAdminDeleteTest() throws Exception {
-        var user = UserFactoryProvider.getFactory(UserRealm.LDAP).create("testuser", null, UserRole.DEFAULT, true);
+        var user = UserRealm.LDAP.getUserFactory().create("testuser", null, UserRole.DEFAULT, true);
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
@@ -234,7 +232,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
         assertDoesNotThrow(() -> new ObjectMapper().readValue(dtoString, UserDto.class), 
                 "Some wrong values was returned from the controller. The content is not a valid json dto"); 
         var returnedUserDto =  new ObjectMapper().readValue(dtoString, UserDto.class);
-        UserDto userDto = UserModificationService.from(UserRole.ADMIN).asDto(user);
+        UserDto userDto = UserRole.ADMIN.getPermissionTool().asDto(user);
         assertDtoEquals(userDto, returnedUserDto); // assertDtoValuesEquals ?
     }
 
@@ -250,7 +248,7 @@ public class UserControllerRestIT extends AbstractContainerTestDatabase {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetAllTest() throws Exception {
-        var factory = UserFactoryProvider.getFactory(UserRealm.LDAP);
+        var factory = UserRealm.LDAP.getUserFactory();
         var user1 = factory.create("testuser", null, UserRole.DEFAULT, true);
         var user2 = factory.create("testuser2", null, UserRole.DEFAULT, true);
         userService.commit(user1);

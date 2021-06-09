@@ -8,8 +8,6 @@ import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 
 /**

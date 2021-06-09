@@ -13,8 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
@@ -166,4 +165,11 @@ public interface SparkyUser extends UserDetails {
      */
     @Override
     int hashCode();
+    
+    /**
+     * Returns the user object as DTO while respecting the permissions of the current user. 
+     * 
+     * @return
+     */
+    UserDto ownDto();
 }

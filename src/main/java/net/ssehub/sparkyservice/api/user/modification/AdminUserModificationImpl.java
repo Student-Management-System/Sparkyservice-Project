@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
@@ -17,7 +17,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @author marcel
  */
 @Service
-class AdminUserModificationImpl implements UserModificationService {
+public class AdminUserModificationImpl implements UserModificationService {
 
     @Autowired
     private final UserModificationService lowerPermService;

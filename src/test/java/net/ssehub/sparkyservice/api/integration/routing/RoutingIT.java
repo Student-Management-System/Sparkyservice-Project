@@ -29,10 +29,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * For this test class, a set of routes was defined in the given properties file. 

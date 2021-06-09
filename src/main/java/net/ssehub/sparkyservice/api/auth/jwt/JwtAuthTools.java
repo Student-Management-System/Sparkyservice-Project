@@ -13,14 +13,13 @@ import javax.annotation.Nonnull;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
@@ -53,7 +52,7 @@ public class JwtAuthTools {
         var rolList = (List<?>) parsedToken.getBody().get("rol");
         List<UserRole> authorities = rolList.stream()
                 .map(String.class::cast)
-                .map(UserRole.DEFAULT::getEnum)
+                .map(UserRole::getEnum)
                 .collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
         String realmName = (String) parsedToken.getBody().get("realm");

@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRealm;
 
 /**
  * Can be used as {@link Authentication} principal object. Holds the necessary information to identify a user.

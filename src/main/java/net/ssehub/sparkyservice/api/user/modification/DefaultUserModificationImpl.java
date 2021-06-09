@@ -7,8 +7,8 @@ import javax.annotation.Nonnull;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
@@ -18,7 +18,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @author marcel
  */
 @Service
-class DefaultUserModificationImpl implements UserModificationService {
+public class DefaultUserModificationImpl implements UserModificationService {
 
     /**
      * {@inheritDoc}.

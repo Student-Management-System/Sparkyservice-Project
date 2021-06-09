@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
+import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
 /**
  * Contains a set of method which probably all implementation of {@link SparkyUser} shares.
@@ -179,7 +179,12 @@ abstract class AbstractSparkyUser implements SparkyUser {
         }
         return true;
     }
-
+   
+    @Override
+    public UserDto ownDto() {
+        return this.getRole().getPermissionTool().asDto(this);
+    }
+    
     /**
      * Checks if the given object in manner of this (abstract) class. When the returned optional has a value, 
      * it is safe to assume the object is an instance of this type. 

@@ -9,9 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
@@ -36,7 +35,7 @@ public class MemoryLoginDetailsService implements UserDetailsService {
         if (username.equals(inMemoryUser)) {
             String encrPw = NullHelpers.notNull(encoder.encode(inMemoryPassword));
             var password = new Password(encrPw, encoder.getClass().getSimpleName());
-            var memUser = UserFactoryProvider.getFactory(UserRealm.MEMORY)  
+            var memUser = UserRealm.MEMORY.getUserFactory()
                     .create(inMemoryUser, password, UserRole.ADMIN, true);
             return memUser;
         }

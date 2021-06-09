@@ -17,7 +17,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
@@ -117,7 +116,7 @@ public class AdditionalAuthInterpreter {
         JwtToken tokenObj = jwtService.readJwtToken(authHeader);
         SparkyUser user = extractor.extendAndRefresh(tokenObj.getUserInfo());
         var authDto = new AuthenticationInfoDto();
-        authDto.user = UserModificationService.from(user.getRole()).asDto(user);
+        authDto.user = user.ownDto();
         authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());
         authDto.token.token = authHeader;
         return authDto;

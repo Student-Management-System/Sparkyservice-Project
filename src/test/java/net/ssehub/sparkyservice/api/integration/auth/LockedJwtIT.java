@@ -28,11 +28,11 @@ import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Provides tests for JWTs locking and refreshing mechanisms. 

@@ -19,10 +19,9 @@ import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -49,7 +48,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
     private static UserRole getRole(Collection<? extends GrantedAuthority> authorities) {
         Object[] objList = authorities.toArray();
         String[] authList = Arrays.stream(objList).map(String::valueOf).toArray(String[]::new);
-        return UserRole.DEFAULT.getEnum(authList[0]);
+        return UserRole.getEnum(authList[0]);
     }
 
     @Override
@@ -75,7 +74,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         if (passwordString != null) {
             var password = new Password(passwordString, "UNKWN");
             optUser = Optional.of(
-                UserFactoryProvider.getFactory(UserRealm.MEMORY)
+                UserRealm.MEMORY.getUserFactory()
                     .create(details.getUsername(), password, getRole(details.getAuthorities()) , details.isEnabled())
             );
         }
@@ -170,8 +169,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         return Optional.of(auth.getPrincipal())
                 .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
                 .map(SparkysAuthPrincipal.class::cast)
-                .map(sp -> sp.getRealm())
-                .map(UserFactoryProvider::getFactory)
+                .map(sp -> sp.getRealm().getUserFactory())
                 .map(factory -> factory.create(username, pw, getRole(auth.getAuthorities()), false));
     }
 

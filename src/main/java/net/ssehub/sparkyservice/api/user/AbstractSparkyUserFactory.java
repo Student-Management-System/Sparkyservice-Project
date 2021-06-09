@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.user.creation;
+package net.ssehub.sparkyservice.api.user;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -6,8 +6,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
 /**

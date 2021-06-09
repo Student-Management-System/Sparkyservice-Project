@@ -8,10 +8,10 @@ import javax.annotation.Nullable;
 import org.springframework.security.access.annotation.Secured;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Business search logic for storage management. Maps {@link User} to {@link SparkyUser}. 

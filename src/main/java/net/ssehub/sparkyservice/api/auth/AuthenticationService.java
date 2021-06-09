@@ -5,8 +5,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ldap.AuthenticationException;
 import org.springframework.security.core.Authentication;
@@ -16,13 +14,10 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 
 @Service
 @ParametersAreNonnullByDefault
 public class AuthenticationService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationService.class);
 
     @Nonnull
     private final UserExtractionService userExtractor;
@@ -61,7 +56,7 @@ public class AuthenticationService {
         // TODO merge this method - it is a possible duplicate
         var user = userExtractor.extract(auth);
         var dto = new AuthenticationInfoDto();
-        dto.user = UserModificationService.from(user.getRole()).asDto(user);
+        dto.user = user.ownDto();
         if (auth.getCredentials() instanceof TokenDto) {
             dto.token = (TokenDto) auth.getCredentials();
         }

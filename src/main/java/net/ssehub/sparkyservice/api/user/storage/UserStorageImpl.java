@@ -19,11 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.SparkyUtil;
 
 /**
@@ -97,7 +96,7 @@ public class UserStorageImpl implements UserStorageService {
      * @return SparkyUser representation of given JPA object
      */
     public @Nonnull static SparkyUser transformUser(@Nonnull User user) {
-        return UserFactoryProvider.getFactory(user.getRealm()).create(user);
+        return user.getRealm().getUserFactory().create(user);
     }
 
     /**

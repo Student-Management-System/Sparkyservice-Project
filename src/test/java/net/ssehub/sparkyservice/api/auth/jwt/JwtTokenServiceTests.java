@@ -29,11 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
 import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.JwtTestBeanConf;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LdapUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**

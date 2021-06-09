@@ -35,17 +35,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
+import net.ssehub.sparkyservice.api.user.AbstractSparkyUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserController;
-import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -60,8 +58,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 //checkstyle: stop exception type check
 public class UserControllerEditIT extends AbstractContainerTestDatabase {
 
-    private static final AbstractSparkyUserFactory<? extends SparkyUser> FACTORY = 
-            UserFactoryProvider.getFactory(UserRealm.LOCAL);
+    private static final AbstractSparkyUserFactory<? extends SparkyUser> FACTORY = UserRealm.LDAP.getUserFactory();
 
     @Autowired
     private WebApplicationContext context;
@@ -220,7 +217,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
     public void editLdapUserRolesTest() throws Exception {
         String content  = Files.readString(Paths.get("src/test/resources/dtoJsonFiles/EditUserDtoLdap.json.txt"));
         var userDto = new ObjectMapper().readValue(content, UserDto.class);
-        var userFromFile = UserFactoryProvider.getFactory(userDto.realm).create(userDto);
+        var userFromFile = userDto.realm.getUserFactory().create(userDto);
         userFromFile.setRole(UserRole.ADMIN);
         userFromFile.getSettings().setEmail_receive(true);
         userService.commit(userFromFile);
@@ -266,7 +263,7 @@ public class UserControllerEditIT extends AbstractContainerTestDatabase {
         String dtoArrayString = result.getResponse().getContentAsString();
         var returnedDto = new ObjectMapper().readValue(dtoArrayString, UserDto.class);
         var editedUser = userService.findUserById(userId);
-        var editedDto = UserModificationService.from(UserRole.ADMIN).asDto(editedUser);
+        var editedDto = UserRole.ADMIN.getPermissionTool().asDto(editedUser);
         assertAll(
             () -> assertEquals("test@test", editedUser.getSettings().getEmail_address()),
             () -> assertDtoEquals(editedDto, returnedDto)

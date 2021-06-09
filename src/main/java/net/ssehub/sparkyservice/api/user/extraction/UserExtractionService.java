@@ -8,8 +8,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.user.AbstractSparkyUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 

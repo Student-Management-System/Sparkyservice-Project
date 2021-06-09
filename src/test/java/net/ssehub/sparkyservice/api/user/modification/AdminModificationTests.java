@@ -19,10 +19,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
 
@@ -150,7 +149,7 @@ public class AdminModificationTests {
         var testDto = createExampleDto();
         testDto.role = UserRole.ADMIN;
         testDto.realm = UserRealm.LOCAL;
-        var testUserFromDto = UserFactoryProvider.getFactory(UserRealm.LOCAL).create(testDto);
+        var testUserFromDto = UserRealm.LOCAL.getUserFactory().create(testDto);
         var userDto = modificationService.asDto(testUserFromDto);
         assertDtoValuesEquals(testDto, userDto);
     }

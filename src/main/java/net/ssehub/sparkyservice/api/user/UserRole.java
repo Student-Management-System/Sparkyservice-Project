@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.jpa.user;
+package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.*;
 
@@ -10,6 +10,9 @@ import javax.annotation.Nullable;
 
 import org.springframework.security.core.GrantedAuthority;
 
+import net.ssehub.sparkyservice.api.user.modification.AdminUserModificationImpl;
+import net.ssehub.sparkyservice.api.user.modification.DefaultUserModificationImpl;
+import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
 import net.ssehub.sparkyservice.api.util.EnumUtil;
 import net.ssehub.sparkyservice.api.util.NonNullByDefault;
 
@@ -24,17 +27,32 @@ public enum UserRole implements GrantedAuthority {
     /**
      * Default user group. All authenticated user will probably hold this role if they have no other. 
      */
-    DEFAULT(FullName.DEFAULT), 
+    DEFAULT(FullName.DEFAULT) {
+        @Override
+        public UserModificationService getPermissionTool() {
+            return new DefaultUserModificationImpl();
+        }
+    }, 
 
     /**
      * Full permission to all services provided by this project.
      */
-    ADMIN(FullName.ADMIN), 
+    ADMIN(FullName.ADMIN) {
+        @Override
+        public UserModificationService getPermissionTool() {
+            return new AdminUserModificationImpl(new DefaultUserModificationImpl());
+        }
+    }, 
     
     /**
      * Permission to access all routed paths in order to reach protected micro services. 
      */
-    SERVICE(FullName.SERVICE);
+    SERVICE(FullName.SERVICE) {
+        @Override
+        public UserModificationService getPermissionTool() {
+            return new DefaultUserModificationImpl();
+        }
+    };
 
     private @Nonnull final String authority;
 
@@ -76,7 +94,7 @@ public enum UserRole implements GrantedAuthority {
      * @param value - A string which probably identifies
      * @return the string as enumCan't get an instance of UserRole of this string.
      */
-    public @Nonnull UserRole getEnum(@Nullable String value) {
+    public static @Nonnull UserRole getEnum(@Nullable String value) {
         var strategyList = new ArrayList<Predicate<UserRole>>();
         strategyList.add(e -> e.getRoleValue().equalsIgnoreCase(value));
         strategyList.add(e -> e.name().equalsIgnoreCase(value));
@@ -96,4 +114,12 @@ public enum UserRole implements GrantedAuthority {
         public static final String DEFAULT = "ROLE_DEFAULT";
         public static final String SERVICE = "ROLE_SERVICE";
     }
+    
+    /**
+     * Creates a utility object with. The current role "decides" how
+     * powerful (regarding to modifying fields, changing conditions and provided informations) the tool will be.
+     *  
+     * @return A utility for modifying and accessing users
+     */
+    public abstract UserModificationService getPermissionTool();
 }

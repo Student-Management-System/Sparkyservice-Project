@@ -18,8 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.util.DateUtil;

@@ -8,17 +8,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
-import net.ssehub.sparkyservice.api.jpa.user.UserRole;
-import net.ssehub.sparkyservice.api.user.creation.AbstractSparkyUserFactory;
-import net.ssehub.sparkyservice.api.user.creation.UserFactoryProvider;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
 /**
  * Provides Factory methods for {@link LdapUser}. 
  * 
  * @author marcel
- * @see UserFactoryProvider 
  */
 @ParametersAreNonnullByDefault
 public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser> {
@@ -48,7 +43,6 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
      * @param role - Mandatory
      * @param isEnabled Account is disabled when false
      * @return New instance of LDAP user
-     * @see UserFactoryProvider#getFactory(UserRealm)
      */
     @Nonnull
     @Override

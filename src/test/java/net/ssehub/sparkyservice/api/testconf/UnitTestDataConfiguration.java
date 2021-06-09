@@ -14,7 +14,7 @@ import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
-import net.ssehub.sparkyservice.api.jpa.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
