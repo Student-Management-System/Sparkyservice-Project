@@ -30,6 +30,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
+import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -46,7 +47,7 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 @TestPropertySource(locations = {"classpath:test-routing.properties"})
 @AutoConfigureMockMvc
 //checkstyle: stop exception type check
-public class RoutingIT {
+public class RoutingIT extends AbstractContainerTestDatabase {
 
     public static final String PROTECTED_LIST_ROUTE = "/testroutesecure2";
     private static final String FREE_ROUTE = "/testroutefree";

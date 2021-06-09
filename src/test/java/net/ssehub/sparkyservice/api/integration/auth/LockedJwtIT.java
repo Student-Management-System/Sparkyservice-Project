@@ -29,6 +29,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
+import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -44,9 +45,10 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 @TestPropertySource(locations = {"classpath:test-routing.properties"})
 @AutoConfigureMockMvc
 //checkstyle: stop exception type check
-public class LockedJwtIT {
+public class LockedJwtIT extends AbstractContainerTestDatabase {
 
-    private static final String USERNAME = "service"; // "service" must be allowed in test.properties for PROTECTED_PATH
+    // "service@local" must be allowed in test-routing.properties for PROTECTED_PATH
+    private static final String USERNAME = "service"; 
     private static final String PROTECTED_PATH = "/testroutesecure2";
     @Nonnull
     private static final SparkyUser TEST_USER = LocalUserDetails.newLocalUser(USERNAME, "test", UserRole.SERVICE);
