@@ -47,6 +47,7 @@ public class LocalLoginDetailsMapper implements UserDetailsService {
         try {            
             return notNull(
                 Optional.ofNullable(username)
+                    .map(name -> name.toLowerCase())
                     .map(name -> storageService.findUserByNameAndRealm(name, UserRealm.LOCAL))
                     .filter(LocalUserDetails.class::isInstance) // safety check!
                     .orElseThrow(() -> new UsernameNotFoundException("User with name \"null\" not found"))
@@ -55,4 +56,5 @@ public class LocalLoginDetailsMapper implements UserDetailsService {
             throw new UsernameNotFoundException(e.getMessage());
         }
     }
+
 }
