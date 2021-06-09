@@ -58,7 +58,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 //checkstyle: stop exception type check
 public class UserControllerEditIT extends AbstractContainerTestDatabase {
 
-    private static final AbstractSparkyUserFactory<? extends SparkyUser> FACTORY = UserRealm.LDAP.getUserFactory();
+    private static final AbstractSparkyUserFactory<? extends SparkyUser> FACTORY = UserRealm.LOCAL.getUserFactory();
 
     @Autowired
     private WebApplicationContext context;
