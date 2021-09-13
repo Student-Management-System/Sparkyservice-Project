@@ -118,7 +118,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
     private Optional<SparkyUser> fromSparkyPrincipal(Object obj) {
         Optional<SparkyUser> user;
         try {
-            return Optional.of(obj)
+            user =  Optional.of(obj)
                 .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
                 .map(SparkysAuthPrincipal.class::cast)
                 .map(this::extendAndRefresh);
