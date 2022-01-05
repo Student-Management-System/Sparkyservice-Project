@@ -57,8 +57,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      */
     LdapUser(User jpaUser) {
         this(jpaUser.getUserName(), jpaUser.getRole(), jpaUser.isActive());
-        var expireDate = jpaUser.getExpirationDate().map(java.sql.Date::toLocalDate).orElse(null);
-        this.setExpireDate(expireDate);
+        this.setExpireDate(jpaUser.getExpirationDate());
         this.setSettings(jpaUser.getProfileConfiguration());
         this.setFullname(jpaUser.getFullName());
         super.databaseId = jpaUser.getId();

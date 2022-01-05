@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.user;
 
+import java.time.LocalDate;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -22,7 +24,7 @@ public class MemoryUserFactory implements AbstractSparkyUserFactory<MemoryUser> 
             throw new IllegalArgumentException("Username, password and role are mandatory");
         }
         var newUser = new MemoryUser(username, password, role);
-        newUser.setExpireDate(null);
+        newUser.setExpireDate((LocalDate) null);
         return newUser;
     }
 

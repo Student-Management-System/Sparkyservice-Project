@@ -76,6 +76,10 @@ abstract class AbstractSparkyUser implements SparkyUser {
     public void setExpireDate(@Nullable LocalDate expireDate) {
         this.expirationDate = notNull(Optional.ofNullable(expireDate));
     }
+    
+    public void setExpireDate(Optional<LocalDate> expireDate) {
+        this.expirationDate = expireDate;
+    }
 
     @Override
     public boolean isEnabled() {

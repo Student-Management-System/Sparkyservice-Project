@@ -20,7 +20,6 @@ import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * Class for authentication with SpringSecurity. This class should be mainly used for authenticated users which are
@@ -60,7 +59,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
         }
         passwordEntity = pwEntity;
         databaseId = jpaUser.getId();
-        jpaUser.getExpirationDate().map(DateUtil::toLocalDate).ifPresent(this::setExpireDate);
+        jpaUser.getExpirationDate().ifPresent(this::setExpireDate);
         this.setSettings(jpaUser.getProfileConfiguration());
         this.setFullname(jpaUser.getFullName());
     }

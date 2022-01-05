@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -20,6 +21,7 @@ import javax.persistence.UniqueConstraint;
 
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
+import net.ssehub.sparkyservice.api.user.storage.LocalDateAttributeConverter;
 
 /**
  * Represents a user with JPA annotations.
@@ -64,14 +66,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     protected UserRole role;
 
-    @OneToOne(cascade = {
-            CascadeType.ALL }, targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
+    @OneToOne(cascade = {CascadeType.ALL},
+            targetEntity = net.ssehub.sparkyservice.api.jpa.user.PersonalSettings.class)
     @Nonnull
     protected PersonalSettings profileConfiguration;
 
     @Nullable
     @Column
-    protected java.sql.Date expirationTime;
+    // TODO SE: Should not be necessary to manually specify the converter (check if required)
+    @Convert(converter = LocalDateAttributeConverter.class)
+    protected LocalDate expirationTime;
 
     /**
      * Default constructor used by hibernate.
@@ -245,7 +249,7 @@ public class User {
      * 
      * @return Date of account expiration 
      */
-    public Optional<java.sql.Date> getExpirationDate() {
+    public Optional<LocalDate> getExpirationDate() {
         return Optional.ofNullable(expirationTime);
     }
 
@@ -254,17 +258,16 @@ public class User {
      * 
      * @param expirationDate
      */
-    public void setExpirationDate(@Nullable java.sql.Date expirationDate) {
+    public void setExpirationDate(@Nullable LocalDate expirationDate) {
         this.expirationTime = expirationDate;
     }
 
     /**
-     * .
+     * Sets the expiration date of this account. The user can login until the given date is reached.
      * @param expirationDate
-     * @see #setExpirationDate(java.sql.Date)
      */
     public void setExpirationDate(Optional<LocalDate> expirationDate) {
-        this.expirationTime = expirationDate.map(java.sql.Date::valueOf).orElse(null);
+        this.expirationTime = expirationDate.orElseGet(null);
     }
 
     /**

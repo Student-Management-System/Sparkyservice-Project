@@ -16,6 +16,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
@@ -85,8 +87,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private MemoryLoginDetailsService memoryDetailsService;
     
+    /**
+     * JwtAuthenticationFilter requires ObjectMapper of REST framework, but cannot obtain it via autowiring as it is no
+     * component. For this reason we obtain it here and pass it to the constrcutor.
+     * Solution based on: https://stackoverflow.com/a/30725492
+     */
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
+
     @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    protected void configure(HttpSecurity http) throws Exception {        
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
@@ -101,12 +111,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .and()
-                .addFilter(
-                    new JwtAuthenticationFilter(authenticationManager(), jwtService)
-                )
-                .addFilter(
-                    new JwtAuthorizationFilter(authenticationManager(), jwtService)
-                )
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtService, jacksonObjectMapper))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtService))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         fillJwtCache();

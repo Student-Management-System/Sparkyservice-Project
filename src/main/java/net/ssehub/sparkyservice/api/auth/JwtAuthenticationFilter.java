@@ -33,6 +33,8 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  * @author marcel
  */
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+    
+    private ObjectMapper jacksonObjectMapper;
 
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final AuthenticationManager authenticationManager;
@@ -44,11 +46,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * 
      * @param authenticationManager
      * @param jwtService
+     * @param springOM The JSON object mapper used by spring for the REST interfaces.
      */
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService,
+        ObjectMapper springOM) {
+        
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.jwtService = jwtService;
+        this.jacksonObjectMapper = springOM;
     }
 
     /**
@@ -114,7 +120,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.addHeader(httpHeader, jwtPrefix + " " + authDto.token.token);
         response.setContentType("application/json; charset=UTF-8"); 
         try (var responseWriter = response.getWriter()) {
-            String bodyDtoString = new ObjectMapper().writeValueAsString(authDto);
+            String bodyDtoString = jacksonObjectMapper.writeValueAsString(authDto);
             responseWriter.write(bodyDtoString);
             responseWriter.flush();
         } catch (IOException e) {
