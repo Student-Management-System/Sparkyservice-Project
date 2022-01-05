@@ -267,7 +267,7 @@ public class User {
      * @param expirationDate
      */
     public void setExpirationDate(Optional<LocalDate> expirationDate) {
-        this.expirationTime = expirationDate.orElseGet(null);
+        this.expirationTime = expirationDate.orElse(null);
     }
 
     /**
