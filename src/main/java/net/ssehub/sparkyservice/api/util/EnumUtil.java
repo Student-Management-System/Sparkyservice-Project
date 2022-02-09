@@ -43,7 +43,7 @@ public class EnumUtil {
         Optional<T> castedEnum = Optional.empty();
         for (Predicate<T> singleSelector : selectorList) {
             castedEnum = Arrays.stream(values).filter(singleSelector).findFirst();
-            if (!castedEnum.isPresent()) {
+            if (castedEnum.isPresent()) {
                 break;
             }
         }
