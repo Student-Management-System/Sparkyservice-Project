@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -13,7 +12,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
@@ -46,7 +49,8 @@ public class UserStorageServiceTests {
     
     private static final String USER_NAME = "test213";
     private static final String USER_PW = "abcdefh";
-    private static final UserRealm USER_REALM = LocalUserDetails.DEFAULT_REALM;
+    private static final @Nonnull UserRealm USER_REALM = UserRealm.LOCAL;
+    private static final Identity IDENT = new Identity(USER_NAME, USER_REALM);
 
     private Optional<List<User>> jpaUserList;
     private Optional<User> jpaUser;
@@ -72,41 +76,34 @@ public class UserStorageServiceTests {
     @Test
     public void findUserByNameTest() throws UserNotFoundException {
         when(mockedRepository.findByuserName(USER_NAME)).thenReturn(jpaUserList);
-        List<SparkyUser> users = userService.findUsersByUsername(USER_NAME);
+        List<SparkyUser> users = userService.findUsers(USER_NAME);
         assertTrue(!users.isEmpty(), "No user was loaded from service class");
     }
 
     @Test
     public void findMultipleUsersByNameTest() throws UserNotFoundException {
         when(mockedRepository.findByuserName(USER_NAME)).thenReturn(jpaUserList);
-        assertEquals(2, userService.findUsersByUsername(USER_NAME).size());
-    }
-
-    @Test
-    public void findUserByNameAndRealmTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
-        var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
-        assertNotNull(loadedUser, "User was null.");
+        assertEquals(2, userService.findUsers(USER_NAME).size());
     }
 
     @Test
     public void findUserByNameAndRealmNullTest() throws UserNotFoundException {
         assertThrows(UserNotFoundException.class, 
-                () -> userService.findUserByNameAndRealm(null, null));
-    }
-
-    @Test
-    public void userNameValueTest() throws UserNotFoundException {
-        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
-        var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
-        assertEquals(USER_NAME, loadedUser.getUsername(), "Wrong username provided by user service");
+                () -> userService.findUser((Identity) null));
     }
 
     @Test
     public void userRealmValueTest() throws UserNotFoundException {
         when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
-        var loadedUser = userService.findUserByNameAndRealm(USER_NAME, USER_REALM);
-        assertEquals(USER_REALM, loadedUser.getRealm(), "Wrong realm provided by user service");
+        var loadedUser = userService.findUser(IDENT);
+        assertEquals(IDENT, loadedUser.getIdentity(), "Wrong user was loaded");
+    }
+    
+    @DisplayName("Search for user with username as identifier positive test")
+    @Test
+    public void findUserWithUsernameTest() {
+        when(mockedRepository.findByuserNameAndRealm(USER_NAME, USER_REALM)).thenReturn(this.jpaUser);
+        assertDoesNotThrow(() -> userService.findUser(IDENT.asUsername()));
     }
     
     /**

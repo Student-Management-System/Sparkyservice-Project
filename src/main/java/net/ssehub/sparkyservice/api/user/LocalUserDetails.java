@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
@@ -30,7 +31,11 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 @ParametersAreNonnullByDefault
 public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
 
+    @Nonnull
     public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
+    
+    @Nonnull
+    public static final UserRealm ASSOCIATED_REALM = UserRealm.LOCAL;
     public static final String DEFAULT_ALGO = BCryptPasswordEncoder.class.getSimpleName().toLowerCase();
     private static final long serialVersionUID = 1L;
 
@@ -43,7 +48,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      */
     @Deprecated
     LocalUserDetails() {
-        this("", null, false, UserRole.DEFAULT);
+        this("user", null, false, UserRole.DEFAULT);
     }
 
     /**
@@ -52,7 +57,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      * @param jpaUser
      */
     LocalUserDetails(User jpaUser) {
-        this(jpaUser.getUserName(), null, jpaUser.isActive(), jpaUser.getRole());
+        this(Identity.of(jpaUser), null, jpaUser.isActive(), jpaUser.getRole());
         var pwEntity = jpaUser.getPasswordEntity();
         if (pwEntity == null) {
             throw new IllegalArgumentException("Passwords are mandatory for local users");
@@ -71,7 +76,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      */
     @SuppressWarnings("null")
     LocalUserDetails(UserDto dto) {
-        super(dto.username, dto.role);
+        super(Identity.of(dto.username), dto.role);
         expirationDate = Optional.ofNullable(dto.expirationDate);
         encodeAndSetPassword(dto.passwordDto.newPassword);
         fullname = dto.fullName;
@@ -86,11 +91,26 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      * @param isActive
      * @param role
      */
-    LocalUserDetails(String userName, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
-        super(userName, role);
-        setEnabled(isActive);
+    LocalUserDetails(String nickname, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
+        this(new Identity(nickname, ASSOCIATED_REALM), passwordEntity, isActive, role);
         this.passwordEntity = passwordEntity;
-        log.trace("New LocalUserDetails created: {}@LOCAL", userName);
+        log.trace("New LocalUserDetails created: {}", getUsername());
+    }
+    
+    
+    /**
+     * Creates an user with necessary fields. It preserves the old identity. 
+     * 
+     * @param ident
+     * @param role
+     * @param isEnabled
+     */
+    private LocalUserDetails(Identity ident, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
+        super(ident, role);
+        setEnabled(isActive);
+        if (ident.realm() != ASSOCIATED_REALM) {
+            log.debug("Preserving the identity of one user {}", ident.asUsername());
+        }
     }
 
     /**
@@ -106,8 +126,8 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      *                    - The users permission role
      * @return new instance of StoredUserDetails.
      */
-    public static @Nonnull LocalUserDetails newLocalUser(String username, String rawPassword, UserRole role) {
-        var newUser = new LocalUserDetails(username, null, true, role);
+    public static @Nonnull LocalUserDetails newLocalUser(String nickname, String rawPassword, UserRole role) {
+        var newUser = new LocalUserDetails(nickname, null, true, role);
         newUser.encodeAndSetPassword(rawPassword);
         newUser.setExpireDate(LocalDate.now().plusMonths(6));
         return newUser;
@@ -174,15 +194,9 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
 
     @Override
     @Nonnull
-    public UserRealm getRealm() {
-        return UserRealm.LOCAL;
-    }
-
-    @Override
-    @Nonnull
     public User getJpa() {
         var jpaUser = new User(
-            getUsername(), UserRealm.LOCAL, isEnabled(), getRole()
+            ident.nickname(), ident.realm(), isEnabled(), getRole()
         );
         jpaUser.setPasswordEntity(new Password(getPassword()));
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));

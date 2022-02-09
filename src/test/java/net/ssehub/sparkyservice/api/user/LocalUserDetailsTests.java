@@ -38,7 +38,7 @@ class LocalUserDetailsTests {
     @Test
     public void userDetailsFactoryDefaultRealmTest() {
         var userDetails = LocalUserDetails.newLocalUser("test", "", UserRole.DEFAULT);
-        assertEquals(UserRealm.LOCAL, userDetails.getRealm(), 
+        assertEquals(UserRealm.LOCAL, userDetails.getIdentity().realm(), 
                 "The user is user details are not stored in the default realm.");
     }
 

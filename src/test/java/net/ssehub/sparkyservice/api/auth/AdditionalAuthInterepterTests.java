@@ -20,7 +20,7 @@ import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
- * Provides test cases for {@link AdditionalAuthInterpreter}.
+ * Provides test cases for {@link JwtAuthReader}.
  * 
  * @author marcel
  */
@@ -62,7 +62,7 @@ public class AdditionalAuthInterepterTests {
     @Test
     @DisplayName("Test if token IDENT is extracted successful")
     public void positivTokenReturnTest() {
-        var reader = new AdditionalAuthInterpreter(jwtTokenService, jwtToken);
+        var reader = new JwtAuthReader(jwtTokenService, jwtToken);
         assertAll(
             () -> assertTrue(reader.getAuthenticatedUserIdent().isPresent()),
             () -> assertTrue((USER_NAME + "@ldap").equalsIgnoreCase(reader.getAuthenticatedUserIdent().get()))
@@ -72,7 +72,7 @@ public class AdditionalAuthInterepterTests {
     @Test
     @DisplayName("Authentication with null as header test")
     public void nullHeaderTest() {
-        var reader = new AdditionalAuthInterpreter(jwtTokenService, null);
+        var reader = new JwtAuthReader(jwtTokenService, null);
         assertTrue(reader.getAuthenticatedUserIdent().isEmpty(), "Actually there shouldn't be an authenticated user");
     }
 }

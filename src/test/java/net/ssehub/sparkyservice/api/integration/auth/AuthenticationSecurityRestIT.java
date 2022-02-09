@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
@@ -34,6 +34,7 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthController;
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
@@ -245,7 +246,7 @@ public class AuthenticationSecurityRestIT extends AbstractContainerTestDatabase 
                 .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUserByNameAndRealm("gauss", UserRealm.LDAP), 
+        assertNotNull(userService.findUser(new Identity("gauss", UserRealm.LDAP)), 
                 "User was not stored into " + UserRealm.LDAP + " realm.");
     }
     

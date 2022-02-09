@@ -11,13 +11,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
@@ -60,6 +61,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         } else if (details instanceof SparkyUser) {
             user = (SparkyUser) details;
         } else if (details instanceof User) { // mocked Spring user - always memory
+            // TODO
             var springUser = (User) details;
             user = notNull(transfromSpringUser(springUser).orElseThrow());
         } else {
@@ -83,11 +85,12 @@ public class SimpleExtractionImpl implements UserExtractionService {
 
     @Override
     @Nonnull
-    public SparkyUser extendAndRefresh(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException {
+    // TODO weg?
+    public SparkyUser extendAndRefresh(@Nullable AuthenticatedPrincipal principal) throws UserNotFoundException {
         if (principal == null) {
             throw new UserNotFoundException("Principal was null");
         }
-        return storageService.findUserByNameAndRealm(principal.getName(), principal.getRealm());
+        return storageService.findUser(principal.getName());
     }
 
     @Override
@@ -96,7 +99,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow(MissingDataException::new);
         return notNull(
             fromUserDetails(principal)
-                .or(() -> fromSparkyPrincipal(principal))
+                .or(() -> fromAuthenticationPrincipal(principal))
                 .or(() -> Optional.of(extract(auth)))
                 .orElseThrow(() -> new UnsupportedOperationException("Not supported to extend from this auth"))
         );
@@ -115,13 +118,11 @@ public class SimpleExtractionImpl implements UserExtractionService {
         return user;
     }
 
-    private Optional<SparkyUser> fromSparkyPrincipal(Object obj) {
+    // TODO weg
+    private Optional<SparkyUser> fromAuthenticationPrincipal(Object obj) {
         Optional<SparkyUser> user;
         try {
-            user =  Optional.of(obj)
-                .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
-                .map(SparkysAuthPrincipal.class::cast)
-                .map(this::extendAndRefresh);
+            return Optional.of(storageService.findUser((String) obj));
         } catch (UserNotFoundException e) {
             user = Optional.empty();
         }
@@ -134,7 +135,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         if (user == null) {
             throw new MissingDataException("UserDto was null");
         }
-        return storageService.findUserByNameAndRealm(user.username, user.realm);
+        return storageService.findUser(user.username);
     }
 
     /**
@@ -166,11 +167,10 @@ public class SimpleExtractionImpl implements UserExtractionService {
     private Optional<SparkyUser> tryExtractInformation(@Nonnull Authentication auth) {
         String username = auth.getName();
         Password pw = extractPassword(auth);
-        return Optional.of(auth.getPrincipal())
-                .filter(p -> SparkysAuthPrincipal.class.isAssignableFrom(p.getClass()))
-                .map(SparkysAuthPrincipal.class::cast)
-                .map(sp -> sp.getRealm().getUserFactory())
-                .map(factory -> factory.create(username, pw, getRole(auth.getAuthorities()), false));
+        // TODO check the content of principal and username
+        return Optional.ofNullable(auth.getPrincipal())
+            .map(String.class::cast).map(Identity::of)
+            .map(id -> id.realm().getUserFactory().create(username, pw, getRole(auth.getAuthorities()), false));
     }
 
     @Nullable

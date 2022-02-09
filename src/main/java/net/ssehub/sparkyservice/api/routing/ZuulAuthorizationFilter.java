@@ -18,7 +18,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import net.ssehub.sparkyservice.api.auth.AdditionalAuthInterpreter;
+import net.ssehub.sparkyservice.api.auth.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
@@ -155,8 +155,8 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         Optional<String> header = Optional.ofNullable(request.getHeader(PROXY_AUTH_HEADER));
         var aclInterpreter = new AccessControlListInterpreter(zuulRoutes, proxyPath);
         if (aclInterpreter.isAclEnabled()) {
-            header.map(token -> new AdditionalAuthInterpreter(jwtService, token, log))
-                .flatMap(AdditionalAuthInterpreter::getAuthenticatedUserIdent)
+            header.map(token -> new JwtAuthReader(jwtService, token, log))
+                .flatMap(JwtAuthReader::getAuthenticatedUserIdent)
                 .filter(aclInterpreter::isUsernameAllowed)
                 .ifPresentOrElse(ident -> log.debug("Access granted to {}, user: {}", proxyPath, ident), 
                     () ->  {

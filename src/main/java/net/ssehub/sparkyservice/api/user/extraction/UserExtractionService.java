@@ -3,10 +3,10 @@ package net.ssehub.sparkyservice.api.user.extraction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.AbstractSparkyUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -47,7 +47,7 @@ public interface UserExtractionService {
      * @throws UserNotFoundException If the user is not found in this application (database or cache)
      */
     @Nonnull
-    SparkyUser extendAndRefresh(@Nullable SparkysAuthPrincipal principal) throws UserNotFoundException;
+    SparkyUser extendAndRefresh(@Nullable AuthenticatedPrincipal principal) throws UserNotFoundException;
 
     /**
      * Tries to extend the information from authentication to create a user object. 

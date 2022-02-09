@@ -6,6 +6,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.springframework.security.authentication.AuthenticationManager;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -38,7 +39,7 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
      * </li><li>  Provides a DN which can used by an {@link AuthenticationManager}
      * </li></ul>
      * 
-     * @param username - Mandatory
+     * @param nickname - nickname of the user (not the username!)
      * @param password - Is ignored
      * @param role - Mandatory
      * @param isEnabled Account is disabled when false
@@ -46,11 +47,11 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
      */
     @Nonnull
     @Override
-    public LdapUser create(@Nullable String username, @Nullable Password password, @Nullable UserRole role,
+    public LdapUser create(@Nullable String nickname, @Nullable Password password, @Nullable UserRole role,
             boolean isEnabled) {
-        if (username == null || role == null) {
+        if (nickname == null || role == null) {
             throw new IllegalArgumentException("Username and role are mandatory");
         }
-        return new LdapUser(username, role, isEnabled);
+        return new LdapUser(nickname, role, isEnabled);
     }
 }

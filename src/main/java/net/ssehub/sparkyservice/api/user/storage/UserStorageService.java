@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 
 import org.springframework.security.access.annotation.Secured;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -50,30 +51,24 @@ public interface UserStorageService {
      *                               If no user with the given id is found in data storage
      */
     @Nonnull
-    SparkyUser findUserById(int id) throws UserNotFoundException;
+    SparkyUser findUser(int id) throws UserNotFoundException;
 
     /**
      * Searches a data storage for all users with a given username.
      * 
      * @param username
-     * @return A list of users which shares the same username in different realms
+     * @return A list of users which shares the same nickname in different realms
      * @throws UserNotFoundException
      */
     @Nonnull
-    List<SparkyUser> findUsersByUsername(@Nullable String username) throws UserNotFoundException;
+    List<SparkyUser> findUsers(@Nullable String nickname) throws UserNotFoundException;
 
-    /**
-     * Finds a specific user by name and realm.
-     * 
-     * @param username
-     * @param realm
-     * @return Specific user
-     * @throws UserNotFoundException
-     */
     @Nonnull
-    SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
-        throws UserNotFoundException;
-
+    SparkyUser findUser(@Nullable String identName) throws UserNotFoundException;
+    
+    @Nonnull
+    SparkyUser findUser(@Nullable Identity ident) throws UserNotFoundException;
+    
     /**
      * A list with all users in the data storage. Never null but may be empty.
      * 
@@ -127,6 +122,6 @@ public interface UserStorageService {
      */
     @Nonnull
     default SparkyUser refresh(SparkyUser user) throws UserNotFoundException {
-        return this.findUserByNameAndRealm(user.getUsername(), user.getRealm());
+        return this.findUser(user.getUsername());
     }
 }

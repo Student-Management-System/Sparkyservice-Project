@@ -14,16 +14,16 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * 
  * @author marcel
  */
-public class LocalUserFactory implements AbstractSparkyUserFactory<LocalUserDetails> {
+public class LocalUserFactory implements AbstractSparkyUserFactory<LocalUserDetails>{
 
     @Override
     @Nonnull
-    public LocalUserDetails create(@Nullable String username, @Nullable Password password, @Nullable UserRole role,
+    public LocalUserDetails create(@Nullable String nickname, @Nullable Password password, @Nullable UserRole role,
             boolean isEnabled) {
-        if (username == null || role == null) {
+        if (nickname == null || role == null) {
             throw new IllegalArgumentException("Username and role are mandatory");
         }
-        var newUser = new LocalUserDetails(username, password, isEnabled, role);
+        var newUser = new LocalUserDetails(nickname, password, isEnabled, role);
         newUser.setExpireDate(LocalDate.now().plusMonths(6));
         return newUser;
     }

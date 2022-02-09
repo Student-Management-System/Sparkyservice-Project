@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.user.UserRealm;
@@ -36,7 +36,8 @@ public class UnitTestDataConfiguration {
     public static final String OLD_PASSWORD = "oldPw123";
     public static final String USER_EMAIL = "info@test";
     public static final String PAYLOAD = "testPayload";
-    public static final String USER_NAME = "user";
+    public static final String NICK_NAME = "user";
+    public static final String USER_NAME = new Identity(NICK_NAME, UserRealm.LOCAL).asUsername();
     public static final LocalDate EXP_DATE = LocalDate.now().plusDays(2);
 
     /**
@@ -47,7 +48,6 @@ public class UnitTestDataConfiguration {
     public static @Nonnull UserDto createExampleDto() {
         var editUserDto = new UserDto();
         editUserDto.username = USER_NAME;
-        editUserDto.realm = UserRealm.UNKNOWN;
         editUserDto.passwordDto = new ChangePasswordDto();
         editUserDto.passwordDto.newPassword = NEW_PASSWORD;
         editUserDto.passwordDto.oldPassword = OLD_PASSWORD;
@@ -90,14 +90,5 @@ public class UnitTestDataConfiguration {
     @Primary
     public UserExtractionService userTransformer() {
         return new SpringConfig().userTransformer();
-    }
-
-    /**
-     * The login information mapper for local storage logins.
-     * @return LocalLoginDetailsMapper
-     */
-    @Bean
-    public LocalLoginDetailsMapper mapper() {
-        return new LocalLoginDetailsMapper();
     }
 }

@@ -74,9 +74,7 @@ public class JwtTokenServiceTests {
     @Test
     @DisplayName("Disabling JWT by JIT test")
     public void disableJwtTest() throws JwtTokenReadException {
-        var testUser = notNull(
-            userStorageService.findUsersByUsername(this.testUser.getUsername()).get(0)
-        );
+        var testUser = userStorageService.findUser(this.testUser.getUsername());
         String jwtString = jwtTokenService.createFor(testUser);
         JwtToken tokenObj = jwtTokenService.readJwtToken(jwtString);
         JwtCache.getInstance().refreshFromStorage();
@@ -91,9 +89,8 @@ public class JwtTokenServiceTests {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void isTokenNonLockedTest(boolean isLocked) {
-        var userInfo = new AuthPrincipalImpl(testUser.getRealm(), testUser.getUsername());
         var tokenObj = new JwtToken(notNull(UUID.randomUUID()), 
-                new Date(System.currentTimeMillis()), userInfo, UserRole.ADMIN);
+                new Date(System.currentTimeMillis()), testUser.getUsername(), UserRole.ADMIN);
         tokenObj.setLocked(isLocked);
         jwtStorageService.commit(tokenObj);
         JwtCache.getInstance().refreshFromStorage();
@@ -104,7 +101,7 @@ public class JwtTokenServiceTests {
     @DisplayName("Token is not logged when not in database test")
     public void isTokenNonLoggedNonExistingTest() { 
         var tokenObj = new JwtToken(notNull(UUID.randomUUID()), 
-                new Date(System.currentTimeMillis()), new AuthPrincipalImpl("LOCAL", "test"), UserRole.ADMIN);
+                new Date(System.currentTimeMillis()), testUser.getUsername(), UserRole.ADMIN);
         assertTrue(jwtTokenService.isJitNonLocked(tokenObj.getJti()));
     }
     

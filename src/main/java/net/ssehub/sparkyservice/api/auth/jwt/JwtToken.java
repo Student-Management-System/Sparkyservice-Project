@@ -11,10 +11,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.token.JpaJwtToken;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -27,22 +26,22 @@ public class JwtToken {
     @Nullable
     private Date expirationDate;
     @Nonnull
-    private SparkysAuthPrincipal userInfo;
+    private String subject;
     @Nonnull
     private Collection<UserRole> tokenPermissionRoles;
     @Nonnull
     private UUID jti;
 
-    public JwtToken(final UUID jti, final Date expirationDate, final SparkysAuthPrincipal userInfo,
+    public JwtToken(final UUID jti, final Date expirationDate, final String subject,
             UserRole permission) {
-        this(jti, expirationDate, userInfo, notNull(Arrays.asList(permission)));
+        this(jti, expirationDate, subject, notNull(Arrays.asList(permission)));
     }
 
-    public JwtToken(final UUID jit, final Date expirationDate, final SparkysAuthPrincipal userInfo, 
+    public JwtToken(final UUID jit, final Date expirationDate, final String subject, 
             Collection<UserRole> permissionRoles) {
         super();
         this.expirationDate = expirationDate;
-        this.userInfo = userInfo;
+        this.subject = subject; 
         this.jti = jit;
         remainingRefreshes = 0;
         locked = false;
@@ -58,33 +57,14 @@ public class JwtToken {
         this.remainingRefreshes = copyMe.remainingRefreshes;
         this.locked = copyMe.locked;
         this.expirationDate = copyMe.expirationDate;
-        this.userInfo = copyMe.userInfo;
+        this.subject = copyMe.subject;
         this.tokenPermissionRoles = copyMe.tokenPermissionRoles;
         this.jti = copyMe.jti;
     }
 
     public JwtToken(final JpaJwtToken jpaTokenObj) {
         super();
-        this.userInfo = new SparkysAuthPrincipal() {
-            
-            @Override
-            @Nonnull
-            public UserRealm getRealm() {
-                return jpaTokenObj.getUser().getRealm();
-            }
-            
-            @Override
-            @Nonnull
-            public String getName() {
-                return jpaTokenObj.getUser().getUserName();
-            }
-
-            @Override
-            @Nonnull
-            public String asString() {
-                return jpaTokenObj.getUser().getUserName() + "@" + jpaTokenObj.getUser().getRealm();
-            }
-        };
+        this.subject = new Identity(jpaTokenObj.getUser().getNickname(), jpaTokenObj.getUser().getRealm()).asUsername();
         this.remainingRefreshes = jpaTokenObj.getRemainingRefreshes();
         this.locked = jpaTokenObj.isLocked();
         this.jti = notNull(
@@ -95,7 +75,7 @@ public class JwtToken {
     }
 
     public JpaJwtToken getJpa(UserStorageService service) throws UserNotFoundException {
-        var user = service.findUserByNameAndRealm(userInfo.getName(), userInfo.getRealm());
+        var user = service.findUser(subject);
         return new JpaJwtToken(notNull(jti.toString()), remainingRefreshes, locked, user.getJpa());
     }
 
@@ -128,12 +108,8 @@ public class JwtToken {
         this.expirationDate = expirationDate;
     }
 
-    public SparkysAuthPrincipal getUserInfo() {
-        return userInfo;
-    }
-
-    public void setUserInfo(SparkysAuthPrincipal userInfo) {
-        this.userInfo = userInfo;
+    public String getSubject() {
+        return subject;
     }
 
     public Collection<UserRole> getTokenPermissionRoles() {
@@ -160,7 +136,7 @@ public class JwtToken {
     @Override
     public String toString() {
         return "JwtToken [remainingRefreshes=" + remainingRefreshes + ", locked=" + locked + ", expirationDate="
-            + expirationDate + ", userInfo=" + userInfo + ", tokenPermissionRoles=" + tokenPermissionRoles
+            + expirationDate + ", userInfo=" + subject + ", tokenPermissionRoles=" + tokenPermissionRoles
             + ", jti=" + jti + "]";
     }
 

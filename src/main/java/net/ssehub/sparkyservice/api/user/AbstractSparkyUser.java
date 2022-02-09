@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
@@ -26,9 +27,12 @@ abstract class AbstractSparkyUser implements SparkyUser {
 
     @Nullable
     protected String fullname;
+    
     @Nonnull
-    protected String username;
+    protected final Identity ident;
+    
     protected boolean isEnabled;
+    
     @Nonnull
     protected UserRole role;
     @Nonnull
@@ -42,9 +46,8 @@ abstract class AbstractSparkyUser implements SparkyUser {
      * @param username
      * @param role
      */
-    public AbstractSparkyUser(@Nonnull String username, @Nonnull UserRole role) {
-        this.username = username; //  needed because field is final
-        setUsername(username);
+    public AbstractSparkyUser(@Nonnull final Identity ident, @Nonnull final UserRole role) {
+        this.ident = ident;
         this.role = role;
     }
     
@@ -89,18 +92,19 @@ abstract class AbstractSparkyUser implements SparkyUser {
     @Override
     @Nonnull
     public String getUsername() {
-
-        return username;
+        return ident.asUsername();
     }
 
-    @Override
-    public void setUsername(String username) {
-        if (username != null) {
-            username = username.trim();
-            username = username.toLowerCase();
-            this.username = notNull(username);
-        }
-    }
+//    @Override
+//    public void setUsername(String username) {
+////        if (username != null) {
+////            username = username.trim();
+////            username = username.toLowerCase();
+////            this.username = notNull(username);
+////        }
+//        // TODO 
+//        throw new UnsupportedOperationException();
+//    }
 
     @Override
     @Nonnull
@@ -178,7 +182,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
         } else if (!localSettings.equals(other.settings)) {
             return false;
         }
-        if (!username.equals(other.username)) {
+        if (!ident.equals(other.ident)) {
             return false;
         }
         return true;
@@ -227,7 +231,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
             .append(this.databaseId)
             .append(this.isEnabled)
             .append(this.expirationDate)
-            .append(this.username)
+            .append(this.ident)
             .append(this.fullname)
             .append(this.settings);
     }
@@ -246,4 +250,12 @@ abstract class AbstractSparkyUser implements SparkyUser {
      * implementation.
      */
     public abstract int hashCode();
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public @Nonnull Identity getIdentity() {
+        return this.ident;
+    }
 }

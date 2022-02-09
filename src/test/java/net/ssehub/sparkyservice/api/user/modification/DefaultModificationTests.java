@@ -70,7 +70,6 @@ public class DefaultModificationTests {
         var modifiedDto = modificationService.asDto(user);
         var dtoSettings = modifiedDto.settings;
         assertAll(
-            () -> assertEquals(user.getRealm(), modifiedDto.realm, "Realm not available in DTO"),
             () -> assertEquals(null, modifiedDto.expirationDate, "Exp Date is available!"),
             () -> assertEquals(user.getFullname(), modifiedDto.fullName, "Fullname not avaiable"),
             () -> assertEquals(null, dtoSettings.payload, "Payload is available"),

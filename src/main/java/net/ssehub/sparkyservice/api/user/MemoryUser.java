@@ -4,6 +4,10 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
@@ -18,6 +22,8 @@ import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
 
     private static final long serialVersionUID = 2606418064897651578L;
+    public static final UserRealm ASSOCIATED_REALM = UserRealm.MEMORY;
+    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     @Nonnull
     private Password password;
@@ -29,8 +35,8 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
      * @param password
      * @param role
      */
-    public MemoryUser(@Nonnull String username, @Nonnull Password password, @Nonnull UserRole role) {
-        super(username, role);
+    public MemoryUser(@Nonnull String nickname, @Nonnull Password password, @Nonnull UserRole role) {
+        super(new Identity(nickname, UserRealm.MEMORY), role);
         this.password = password;
     }
 
@@ -61,12 +67,6 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
 
     @Override
     @Nonnull
-    public UserRealm getRealm() {
-        return UserRealm.MEMORY;
-    }
-
-    @Override
-    @Nonnull
     public User getJpa() {
         throw new NoTransactionUnitException(MemoryUser.class.getName() + " can't produce a JPA User instance");
     }
@@ -74,6 +74,7 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     @Override
     public void updatePassword(@Nonnull ChangePasswordDto passwordDto, @Nonnull UserRole role) {
         // nothing
+        log.debug("Skipped attempt to change password on memory user");
     }
 
     @Override

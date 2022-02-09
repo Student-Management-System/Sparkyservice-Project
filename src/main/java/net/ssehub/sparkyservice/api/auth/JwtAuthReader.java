@@ -16,7 +16,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
@@ -25,7 +25,7 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  * @author marcel
  */
 @ParametersAreNonnullByDefault
-public class AdditionalAuthInterpreter {
+public class JwtAuthReader {
 
     private Optional<Logger> logger;
 
@@ -42,7 +42,7 @@ public class AdditionalAuthInterpreter {
      *                              is stored
      * @param service
      */
-    public AdditionalAuthInterpreter(final JwtTokenService service, @Nullable final String authorizationHeader) {
+    public JwtAuthReader(final JwtTokenService service, @Nullable final String authorizationHeader) {
         this.jwtService = service;
         this.authHeader = authorizationHeader;
         logger = Optional.empty();
@@ -54,7 +54,7 @@ public class AdditionalAuthInterpreter {
      * @param jwtString
      * @param logger Used for logging internal processes. Don't set logger when no logs wished.
      */
-    public AdditionalAuthInterpreter(final JwtTokenService service, @Nullable final String jwtString, Logger logger) {
+    public JwtAuthReader(final JwtTokenService service, @Nullable final String jwtString, Logger logger) {
         this(service, jwtString);
         this.logger = Optional.of(logger);
     }
@@ -99,8 +99,7 @@ public class AdditionalAuthInterpreter {
      * @return fullIdentName
      */
     private @Nonnull String getUserIdentifier(Authentication auth) {
-        var spPrincipal = (SparkysAuthPrincipal) auth.getPrincipal();
-        return spPrincipal.asString();
+        return (String) auth.getPrincipal();
     }
 
     /**
@@ -111,10 +110,10 @@ public class AdditionalAuthInterpreter {
      * @return AuthenticationDTO with information of extracted from the jwt string
      * @throws JwtTokenReadException 
      */
-    public @Nonnull AuthenticationInfoDto getAuthenticationInfoDto(UserExtractionService extractor) 
+    public @Nonnull AuthenticationInfoDto getAuthenticationInfoDto(UserStorageService service) 
             throws JwtTokenReadException {
         JwtToken tokenObj = jwtService.readJwtToken(authHeader);
-        SparkyUser user = extractor.extendAndRefresh(tokenObj.getUserInfo());
+        SparkyUser user = service.findUser(tokenObj.getSubject());
         var authDto = new AuthenticationInfoDto();
         authDto.user = user.ownDto();
         authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());

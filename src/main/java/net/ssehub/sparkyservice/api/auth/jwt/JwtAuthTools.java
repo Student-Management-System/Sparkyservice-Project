@@ -16,7 +16,6 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -55,13 +54,11 @@ public class JwtAuthTools {
                 .map(UserRole::getEnum)
                 .collect(Collectors.toList());
         Date expiration = parsedToken.getBody().getExpiration();
-        String realmName = (String) parsedToken.getBody().get("realm");
         var jtiString = (String) parsedToken.getBody().get("jti");
         var jti = UUID.fromString(jtiString);
-        SparkysAuthPrincipal sparkyPrincipal = new AuthPrincipalImpl(realmName, username);
         
         if (jti != null && expiration != null && authorities != null) {
-            var tokenObj = new JwtToken(jti, expiration, sparkyPrincipal, authorities);
+            var tokenObj = new JwtToken(jti, expiration, username, authorities);
             tokenObj.setTokenPermissionRoles(authorities);
             return tokenObj;
         } else {
@@ -86,10 +83,9 @@ public class JwtAuthTools {
                 .setHeaderParam("typ", jwtConf.getType())
                 .setIssuer(jwtConf.getIssuer())
                 .setAudience(jwtConf.getAudience())
-                .setSubject(tokenObj.getUserInfo().getName())
+                .setSubject(tokenObj.getSubject())
                 .setExpiration(tokenObj.getExpirationDate())
                 .claim("rol", tokenObj.getTokenPermissionRoles())
-                .claim("realm", tokenObj.getUserInfo().getRealm())
                 .setId(tokenObj.getJti().toString())
                 .compact()
         );

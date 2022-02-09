@@ -41,7 +41,6 @@ public class AdminUserModificationImpl implements UserModificationService {
         if (user != null && userDto != null) {
             final SettingsDto localDtoSettings = userDto.settings;
             final var pwDto = userDto.passwordDto;
-            user.setUsername(userDto.username);
             user.setExpireDate(userDto.expirationDate);
             user.setFullname(userDto.fullName);
             user.setRole(userDto.role);

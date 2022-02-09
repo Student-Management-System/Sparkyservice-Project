@@ -44,18 +44,17 @@ public class UserService {
      */
     public UserDto modifyUser(@Nonnull UserDto userDto, @Nonnull Authentication auth) {
         SparkyUser authenticatedUser = transformerService.extract(auth);
-        Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username)
-                && user.getRealm().equals(userDto.realm);
+        Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username);
         if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
-            SparkyUser targetUser = storageService.findUserByNameAndRealm(userDto.username, userDto.realm);
+            SparkyUser targetUser = storageService.findUser(userDto.username);
             authenticatedUser.getRole().getPermissionTool().update(targetUser, userDto);
             storageService.commit(targetUser);
             var editedUser = storageService.refresh(targetUser);
             return editedUser.ownDto();
         } else {
-            log.info("User {}@{} tries to modify the data of other user without admin privileges",
-                    authenticatedUser.getUsername(), authenticatedUser.getRealm());
-            log.debug("Edit target was: {}@{}", userDto.username, userDto.realm);
+            log.info("User {} tries to modify the data of other user without admin privileges",
+                    authenticatedUser.getUsername());
+            log.debug("Edit target was: {}", userDto.username);
             throw new AccessDeniedException("Not allowed to modify other users data");
         }
     }
@@ -75,7 +74,7 @@ public class UserService {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
-        var user = storageService.findUserByNameAndRealm(username, realm);
+        var user = storageService.findUser(username);
         return user.ownDto();
     }
 
@@ -90,7 +89,7 @@ public class UserService {
     public UserDto createLocalUser(@Nonnull String username) throws UserEditException {
         try {
             LocalUserDetails newUser = storageService.addUser(username);
-            log.debug("Created new user: {}@{}", newUser.getUsername(), newUser.getRealm());
+            log.debug("Created new user: {}", username);
             return UserRole.ADMIN.getPermissionTool().asDto(newUser);
         } catch (DuplicateEntryException e) {
             log.debug("No user added: Duplicate entry");

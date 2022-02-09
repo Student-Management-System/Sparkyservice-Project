@@ -4,20 +4,26 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 
 /**
- * Represents a user which is in the local realm.
+ * Represents a user which is in the ldap domain of university hildesheim.
  * 
  * @author marcel
  */
 public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUserDetails {
 
     private static final long serialVersionUID = -2155556837850826196L;
+    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+    @Nonnull
+    public static final UserRealm ASSOCIATED_REALM = UserRealm.LDAP;
 
     private String dn;
 
@@ -29,11 +35,26 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      * @param isEnabled
      * @see #create(String, UserRole, boolean)
      */
-    LdapUser(@Nonnull String username, @Nonnull UserRole role, boolean isEnabled) {
-        super(username, role);
+    LdapUser(@Nonnull String nickname, @Nonnull UserRole role, boolean isEnabled) {
+        super(new Identity(nickname, ASSOCIATED_REALM), role);
         setEnabled(isEnabled);
     }
-
+    
+    /**
+     * Creates an user with necessary fields. It preserves the old identity. 
+     * 
+     * @param ident
+     * @param role
+     * @param isEnabled
+     */
+    private LdapUser(@Nonnull Identity ident, @Nonnull UserRole role, boolean isEnabled) {
+        super(ident, role);
+        setEnabled(isEnabled);
+        if (ident.realm() != ASSOCIATED_REALM) {
+            log.debug("Preserving the identity of one user {}", ident.asUsername());
+        }
+    }
+    
     /**
      * Copy constructor of another SparkyUser.
      * 
@@ -41,7 +62,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      * @see #create(String, UserRole, boolean)
      */
     LdapUser(SparkyUser copyMe) {
-        this(copyMe.getUsername(), copyMe.getRole(), copyMe.isEnabled());
+        this(copyMe.getIdentity(), copyMe.getRole(), copyMe.isEnabled());
         if (copyMe instanceof LdapUser) {
             dn = ((LdapUser) copyMe).getDn();
         }
@@ -50,13 +71,13 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     }
 
     /**
-     * Creates an instance from a JPA user.
+     * Creates an instance from a JPA user. 
      * 
      * @param jpaUser
      * @see #create(String, UserRole, boolean)
      */
     LdapUser(User jpaUser) {
-        this(jpaUser.getUserName(), jpaUser.getRole(), jpaUser.isActive());
+        this(new Identity(jpaUser.getNickname(), jpaUser.getRealm()), jpaUser.getRole(), jpaUser.isActive());
         this.setExpireDate(jpaUser.getExpirationDate());
         this.setSettings(jpaUser.getProfileConfiguration());
         this.setFullname(jpaUser.getFullName());
@@ -81,6 +102,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     @Override
     public void eraseCredentials() {
         // not necessary
+        log.debug("Ignore attempt to erase credentials on ldap user {}", getUsername());
     }
 
     @Override
@@ -91,7 +113,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     @Override
     @Nonnull
     public User getJpa() {
-        var jpaUser = new User(getUsername(), UserRealm.LDAP, isEnabled(), getRole());
+        var jpaUser = new User(ident.nickname(), UserRealm.LDAP, isEnabled(), getRole());
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);
@@ -100,14 +122,9 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     }
 
     @Override
-    @Nonnull
-    public UserRealm getRealm() {
-        return UserRealm.LDAP;
-    }
-
-    @Override
     public void updatePassword(@Nonnull ChangePasswordDto passwordDto, @Nonnull UserRole role) {
         //nothing
+        log.debug("Ignore attempt to change password on ldapuser {}", getUsername());
     }
 
     @Override

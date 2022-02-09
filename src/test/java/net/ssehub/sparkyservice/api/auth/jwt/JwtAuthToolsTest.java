@@ -16,7 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -38,9 +38,9 @@ public class JwtAuthToolsTest {
      */
     @BeforeEach
     public void setupTestToken() {
-        SparkysAuthPrincipal principal = new AuthPrincipalImpl(UserRealm.LOCAL, "testuser");
         var expDate = DateUtil.toUtilDate(LocalDate.now().plusDays(10));
-        testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, principal, UserRole.ADMIN);
+        var id = new Identity("user", UserRealm.LOCAL);
+        testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, id.asUsername(), UserRole.ADMIN);
     }
 
 
@@ -79,7 +79,7 @@ public class JwtAuthToolsTest {
             () -> assertNotNull(token.getExpirationDate()),
             () -> assertNotNull(token.getRemainingRefreshes()),
             () -> assertNotNull(token.getJti()),
-            () -> assertNotNull(token.getUserInfo())
+            () -> assertNotNull(token.getSubject())
         );
     }
 

@@ -147,7 +147,7 @@ public class User {
      * @return name of the user which is unique per realm
      */
     @Nonnull
-    public String getUserName() {
+    public String getNickname() {
         return this.userName;
     }
 
@@ -172,9 +172,10 @@ public class User {
      * Overrides the old username - it have to pe unique per realm and max length
      * 50.
      * 
+     * 
      * @param userName unique string per realm
      */
-    public void setUserName(String userName) {
+    public void setNickname(String userName) {
         if (userName.length() > 50) {
             throw new IllegalArgumentException("The max length for a username is 50");
         }
@@ -281,7 +282,7 @@ public class User {
     }
 
     /**
-     * Can be used as unique identifier together with {@link #getUserName()}.
+     * Can be used as unique identifier together with {@link #getNickname()}.
      * 
      * @return Authentication realm of the user
      */
@@ -290,7 +291,7 @@ public class User {
     }
 
     /**
-     * User realm defines the authentication realm. Together with {@link #getUserName()} this is a unique identifier. 
+     * User realm defines the authentication realm. Together with {@link #getNickname()} this is a unique identifier. 
      * 
      * @param realm
      */

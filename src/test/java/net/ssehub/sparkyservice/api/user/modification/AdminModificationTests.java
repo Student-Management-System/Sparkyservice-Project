@@ -1,6 +1,5 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
-import static net.ssehub.sparkyservice.api.testconf.SparkyAssertions.assertDtoValuesEquals;
 import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -103,7 +102,6 @@ public class AdminModificationTests {
     public void changeUserValuesTest() throws Exception {
         var userDto = createExampleDto();
         userDto.role = UserRole.DEFAULT;
-        userDto.realm = UserRealm.LOCAL;
         LocalUserDetails user = constructor.newInstance();
         modificationService.update(user, userDto);
         var userSettings = user.getSettings();
@@ -111,7 +109,6 @@ public class AdminModificationTests {
         
         assertAll(
             () -> assertEquals(user.getUsername(), userDto.username, "Username was not changed"),
-            () -> assertEquals(user.getRealm(), userDto.realm, "Realm was not changed"),
             () -> assertEquals(user.getRole(), userDto.role, "Role was not changed"),
             () -> assertEquals(user.getExpireDate().get(), userDto.expirationDate, "Exp. Date not changed"),
             () -> assertEquals(user.getFullname(), userDto.fullName, "Fullname not changed"),
@@ -148,10 +145,9 @@ public class AdminModificationTests {
     public void userAsDtoTest() throws Exception {
         var testDto = createExampleDto();
         testDto.role = UserRole.ADMIN;
-        testDto.realm = UserRealm.LOCAL;
         var testUserFromDto = UserRealm.LOCAL.getUserFactory().create(testDto);
         var userDto = modificationService.asDto(testUserFromDto);
-        assertDtoValuesEquals(testDto, userDto);
+        assertTrue(userDto.equals(testDto));
     }
 
     // TODO create test case for default user creation

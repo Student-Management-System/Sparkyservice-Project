@@ -22,7 +22,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
-import net.ssehub.sparkyservice.api.auth.SparkysAuthPrincipal;
 import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -108,7 +107,7 @@ public class JwtTokenService {
         tokenDto.expiration = DateUtil.toString(tokenObj.getExpirationDate());
         tokenDto.token = jwtString;
         return new UsernamePasswordAuthenticationToken(
-                tokenObj.getUserInfo(), tokenDto, tokenObj.getTokenPermissionRoles()
+                tokenObj.getSubject(), tokenDto, tokenObj.getTokenPermissionRoles()
         );
     }
 
@@ -130,8 +129,7 @@ public class JwtTokenService {
                 if (isJitNonLocked(tokenObj.getJti())) {
                     return tokenObj;
                 } else {
-                    log.debug("Token {} is locked. User: {}@{}" + tokenObj.getJti(), tokenObj.getUserInfo().getName(),
-                            tokenObj.getUserInfo().getRealm());
+                    log.debug("Token {} is locked. User: {}" + tokenObj.getJti(), tokenObj.getSubject());
                     throw new JwtTokenReadException("The token with jit " + tokenObj.getJti() + " is locked");
                 }
             }
@@ -193,9 +191,8 @@ public class JwtTokenService {
     public String createFor(SparkyUser user) {
         UUID jit = UUID.randomUUID();
         log.trace("Created JWT token with jit {}", jit.toString());
-        var userInfo = new AuthPrincipalImpl(user.getRealm(), user.getUsername());
         Date expDate = JwtAuthTools.createJwtExpirationDate(user);
-        var tokenObj = new JwtToken(jit, expDate, userInfo, user.getRole());
+        var tokenObj = new JwtToken(jit, expDate, user.getUsername(), user.getRole());
         tokenObj.setRemainingRefreshes(0 /*TODO*/);
         String tokenString = JwtAuthTools.encode(tokenObj, jwtConf);
         JwtCache.getInstance().storeAndSave(tokenObj);

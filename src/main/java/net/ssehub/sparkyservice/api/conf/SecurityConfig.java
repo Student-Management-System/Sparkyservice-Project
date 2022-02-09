@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
-import net.ssehub.sparkyservice.api.auth.LocalLoginDetailsMapper;
 import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
@@ -72,9 +71,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${recovery.user:user}")
     private String inMemoryUser;
     
-    @Autowired
-    private LocalLoginDetailsMapper localDetailsMapper;
-
     @Autowired
     private UserStorageService storageService;
     
@@ -136,7 +132,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
         configureInMemory(auth);
-        auth.userDetailsService(localDetailsMapper);
         configureLdap(auth);
     }
 

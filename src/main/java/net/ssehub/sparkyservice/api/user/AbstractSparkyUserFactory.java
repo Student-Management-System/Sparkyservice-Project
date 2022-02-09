@@ -21,15 +21,15 @@ public interface AbstractSparkyUserFactory<T extends SparkyUser> {
     /**
      * Creates a new user with the minimum set of needed values.
      * 
-     * @param username
+     * @param nickname Name of the user which must be unique per realm
      * @param password
      * @param role
      * @param isEnabled
      * @return {@link SparkyUser} implementation
      */
     @Nonnull
-    T create(@Nullable String username, @Nullable Password password, @Nullable UserRole role, boolean isEnabled);
-
+    T create(@Nullable String nickname, @Nullable Password password, @Nullable UserRole role, boolean isEnabled);
+    
     /**
      * Creates a {@link SparkyUser} via userDto values.
      * 

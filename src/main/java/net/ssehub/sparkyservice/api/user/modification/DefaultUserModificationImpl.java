@@ -40,7 +40,6 @@ public class DefaultUserModificationImpl implements UserModificationService {
     @Override
     public UserDto asDto(SparkyUser user) {
         var dto = new UserDto();
-        dto.realm = user.getRealm();
         dto.role = user.getRole();
         dto.settings = settingsAsDto(user.getSettings());
         dto.username = user.getUsername();

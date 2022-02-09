@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -39,15 +40,6 @@ public interface SparkyUser extends UserDetails {
      * @param role
      */
     void setRole(UserRole role);
-
-    /**
-     * The user realm. In each realm a username is unique. Each realm have different authentication methods and contains
-     * a disjunct set of users.
-     * 
-     * @return The realm of this account
-     */
-    @Nonnull
-    UserRealm getRealm();
 
     /**
      * Disables/enables the account.
@@ -107,17 +99,19 @@ public interface SparkyUser extends UserDetails {
 
     /**
      * {@inheritDoc}
+     * 
+     * Is unique and contains realm information. To get the username (nickname) without realm, use {@link #getIdentity()}.
      */
     @Nonnull
     @Override
     String getUsername();
 
     /**
-     * Updates the username.
-     * 
-     * @param username
+     * Gives the identity object to distinct between realm and the nickname. 
+     * @return
      */
-    void setUsername(String username);
+    @Nonnull
+    Identity getIdentity();
     
     /**
      * Changes the password of the user to a new one with the given permissions.

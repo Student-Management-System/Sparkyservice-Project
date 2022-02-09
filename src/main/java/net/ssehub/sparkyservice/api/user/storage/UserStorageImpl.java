@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -63,7 +64,7 @@ public class UserStorageImpl implements UserStorageService {
          * @return <code>true</code> When the user was found by any provided action
          */
         @SafeVarargs
-        public final boolean checkForUser(Function<SparkyUser, SparkyUser>... userSearchAction) {
+        private final boolean checkForUser(Function<SparkyUser, SparkyUser>... userSearchAction) {
             return Stream.of(userSearchAction)
                 .map(Function.identity())
                 .collect(Collectors.toList())
@@ -104,19 +105,13 @@ public class UserStorageImpl implements UserStorageService {
      */
     @Override
     public <T extends SparkyUser> void commit(@Nonnull T user) {
-        if (user.getRealm() == null || user.getUsername().isBlank()) {
-            throw new IllegalArgumentException("Realm and username must not be blank.");
-        } else if (user.getRealm() != UserRealm.UNKNOWN) {
-            try {
-                User jpa = user.getJpa();
-                log.debug("Try to store user {}@{} into database", jpa.getUserName(), jpa.getRealm());
-                repository.save(jpa);
-                log.debug("...stored");
-            } catch (NoTransactionUnitException e) {
-                log.debug("Don't safe user: {}@{}", user.getUsername(), user.getRealm());
-            }
-        } else {
-            log.warn("UNKNOWN USER REALM: {}@{}", user.getUsername(), user.getRealm());
+        try {
+            User jpa = user.getJpa();
+            log.debug("Try to store user {}@{} into database", jpa.getNickname(), jpa.getRealm());
+            repository.save(jpa);
+            log.debug("...stored");
+        } catch (NoTransactionUnitException e) {
+            log.debug("Don't safe user: {}", user.getUsername());
         }
     }
 
@@ -137,7 +132,7 @@ public class UserStorageImpl implements UserStorageService {
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull List<SparkyUser> findUsersByUsername(@Nullable String username) {
+    public @Nonnull List<SparkyUser> findUsers(@Nullable String username) {
         return notNull(
             UserStorageImpl.validateUsername(username)
                 .flatMap(repository::findByuserName)
@@ -149,10 +144,14 @@ public class UserStorageImpl implements UserStorageService {
     }
 
     /**
-     * {@inheritDoc}.
+     * Finds a specific user by name and realm.
+     * 
+     * @param username
+     * @param realm
+     * @return Specific user
+     * @throws UserNotFoundException
      */
-    @Override
-    public @Nonnull SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
+    private @Nonnull SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
             throws UserNotFoundException {
         return notNull(UserStorageImpl.validateUsername(username)
             .flatMap(name -> repository.findByuserNameAndRealm(name, realm))
@@ -165,7 +164,7 @@ public class UserStorageImpl implements UserStorageService {
      * {@inheritDoc}.
      */
     @Override
-    public @Nonnull SparkyUser findUserById(int id) throws UserNotFoundException {
+    public @Nonnull SparkyUser findUser(int id) throws UserNotFoundException {
         Optional<User> user = repository.findById(id);
         var localUser = user.map(UserStorageImpl::transformUser)
                 .orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
@@ -181,8 +180,8 @@ public class UserStorageImpl implements UserStorageService {
         try {
             if (user != null) {
                 found =  filter.checkForUser(
-                    u -> this.findUserById(u.getJpa().getId()), 
-                    u -> this.findUserByNameAndRealm(u.getUsername(), u.getRealm())
+                    u -> this.findUser(u.getJpa().getId()), 
+                    u -> this.findUser(u.getUsername())
                 );
             } 
         } catch (NoTransactionUnitException e) {
@@ -243,6 +242,23 @@ public class UserStorageImpl implements UserStorageService {
      */
     public static @Nonnull Optional<String> validateUsername(@Nullable String username) {
         return notNull(Optional.ofNullable(username).map(String::toLowerCase));
+    }
+
+    @Override
+    @Nonnull
+    public SparkyUser findUser(@Nullable String identName) throws UserNotFoundException {
+        if (identName != null) {
+            return findUser(Identity.of(identName));
+        } throw new UserNotFoundException("Null");
+    }
+
+    @Override
+    @Nonnull
+    public SparkyUser findUser(@Nullable Identity ident) throws UserNotFoundException {
+        if (ident == null) {
+            throw new UserNotFoundException("null");
+        }
+        return findUserByNameAndRealm(ident.nickname(), ident.realm());
     }
     
 }

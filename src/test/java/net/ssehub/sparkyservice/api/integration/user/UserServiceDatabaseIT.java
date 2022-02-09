@@ -1,7 +1,7 @@
 package net.ssehub.sparkyservice.api.integration.user;
 
 import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.NEW_PASSWORD;
-import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.USER_NAME;
+import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.NICK_NAME;
 import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,7 +24,6 @@ import net.ssehub.sparkyservice.api.testconf.JwtTestBeanConf;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.UserService;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -79,8 +78,7 @@ public class UserServiceDatabaseIT {
     public void editFullnameTest() throws JwtTokenReadException {
         var editDto = createExampleDto();
         editDto.role = UserRole.ADMIN;
-        editDto.realm = UserRealm.LOCAL;
-        SparkyUser user = new LocalUserFactory().create(USER_NAME, new Password(NEW_PASSWORD), editDto.role, true);
+        SparkyUser user = new LocalUserFactory().create(NICK_NAME, new Password(NEW_PASSWORD), editDto.role, true);
         storageService.commit(user);
         Authentication authContext = jwtService.readToAuthentication(jwtService.createFor(user));
 
