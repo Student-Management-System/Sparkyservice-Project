@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -237,6 +238,7 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @Disabled("CI-Servers firewal blocks access to ldap server")
     public void storeUserAfterLdapAuthTest() throws Exception {
         var result = this.mvc
                 .perform(
