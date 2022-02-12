@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,7 +31,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
-import net.ssehub.sparkyservice.api.testconf.AbstractContainerTestDatabase;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -44,10 +44,11 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@TestPropertySource(locations = {"classpath:test-routing.properties"})
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
+@TestPropertySource(locations = {"classpath:test-routing.properties"})
 //checkstyle: stop exception type check
-public class RoutingIT extends AbstractContainerTestDatabase {
+public class RoutingIT {
 
     public static final String PROTECTED_LIST_ROUTE = "/testroutesecure2";
     private static final String FREE_ROUTE = "/testroutefree";

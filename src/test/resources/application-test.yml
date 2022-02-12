@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  jpa:
+    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+
+ldap:
+    enabled: true
+    ad: false
+    urls: ldap://ldap.forumsys.com:389/
+    base:
+       dn: dc=example,dc=com
+    domain: 
+    username: cn=read-only-admin,dc=example,dc=com
+    password: password
+    user:
+       dn:
+          pattern:  uid={0}
+          
+jwt:
+   secret: kjsdfsdkjfjhdskfhsdlkfsdlfkjsaddklusdklfjdsksdlkfjsadlkfjsdaflkjsdflkj
+   header: Authorization
+   prefix: Bearer
+   type: JWT
+   issuer: generel-tests
+   audience: sparky-tests
+  
+recovery:
+    enabled: true
+    password: 12345
+    user: user
