@@ -9,7 +9,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.springframework.security.core.Authentication;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 
 /**
@@ -21,21 +20,44 @@ import net.ssehub.sparkyservice.api.user.UserRealm;
 @ParametersAreNonnullByDefault
 //public record Identity(String nickname, UserRealm realm) {
 public class Identity {
-    private final String nickname;
-    private final UserRealm realm;
-
     private static final String SEPERATOR = "@";
 
-    @Nonnull
-    public static final Identity of(SparkyUser user) {
-        return user.getIdentity();
+    private @Nonnull final String nickname;
+    private @Nonnull final UserRealm realm;
+
+//    public Identity {
+    /**
+     * Representation of a users identity. It contains necessary information for identifying 
+     * users across the whole application context. 
+     * 
+     * @param nickname Username without realm information 
+     * @param realm The users realm
+     */
+    public Identity(String nickname, UserRealm realm) {
+        if (nickname.isBlank()) {
+            throw new IllegalArgumentException("Empty nickname is not allowed");
+        }
+        this.nickname = nickname;
+        this.realm = realm;
     }
 
+    /**
+     * Creates an identity object based on a JPA user.
+     * 
+     * @param user
+     * @return Identity for unique identification
+     */
     @Nonnull
     public static Identity of(User user) {
         return new Identity(user.getNickname(), user.getRealm());
     }
 
+    /**
+     * Creates an identitiy object based on a username string. 
+     * 
+     * @param username Username in the following format <code> user@realm </code>
+     * @return Identity representationof the given username
+     */
     @Nonnull
     public static Identity of(String username) {
         var content = username.split(SEPERATOR);
@@ -52,30 +74,6 @@ public class Identity {
         return new Identity(nickname, realm);
     }
 
-    @Deprecated
-    // TODO delete
-    public static Identity of(@Nullable String name, @Nullable String realmString) {
-        if (realmString == null || name == null) {
-            throw new IllegalArgumentException("Arguments must have a value");
-        }
-        UserRealm realm;
-        try {
-            realm = UserRealm.valueOf(realmString);
-        } catch (IllegalArgumentException e) {
-            realm = UserRealm.UNKNOWN;
-        }
-        return new Identity(name, realm);
-    }
-
-//    public Identity {
-    public Identity(String nickname, UserRealm realm) {
-        if (nickname.isBlank()) {
-            throw new IllegalArgumentException("Empty nickname is not allowed");
-        }
-        this.nickname = nickname;
-        this.realm = realm;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -87,31 +85,42 @@ public class Identity {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         Identity other = (Identity) obj;
-        if (nickname == null) {
-            if (other.nickname != null)
-                return false;
-        } else if (!nickname.equals(other.nickname))
+        if (!nickname.equals(other.nickname)) {
             return false;
-        if (realm != other.realm)
+        }
+        if (realm != other.realm) {
             return false;
+        }
         return true;
     }
 
+    /**
+     * Nickname only without realm information. Can't be used for application wide context.
+     * 
+     * @return Nickname only 
+     */
     @Nonnull
     public String nickname() {
         return notNull(nickname.toLowerCase().trim());
     }
 
-    @SuppressWarnings("null") // field is final
+    
+    /**
+     * The source realm where the {@link #nickname} of this user belongs to.
+     * 
+     * @return The realm
+     */
     @Nonnull
-    // Override for non null annotation
     public UserRealm realm() {
         return this.realm;
     }

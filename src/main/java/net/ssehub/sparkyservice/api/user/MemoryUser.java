@@ -21,8 +21,8 @@ import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
  */
 public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
 
-    private static final long serialVersionUID = 2606418064897651578L;
     public static final UserRealm ASSOCIATED_REALM = UserRealm.MEMORY;
+    private static final long serialVersionUID = 2606418064897651578L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     @Nonnull
@@ -31,7 +31,7 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     /**
      * A memory user. Password can't be changed again!
      * 
-     * @param username
+     * @param nickname The username without realm information
      * @param password
      * @param role
      */

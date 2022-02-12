@@ -122,7 +122,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
     private Optional<SparkyUser> fromAuthenticationPrincipal(Object obj) {
         Optional<SparkyUser> user;
         try {
-            return Optional.of(storageService.findUser((String) obj));
+            user = Optional.of(storageService.findUser((String) obj));
         } catch (UserNotFoundException e) {
             user = Optional.empty();
         }

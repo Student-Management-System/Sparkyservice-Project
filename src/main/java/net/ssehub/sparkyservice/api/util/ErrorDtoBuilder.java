@@ -10,6 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 
+/**
+ * Class with builder pattern for uniform errors. 
+ *
+ * @author marcel
+ */
 public class ErrorDtoBuilder {
 
     private HttpTimestamp timestamp = new HttpTimestamp();
@@ -22,10 +27,13 @@ public class ErrorDtoBuilder {
      */
     public ErrorDtoBuilder() {}
 
-    public @Nonnull ErrorDtoBuilder newUnauthorizedError(@Nullable String path) {
-        return newError(null, HttpStatus.UNAUTHORIZED, path);
-    }
-
+    /**
+     * Factory template method for an unauthorized HTTP error. 
+     * 
+     * @param customMessage
+     * @param path
+     * @return DTO for an unauthorized HTTP Error
+     */
     public @Nonnull ErrorDtoBuilder newUnauthorizedError(@Nullable String customMessage, @Nullable String path) {
         return newError(message, HttpStatus.UNAUTHORIZED, path);
     }
@@ -80,6 +88,12 @@ public class ErrorDtoBuilder {
         return this;
     }
 
+    /**
+     * The HTTP resource path where the error occured on.
+     * 
+     * @param urlPath
+     * @return this
+     */
     public @Nonnull ErrorDtoBuilder setUrlPath(@Nullable String urlPath) {
         this.urlPath = urlPath;
         return this;

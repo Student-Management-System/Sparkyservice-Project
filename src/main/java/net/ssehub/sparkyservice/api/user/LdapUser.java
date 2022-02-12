@@ -20,17 +20,16 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
  */
 public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUserDetails {
 
+    public @Nonnull static final UserRealm ASSOCIATED_REALM = UserRealm.LDAP;
     private static final long serialVersionUID = -2155556837850826196L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
-    @Nonnull
-    public static final UserRealm ASSOCIATED_REALM = UserRealm.LDAP;
 
     private String dn;
 
     /**
      * Creates a user with necessary fields.
      * 
-     * @param username
+     * @param nickname The nickname ("real" username without realm information)
      * @param role
      * @param isEnabled
      * @see #create(String, UserRole, boolean)

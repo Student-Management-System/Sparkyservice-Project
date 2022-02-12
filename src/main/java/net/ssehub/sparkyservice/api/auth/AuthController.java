@@ -61,11 +61,11 @@ public class AuthController {
             description = "Authenticates the user and sets a JWT into the authorization header")
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH)
     @ApiResponses(value = { 
-            @ApiResponse(responseCode = "200", description = "Authentication success"),
+        @ApiResponse(responseCode = "200", description = "Authentication success"),
             
-            @ApiResponse(responseCode = "403", description = "Authentication failed", 
-                content = @Content(mediaType = "application/json", 
-                schema = @Schema(implementation = ErrorDto.class)))
+        @ApiResponse(responseCode = "403", description = "Authentication failed", 
+            content = @Content(mediaType = "application/json", 
+            schema = @Schema(implementation = ErrorDto.class)))
     })
     public AuthenticationInfoDto authenticate(@Nonnull @NotNull @Valid CredentialsDto credentials) {
         throw new UnsupportedOperationException();
@@ -89,13 +89,13 @@ public class AuthController {
             security = { @SecurityRequirement(name = "bearer-key") })
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
     @ApiResponses(value = { 
-            @ApiResponse(responseCode = "200", description = "Authentication status is good"),
-            @ApiResponse(responseCode = "403", description = "Not authenticated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorDto.class))),
-            @ApiResponse(responseCode = "401", description = "Not authenticated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorDto.class))) })
+        @ApiResponse(responseCode = "200", description = "Authentication status is good"),
+        @ApiResponse(responseCode = "403", description = "Not authenticated",
+                content = @Content(mediaType = "application/json",
+                       schema = @Schema(implementation = ErrorDto.class))),
+        @ApiResponse(responseCode = "401", description = "Not authenticated",
+                content = @Content(mediaType = "application/json",
+                       schema = @Schema(implementation = ErrorDto.class))) })
     public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
             HttpServletRequest request) throws JwtTokenReadException {
         return authService.checkAuthenticationStatus(auth, notNull(request));

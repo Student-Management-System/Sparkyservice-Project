@@ -56,7 +56,7 @@ public interface UserStorageService {
     /**
      * Searches a data storage for all users with a given username.
      * 
-     * @param username
+     * @param nickname Username without realm information
      * @return A list of users which shares the same nickname in different realms
      * @throws UserNotFoundException
      */

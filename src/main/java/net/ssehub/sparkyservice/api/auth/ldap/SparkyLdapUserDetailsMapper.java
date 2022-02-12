@@ -47,7 +47,7 @@ public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapp
             var ldapInfoExtractor = new LdapInformationExtractor(ctx);
             ldapUser.setExpireDate(ldapInfoExtractor.getExpirationDate());
             ldapUser.setFullname(ldapInfoExtractor.getFullname());
-            ldapUser.getSettings().setEmail_address(ldapInfoExtractor.getEmail());
+            ldapUser.getSettings().setEmailAddress(ldapInfoExtractor.getEmail());
         }
         if (storageService.isUserInStorage(ldapUser)) {
             ldapUser = (LdapUser) storageService.refresh(ldapUser);

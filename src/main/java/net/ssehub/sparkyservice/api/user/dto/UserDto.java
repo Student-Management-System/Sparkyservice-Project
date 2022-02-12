@@ -70,35 +70,47 @@ public class UserDto implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         UserDto other = (UserDto) obj;
         if (expirationDate == null) {
-            if (other.expirationDate != null)
+            if (other.expirationDate != null) {
                 return false;
-        } else if (!expirationDate.equals(other.expirationDate))
+            }
+        } else if (!expirationDate.equals(other.expirationDate)) {
             return false;
+        }
         if (fullName == null) {
-            if (other.fullName != null)
+            if (other.fullName != null) {
                 return false;
-        } else if (!fullName.equals(other.fullName))
+            }
+        } else if (!fullName.equals(other.fullName)) {
             return false;
-        if (role != other.role)
+        }
+        if (role != other.role) {
             return false;
+        }
         if (settings == null) {
-            if (other.settings != null)
+            if (other.settings != null) {
                 return false;
-        } else if (!settings.equals(other.settings))
+            }
+        } else if (!settings.equals(other.settings)) {
             return false;
+        }
         if (username == null) {
-            if (other.username != null)
+            if (other.username != null) {
                 return false;
-        } else if (!username.equals(other.username))
+            }
+        } else if (!username.equals(other.username)) {
             return false;
+        }
         return true;
     }
     

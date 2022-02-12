@@ -249,7 +249,8 @@ public class UserStorageImpl implements UserStorageService {
     public SparkyUser findUser(@Nullable String identName) throws UserNotFoundException {
         if (identName != null) {
             return findUser(Identity.of(identName));
-        } throw new UserNotFoundException("Null");
+        }
+        throw new UserNotFoundException("Null");
     }
 
     @Override

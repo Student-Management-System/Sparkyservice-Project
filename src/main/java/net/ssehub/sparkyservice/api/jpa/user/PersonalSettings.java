@@ -84,20 +84,20 @@ public class PersonalSettings {
         this.user = user;
     }
     
-    public boolean isEmail_receive() {
+    public boolean isEmailReceive() {
         return emailReceive;
     }
     
-    public void setEmail_receive(boolean email_receive) {
-        this.emailReceive = email_receive;
+    public void setEmailReceive(boolean emailReceive) {
+        this.emailReceive = emailReceive;
     }
     
-    public String getEmail_address() {
+    public String getEmailAddress() {
         return emailAddress;
     }
     
-    public void setEmail_address(String email_address) {
-        this.emailAddress = email_address;
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
     
     public boolean isWantsAi() {

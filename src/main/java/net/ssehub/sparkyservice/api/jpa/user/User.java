@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.jpa.user;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -250,8 +252,9 @@ public class User {
      * 
      * @return Date of account expiration 
      */
+    @Nonnull
     public Optional<LocalDate> getExpirationDate() {
-        return Optional.ofNullable(expirationTime);
+        return notNull(Optional.ofNullable(expirationTime));
     }
 
     /**

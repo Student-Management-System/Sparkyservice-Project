@@ -63,7 +63,7 @@ public class DefaultModificationTests {
     @Test
     public void userAsDtoTest() throws Exception {
         LocalUserDetails user = LocalUserDetails.newLocalUser("test", "test", UserRole.DEFAULT);
-        user.getSettings().setEmail_address("test@test");
+        user.getSettings().setEmailAddress("test@test");
         user.getSettings().setPayload("test");
         user.setExpireDate(LocalDate.now());
         

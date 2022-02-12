@@ -55,9 +55,9 @@ public class DefaultUserModificationImpl implements UserModificationService {
      */
     protected static void applyPersonalSettingsDto(@Nonnull SparkyUser user, @Nonnull SettingsDto settings) {
         PersonalSettings dbSettings = user.getSettings();
-        dbSettings.setEmail_address(settings.emailAddress);
+        dbSettings.setEmailAddress(settings.emailAddress);
         dbSettings.setWantsAi(settings.wantsAi);
-        dbSettings.setEmail_receive(settings.emailReceive);
+        dbSettings.setEmailReceive(settings.emailReceive);
     }
 
     /**
@@ -68,8 +68,8 @@ public class DefaultUserModificationImpl implements UserModificationService {
      */
     protected static SettingsDto settingsAsDto(PersonalSettings settings) {
         var dto = new SettingsDto();
-        dto.emailAddress = settings.getEmail_address();
-        dto.emailReceive = settings.isEmail_receive();
+        dto.emailAddress = settings.getEmailAddress();
+        dto.emailReceive = settings.isEmailReceive();
         dto.wantsAi = settings.isWantsAi();
         return dto;
     }

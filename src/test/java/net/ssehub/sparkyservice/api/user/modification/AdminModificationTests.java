@@ -112,7 +112,7 @@ public class AdminModificationTests {
             () -> assertEquals(user.getRole(), userDto.role, "Role was not changed"),
             () -> assertEquals(user.getExpireDate().get(), userDto.expirationDate, "Exp. Date not changed"),
             () -> assertEquals(user.getFullname(), userDto.fullName, "Fullname not changed"),
-            () -> assertEquals(userSettings.getEmail_address(), dtoSettings.emailAddress, "Email not changed"),
+            () -> assertEquals(userSettings.getEmailAddress(), dtoSettings.emailAddress, "Email not changed"),
             () -> assertEquals(userSettings.getPayload(), dtoSettings.payload, "Payload not changed")
         );
     }

@@ -23,23 +23,32 @@ public class TokenDto implements Serializable {
     }
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+            
+        if (getClass() != obj.getClass()) {
             return false;
+        }
+            
         TokenDto other = (TokenDto) obj;
         if (expiration == null) {
-            if (other.expiration != null)
+            if (other.expiration != null) {
                 return false;
-        } else if (!expiration.equals(other.expiration))
+            }
+        } else if (!expiration.equals(other.expiration)) {
             return false;
+        }
         if (token == null) {
-            if (other.token != null)
+            if (other.token != null) {
                 return false;
-        } else if (!token.equals(other.token))
+            }
+        } else if (!token.equals(other.token)) {
             return false;
+        }
         return true;
     }
     

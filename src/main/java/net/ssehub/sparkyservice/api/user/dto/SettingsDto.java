@@ -37,27 +37,36 @@ public class SettingsDto {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         SettingsDto other = (SettingsDto) obj;
         if (emailAddress == null) {
-            if (other.emailAddress != null)
+            if (other.emailAddress != null) {
                 return false;
-        } else if (!emailAddress.equals(other.emailAddress))
+            }
+        } else if (!emailAddress.equals(other.emailAddress)) {
             return false;
-        if (emailReceive != other.emailReceive)
+        }
+        if (emailReceive != other.emailReceive) {
             return false;
+        }
         if (payload == null) {
-            if (other.payload != null)
+            if (other.payload != null) {
                 return false;
-        } else if (!payload.equals(other.payload))
+            }
+        } else if (!payload.equals(other.payload)) {
             return false;
-        if (wantsAi != other.wantsAi)
+        }
+        if (wantsAi != other.wantsAi) {
             return false;
+        }
         return true;
     }
     

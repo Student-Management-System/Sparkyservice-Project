@@ -86,7 +86,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
     /**
      * Constructor with necessary fields.
      * 
-     * @param userName
+     * @param nickname The nickname without realm information
      * @param passwordEntity
      * @param isActive
      * @param role
@@ -103,7 +103,8 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      * 
      * @param ident
      * @param role
-     * @param isEnabled
+     * @param isActive
+     * @param passwordEntity
      */
     private LocalUserDetails(Identity ident, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
         super(ident, role);
@@ -118,13 +119,12 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      * This type should only be used for users which aren't use any other authentication methods (realms) than a
      * {@link UserDetailsService}. Default expiration time are 6 month.
      * 
-     * @param username
-     *                    - Used name of the user (unique per realm!)
+     * @param nickname The username without realm information
      * @param rawPassword
      *                    - Plain text password (will be hashed)
      * @param role
      *                    - The users permission role
-     * @return new instance of StoredUserDetails.
+     * @return An instance of SparkyUser in the local realm.
      */
     public static @Nonnull LocalUserDetails newLocalUser(String nickname, String rawPassword, UserRole role) {
         var newUser = new LocalUserDetails(nickname, null, true, role);

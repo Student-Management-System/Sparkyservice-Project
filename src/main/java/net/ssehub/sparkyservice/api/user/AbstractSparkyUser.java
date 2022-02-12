@@ -43,7 +43,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
     /**
      * Creates a new Abstract user with mandatory information.
      * 
-     * @param username
+     * @param ident The identity of user
      * @param role
      */
     public AbstractSparkyUser(@Nonnull final Identity ident, @Nonnull final UserRole role) {
@@ -80,7 +80,11 @@ abstract class AbstractSparkyUser implements SparkyUser {
         this.expirationDate = notNull(Optional.ofNullable(expireDate));
     }
     
-    public void setExpireDate(Optional<LocalDate> expireDate) {
+    /**
+     * {@link #setExpireDate(LocalDate)}.
+     * @param expireDate
+     */
+    public void setExpireDate(@Nonnull Optional<LocalDate> expireDate) {
         this.expirationDate = expireDate;
     }
 
@@ -142,7 +146,6 @@ abstract class AbstractSparkyUser implements SparkyUser {
      * @param obj
      * @return <code>true</code> when fields of this abstract class are equal
      */
-    @SuppressWarnings("null")
     private boolean isEquals(Object obj) {
         var localSettings = settings;
         var localFullname = fullname;

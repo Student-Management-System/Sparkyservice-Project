@@ -100,15 +100,16 @@ public interface SparkyUser extends UserDetails {
     /**
      * {@inheritDoc}
      * 
-     * Is unique and contains realm information. To get the username (nickname) without realm, use {@link #getIdentity()}.
+     * Is unique and contains realm information. 
+     * To get the username (nickname) without realm, use {@link #getIdentity()}.
      */
     @Nonnull
     @Override
     String getUsername();
 
     /**
-     * Gives the identity object to distinct between realm and the nickname. 
-     * @return
+     * Can be used for user identification across multiple realms.
+     * @return  Gives the identity object to distinct between realm and the nickname. 
      */
     @Nonnull
     Identity getIdentity();

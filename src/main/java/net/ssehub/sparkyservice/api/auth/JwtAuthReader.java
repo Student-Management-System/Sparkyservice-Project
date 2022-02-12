@@ -98,7 +98,8 @@ public class JwtAuthReader {
      * @param auth - Typically extracted by an JWT token
      * @return fullIdentName
      */
-    private @Nonnull String getUserIdentifier(Authentication auth) {
+    private String getUserIdentifier(Authentication auth) {
+        // TODO check if this is possible never null and annotate this method
         return (String) auth.getPrincipal();
     }
 
@@ -106,7 +107,7 @@ public class JwtAuthReader {
      * Builds an authentication DTO with the information which can be extracted from the token. 
      * For this, a user extractor is necessary.
      * 
-     * @param extractor Service which helps to get user informations
+     * @param service Service which helps to get user informations
      * @return AuthenticationDTO with information of extracted from the jwt string
      * @throws JwtTokenReadException 
      */

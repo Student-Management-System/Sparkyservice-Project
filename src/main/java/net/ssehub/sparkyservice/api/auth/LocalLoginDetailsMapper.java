@@ -30,8 +30,8 @@
 //    private UserStorageService storageService;
 //
 //    /**
-//     * Is used by SpringSecurity for getting user details with a given username. It returns a single UserDetails without
-//     * limiting the search to a specific realm. Through this, a specific realm is always preferred (typically the realm
+//   * Is used by SpringSecurity for getting user details with a given username. It returns a single UserDetails without
+//   * limiting the search to a specific realm. Through this, a specific realm is always preferred (typically the realm
 //     * which is used for local authentication).
 //     * 
 //     * @param username

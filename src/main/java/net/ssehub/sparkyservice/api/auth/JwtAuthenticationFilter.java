@@ -34,9 +34,9 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  */
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     
-    private ObjectMapper jacksonObjectMapper;
-
     private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    private ObjectMapper jacksonObjectMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtService;
 
