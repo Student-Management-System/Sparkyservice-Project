@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.auth.exception;
 
-import net.ssehub.sparkyservice.api.auth.Identity;
+import net.ssehub.sparkyservice.api.user.Identity;
 
 /**
  * .

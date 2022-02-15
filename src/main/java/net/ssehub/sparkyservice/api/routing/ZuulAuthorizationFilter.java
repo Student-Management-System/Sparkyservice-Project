@@ -17,12 +17,12 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.auth.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
+import net.ssehub.sparkyservice.api.user.Identity;
 
 /**
  * Performant Authorization Filter for zuul routes without CRUD-operations. 
@@ -33,8 +33,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     
     public static final String PROXY_AUTH_HEADER = "Proxy-Authorization";
 
-    @Nonnull
-    private static Logger log = notNull(LoggerFactory.getLogger(ZuulAuthorizationFilter.class));
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZuulAuthorizationFilter.class);
 
     @Autowired
     private ZuulRoutes zuulRoutes;
@@ -55,16 +54,16 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
 
     @Override
     public boolean shouldFilter() {
-        log.trace("Incoming request");
+        LOGGER.trace("Incoming request");
         allowAuthorizationHeader();
         boolean contextValid = getProxyPath() != null;
         if (zuulRoutes == null || zuulRoutes.getRoutes() == null) { 
             zuulRoutes = emergencyConfLoad();
             contextValid = shouldFilter();
-            log.debug("No zuul route configuration but filter is still executed");
+            LOGGER.debug("No zuul route configuration but filter is still executed");
         }
         if (!contextValid) {
-            log.warn("Block accesss; missing information - POSSIBLE SERVER FAULT");
+            LOGGER.warn("Block accesss; missing information - POSSIBLE SERVER FAULT");
             throw new RuntimeException("Missing context informationen. Internal server error");
         }
         return contextValid;
@@ -79,14 +78,14 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      */
     // (No idea why this is necessary some times)
     private ZuulRoutes emergencyConfLoad() {
-        log.debug("Configured routes: " + zuulRoutes.getRoutes());
+        LOGGER.debug("Configured routes: " + zuulRoutes.getRoutes());
         var servletContext = RequestContext.getCurrentContext().getRequest().getServletContext();
         var webApplicationContext = WebApplicationContextUtils.getWebApplicationContext(servletContext);
         ZuulRoutes routes = webApplicationContext.getBean(ZuulRoutes.class);
         if (routes != null && routes.getRoutes() != null) {
-            log.info("Found zuul route configuration through emergency load");
+            LOGGER.info("Found zuul route configuration through emergency load");
         } else {
-            log.warn("Routing filter is executed but there is no proxy attempt (no proxy header) - Deny access");
+            LOGGER.warn("Routing filter is executed but there is no proxy attempt (no proxy header) - Deny access");
         }
         return routes;
     }
@@ -105,11 +104,11 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * 
      * @return Request path of the user
      */
-    private String getProxyPath() {
+    private static String getProxyPath() {
         var ctx = RequestContext.getCurrentContext();
         String proxyPath = (String) ctx.get(FilterConstants.PROXY_KEY);
         if (proxyPath == null) { // (No idea why this is necessary some times)
-            log.debug("Possible error: No proxy field available (trying to extract requested URI from request)");
+            LOGGER.debug("Possible error: No proxy field available (trying to extract requested URI from request)");
             proxyPath = RequestContext.getCurrentContext().getRequest().getPathInfo();
             proxyPath = AccessControlListInterpreter.removeStartSlash(proxyPath);
         }
@@ -137,12 +136,12 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * 
      * @return Request context of the request which leads to this filter invocation
      */
-    private HttpServletRequest logAndGetRequest() {
-        log.trace("Running filter");
+    private static HttpServletRequest logAndGetRequest() {
+        LOGGER.trace("Running filter");
         RequestContext ctx = RequestContext.getCurrentContext();
         HttpServletRequest request = ctx.getRequest();
-        log.debug("{} request to {}", request.getMethod(), request.getRequestURL().toString());
-        log.debug("Forward target: {} or {}", ctx.get(FilterConstants.FORWARD_TO_KEY), ctx.get("routeHost"));
+        LOGGER.debug("{} request to {}", request.getMethod(), request.getRequestURL().toString());
+        LOGGER.debug("Forward target: {} or {}", ctx.get(FilterConstants.FORWARD_TO_KEY), ctx.get("routeHost"));
         return request;
     }
     /**
@@ -157,15 +156,15 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         Optional<String> header = Optional.ofNullable(request.getHeader(PROXY_AUTH_HEADER));
         var aclInterpreter = new AccessControlListInterpreter(zuulRoutes, proxyPath);
         if (aclInterpreter.isAclEnabled()) {
-            String userIdent = header.map(token -> new JwtAuthReader(jwtService, token, log))
+            Identity user = notNull(header.map(token -> new JwtAuthReader(jwtService, token))
                 .flatMap(JwtAuthReader::getAuthenticatedUserIdent)
-                .orElseThrow(AuthenticationException::new);
-            if (!aclInterpreter.isUsernameAllowed(userIdent)) {
-                log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
-                throw new AuthorizationException(Identity.of(userIdent));
+                .orElseThrow(AuthenticationException::new));
+            if (!aclInterpreter.isAllowed(user)) {
+                LOGGER.debug("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
+                throw new AuthorizationException( user);
             }
         } else {
-            log.debug("ACL for {} is disabled - Allow all", proxyPath);
+            LOGGER.debug("ACL for {} is disabled - Allow all", proxyPath);
         }
         return null;
     }

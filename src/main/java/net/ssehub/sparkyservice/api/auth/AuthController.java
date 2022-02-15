@@ -51,7 +51,7 @@ public class AuthController {
     /**
      * This method does nothing. The method header is important to let swagger list
      * this authentication method. The authentication is handled through
-     * {@link JwtAuthenticationFilter} which listens on the same path than this
+     * {@link AuthenticationFilter} which listens on the same path than this
      * method.
      * 
      * @param credentials - Contains username and password

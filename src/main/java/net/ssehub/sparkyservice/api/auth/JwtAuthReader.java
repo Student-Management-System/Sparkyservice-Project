@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.api.auth;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -9,12 +8,14 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthTools;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
+import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
@@ -27,7 +28,7 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
 @ParametersAreNonnullByDefault
 public class JwtAuthReader {
 
-    private Optional<Logger> logger;
+    private static Logger logger = LoggerFactory.getLogger(JwtAuthReader.class);
 
     @Nonnull
     private final JwtTokenService jwtService;
@@ -45,19 +46,8 @@ public class JwtAuthReader {
     public JwtAuthReader(final JwtTokenService service, @Nullable final String authorizationHeader) {
         this.jwtService = service;
         this.authHeader = authorizationHeader;
-        logger = Optional.empty();
     }
 
-    /**
-     * Authentication reader for specific JWT token. 
-     * @param service
-     * @param jwtString
-     * @param logger Used for logging internal processes. Don't set logger when no logs wished.
-     */
-    public JwtAuthReader(final JwtTokenService service, @Nullable final String jwtString, Logger logger) {
-        this(service, jwtString);
-        this.logger = Optional.of(logger);
-    }
     /**
      * Extracts a full username from a JWT token which can be used as full identifier. <br>
      * Style: <code>user@REALM</code>
@@ -67,14 +57,14 @@ public class JwtAuthReader {
      * @return Optional username with. Optional is empty when no valid token was given (error is written to debug logger
      *         when present)
      */
-    public @Nonnull Optional<String> getAuthenticatedUserIdent() {
-        Optional<String> fullUserNameRealm;
+    public @Nonnull Optional<Identity> getAuthenticatedUserIdent() {
+        Optional<Identity> fullUserNameRealm;
         try {
             fullUserNameRealm = notNull(
-                Optional.of(getAuthentication()).map(this::getUserIdentifier)
+                Optional.of(getAuthentication()).map(this::getUsername).map(Identity::of)
             );
         } catch (JwtTokenReadException e) {
-            logger.ifPresent(log -> log.debug("Could not read JWT token: {}", e.getMessage()));
+            logger.debug("Could not read JWT token: {}", e.getMessage());
             fullUserNameRealm = notNull(Optional.empty());
         }
         return fullUserNameRealm;
@@ -98,7 +88,7 @@ public class JwtAuthReader {
      * @param auth - Typically extracted by an JWT token
      * @return fullIdentName
      */
-    private String getUserIdentifier(Authentication auth) {
+    private String getUsername(Authentication auth) {
         // TODO check if this is possible never null and annotate this method
         return (String) auth.getPrincipal();
     }

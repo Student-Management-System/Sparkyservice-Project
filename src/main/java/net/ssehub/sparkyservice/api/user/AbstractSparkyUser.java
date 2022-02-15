@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 

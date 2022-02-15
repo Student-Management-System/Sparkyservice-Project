@@ -58,8 +58,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(null, currentPath);
         assertAll(
             () -> assertFalse(interpreter.isAclEnabled(), "ACL is not configured but interpreter says it is"),
-            () -> assertTrue(interpreter.isUsernameAllowed("anything@LDAP"), "Everybody should be allowed to "
-                    + "access")
+            () -> assertTrue(interpreter.isAllowed("anything@LDAP"), "Everybody should be allowed")
         );
     }
 
@@ -75,7 +74,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, currentPath);
         assertAll(
             () -> assertFalse(interpreter.isAclEnabled(), "ACL configured with none but interpreter says it's is"),
-            () -> assertTrue(interpreter.isUsernameAllowed("anything@LDAP"), "Everybody should be allowed to "
+            () -> assertTrue(interpreter.isAllowed("anything@LDAP"), "Everybody should be allowed to "
                     + "access")
         );
     }
@@ -98,7 +97,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, currentPath);
         assertAll(
             () -> assertFalse(interpreter.isAclEnabled()),
-            () -> assertTrue(interpreter.isUsernameAllowed("all@LDAP"))
+            () -> assertTrue(interpreter.isAllowed("all@LDAP"))
         );
     }
 
@@ -115,7 +114,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, currentPath);
         assertAll(
             () -> assertFalse(interpreter.isAclEnabled()),
-            () -> assertTrue(interpreter.isUsernameAllowed("any@LDAP"))
+            () -> assertTrue(interpreter.isAllowed("any@LDAP"))
         );
     }
 
@@ -128,7 +127,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, CONFIGURED_PATH);
         assumeTrue(interpreter.isAclEnabled(), "ACL is enabled but interpreter says it's not");
 
-        assertTrue(interpreter.isUsernameAllowed("test@LOCAL"));
+        assertTrue(interpreter.isAllowed("test@LOCAL"));
     }
 
     /**
@@ -140,7 +139,7 @@ public class AccessControlListInterpreterTests {
         var interpreter = new AccessControlListInterpreter(zuulRoutes, CONFIGURED_PATH);
         assumeTrue(interpreter.isAclEnabled(), "ACL is enabled but interpreter says it's not");
 
-        assertFalse(interpreter.isUsernameAllowed("something@LDAP"), 
+        assertFalse(interpreter.isAllowed("something@LDAP"), 
                 "User is allowed to access even he's not on the allowed list");
     }
 
@@ -179,10 +178,10 @@ public class AccessControlListInterpreterTests {
         assumeTrue(interpreterOtherPath.isAclEnabled(), "ACL is enabled but interpreter says it's not");
         
         assertAll(
-            () -> assertFalse(interpreterOtherPath.isUsernameAllowed("test@LOCAL")),
-            () -> assertTrue(interpreter.isUsernameAllowed("test@LOCAL")),
-            () -> assertTrue(interpreterOtherPath.isUsernameAllowed("user@MEMORY")),
-            () -> assertFalse(interpreter.isUsernameAllowed("user@MEMORY"))
+            () -> assertFalse(interpreterOtherPath.isAllowed("test@LOCAL")),
+            () -> assertTrue(interpreter.isAllowed("test@LOCAL")),
+            () -> assertTrue(interpreterOtherPath.isAllowed("user@MEMORY")),
+            () -> assertFalse(interpreter.isAllowed("user@MEMORY"))
         );
     }
 

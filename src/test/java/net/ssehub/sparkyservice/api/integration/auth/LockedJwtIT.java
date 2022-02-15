@@ -22,7 +22,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
+import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
@@ -80,7 +80,7 @@ public class LockedJwtIT {
     }
 
     /**
-     * Tests if a locked JWT of a service account can't authorize normally via {@link JwtAuthorizationFilter}.
+     * Tests if a locked JWT of a service account can't authorize normally via {@link AuthorizationFilter}.
      * 
      * @throws Exception
      */

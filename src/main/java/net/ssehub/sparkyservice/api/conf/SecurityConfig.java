@@ -18,8 +18,8 @@ import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAu
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
-import net.ssehub.sparkyservice.api.auth.JwtAuthorizationFilter;
+import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
+import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
@@ -107,8 +107,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .and()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtService, jacksonObjectMapper))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtService))
+                .addFilter(new AuthenticationFilter(authenticationManager(), jwtService, jacksonObjectMapper))
+                .addFilter(new AuthorizationFilter(authenticationManager(), jwtService))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         fillJwtCache();

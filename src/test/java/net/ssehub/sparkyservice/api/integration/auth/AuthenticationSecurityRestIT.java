@@ -36,11 +36,11 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthController;
-import net.ssehub.sparkyservice.api.auth.Identity;
-import net.ssehub.sparkyservice.api.auth.JwtAuthenticationFilter;
+import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
+import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -144,7 +144,7 @@ public class AuthenticationSecurityRestIT {
     
     /**
      * Test for {@link AuthController#authenticate(String, String)} 
-     * (currently realized with {@link JwtAuthenticationFilter}). <br>
+     * (currently realized with {@link AuthenticationFilter}). <br>
      * Real authentication test with a given password and username. Tests if return status code is 200 (OK). <br><br>
      * 
      * In order to run this tests, the credentials must have set in test.properties.

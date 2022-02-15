@@ -27,9 +27,9 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
  * 
  * @author marcel
  */
-public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
+public class AuthorizationFilter extends BasicAuthenticationFilter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationFilter.class);
     private final JwtTokenService jwtService;
 
     /**
@@ -41,7 +41,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
      * @param authenticationManager
      * @param service Jwt service used for decoding jwt tokens
      */
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, JwtTokenService service) {
+    public AuthorizationFilter(AuthenticationManager authenticationManager, JwtTokenService service) {
         super(authenticationManager);
         this.jwtService = service;
     }

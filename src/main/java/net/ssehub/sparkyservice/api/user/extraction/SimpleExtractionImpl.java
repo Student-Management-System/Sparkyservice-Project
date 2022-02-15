@@ -18,8 +18,8 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
+import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -174,7 +174,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
     }
 
     @Nullable
-    private Password extractPassword(@Nonnull Authentication auth) {
+    private static Password extractPassword(@Nonnull Authentication auth) {
         Password pw = null;
         final var localCred = auth.getCredentials();
         if (localCred != null) {

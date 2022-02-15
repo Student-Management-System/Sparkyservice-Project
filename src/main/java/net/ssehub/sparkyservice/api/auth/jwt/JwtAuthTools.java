@@ -57,7 +57,7 @@ public class JwtAuthTools {
         var jtiString = (String) parsedToken.getBody().get("jti");
         var jti = UUID.fromString(jtiString);
         
-        if (jti != null && expiration != null && authorities != null) {
+        if (jti != null && expiration != null && authorities != null && username != null) {
             var tokenObj = new JwtToken(jti, expiration, username, authorities);
             tokenObj.setTokenPermissionRoles(authorities);
             return tokenObj;

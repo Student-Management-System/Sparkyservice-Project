@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth;
+package net.ssehub.sparkyservice.api.user;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -9,7 +9,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.springframework.security.core.Authentication;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 
 /**
  * Can be used as {@link Authentication} principal object. Holds the necessary
@@ -18,14 +17,12 @@ import net.ssehub.sparkyservice.api.user.UserRealm;
  * @author marcel
  */
 @ParametersAreNonnullByDefault
-//public record Identity(String nickname, UserRealm realm) {
 public class Identity {
     private static final String SEPERATOR = "@";
 
     private @Nonnull final String nickname;
     private @Nonnull final UserRealm realm;
 
-//    public Identity {
     /**
      * Representation of a users identity. It contains necessary information for identifying 
      * users across the whole application context. 

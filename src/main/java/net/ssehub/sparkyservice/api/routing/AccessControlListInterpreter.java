@@ -13,6 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.data.util.Lazy;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
+import net.ssehub.sparkyservice.api.user.Identity;
 
 /**
  * Interpreter for {@link ZuulRoutes}.
@@ -144,14 +145,23 @@ public class AccessControlListInterpreter {
     }
 
     /**
-     * Checks if the current username is on the permitted list.
+     * Checks if the a user is allowed to access the given route.
      * 
-     * @param currentUser
-     * @return true if the current user is configured to pass the zuul path
+     * @param user
+     * @return true if the given user has an entry on the whitelist for the configured path
      */
-    public boolean isUsernameAllowed(@Nonnull String currentUser) {
-        return !isAclEnabled() || Arrays.stream(allowedUsersForPath.get())
-            .anyMatch(currentUser::equalsIgnoreCase);
+    public boolean isAllowed(@Nonnull Identity user) {
+        return !isAclEnabled() || Arrays.stream(allowedUsersForPath.get()).map(Identity::of).anyMatch(user::equals);
+    }
+
+    /**
+     * See {@link #isAllowed(Identity)}. Used for test compatibility
+     * 
+     * @param username
+     * @return true if the given user has an entry on the whitelist for the configured path
+     */
+    boolean isAllowed(@Nonnull String username) {
+        return isAllowed(Identity.of(username));
     }
 
     /**

@@ -62,7 +62,7 @@ class LdapInformationExtractor {
      * @return The content of the attribute
      */
     @Nullable
-    private String getValue(Attribute attribute) {
+    private static String getValue(Attribute attribute) {
         String entry = null;
         try {
             if (attribute != null) {

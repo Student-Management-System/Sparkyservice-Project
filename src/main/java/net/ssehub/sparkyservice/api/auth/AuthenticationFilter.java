@@ -32,9 +32,9 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  * A Filter which handles all authentication requests and actually handles the login.
  * @author marcel
  */
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     
-    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     private ObjectMapper jacksonObjectMapper;
     private final AuthenticationManager authenticationManager;
@@ -48,7 +48,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
      * @param jwtService
      * @param springOM The JSON object mapper used by spring for the REST interfaces.
      */
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService,
+    public AuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService,
         ObjectMapper springOM) {
         
         this.authenticationManager = authenticationManager;

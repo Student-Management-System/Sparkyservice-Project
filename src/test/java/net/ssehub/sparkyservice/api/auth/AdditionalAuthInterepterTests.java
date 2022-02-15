@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.annotation.Nonnull;
@@ -16,6 +17,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
+import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
@@ -38,6 +40,8 @@ public class AdditionalAuthInterepterTests {
     private JwtRepository mockedJwtRepo;
     
     private String jwtToken; 
+    
+    private SparkyUser user;
 
     /**
      * Setup jwt settings.
@@ -53,6 +57,7 @@ public class AdditionalAuthInterepterTests {
     @BeforeEach
     public void setUpConfValues() {
         var user = UserRealm.LDAP.getUserFactory().create(USER_NAME, null, UserRole.ADMIN, true);
+        this.user = user;
         this.jwtToken = jwtTokenService.createFor(user);
     }
 
@@ -65,7 +70,7 @@ public class AdditionalAuthInterepterTests {
         var reader = new JwtAuthReader(jwtTokenService, jwtToken);
         assertAll(
             () -> assertTrue(reader.getAuthenticatedUserIdent().isPresent()),
-            () -> assertTrue((USER_NAME + "@ldap").equalsIgnoreCase(reader.getAuthenticatedUserIdent().get()))
+            () -> assertEquals(user.getIdentity(), reader.getAuthenticatedUserIdent().get())
         );
     }
 
