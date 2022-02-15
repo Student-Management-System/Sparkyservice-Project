@@ -17,9 +17,11 @@ import net.ssehub.sparkyservice.api.user.UserRole;
  */
 @Repository
 interface UserRepository extends CrudRepository<User, Integer> {
+    //CHECKSTYLE:OFF
     Optional<User> findByuserNameAndRealm(String username, UserRealm realm);
     Optional<List<User>> findByuserName(String username);
     Iterable<User> findAll();
     Iterable<User> findByRealm(UserRealm realm);
     Iterable<User> findByRole(UserRole role);
+    //CHECKSTYLE:ON
 }

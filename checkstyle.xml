@@ -139,6 +139,7 @@
       <property name="max" value="5"/>
       <property name="ignoreOverriddenMethods" value="true"/>
     </module>
+    <module name="SuppressionCommentFilter"/>
     <module name="SuppressionCommentFilter">
       <property name="offCommentFormat" value="checkstyle: stop parameter number check"/>
       <property name="onCommentFormat" value="checkstyle: resume parameter number check"/>
