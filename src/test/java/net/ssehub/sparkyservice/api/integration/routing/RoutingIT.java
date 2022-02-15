@@ -144,7 +144,7 @@ public class RoutingIT {
             .perform(
                 get(PROTECTED_ROUTE)
                 .accept(MediaType.ALL))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
     }
 
     /**

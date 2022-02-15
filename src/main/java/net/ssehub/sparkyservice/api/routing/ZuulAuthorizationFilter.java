@@ -12,24 +12,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
+import net.ssehub.sparkyservice.api.auth.Identity;
 import net.ssehub.sparkyservice.api.auth.JwtAuthReader;
+import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
-import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 
 /**
- * Authorization filter for configured zuul routes with zero overhead (and no database operations). 
+ * Performant Authorization Filter for zuul routes without CRUD-operations. 
  * 
  * @author Marcel
  */
 public class ZuulAuthorizationFilter extends ZuulFilter {
-
+    
     public static final String PROXY_AUTH_HEADER = "Proxy-Authorization";
 
     @Nonnull
@@ -44,7 +45,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
 
     @Override
     public String filterType() {
-        return "pre";
+        return FilterConstants.PRE_TYPE;
     }
 
     @Override
@@ -60,11 +61,11 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         if (zuulRoutes == null || zuulRoutes.getRoutes() == null) { 
             zuulRoutes = emergencyConfLoad();
             contextValid = shouldFilter();
-            log.debug("No zuul route configuration but filter is executed");
+            log.debug("No zuul route configuration but filter is still executed");
         }
         if (!contextValid) {
-            log.warn("Block access during missing information - POSSIBLE SERVER FAULT");
-            blockRequest(HttpStatus.INTERNAL_SERVER_ERROR);
+            log.warn("Block accesss; missing information - POSSIBLE SERVER FAULT");
+            throw new RuntimeException("Missing context informationen. Internal server error");
         }
         return contextValid;
     }
@@ -77,7 +78,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * @return Configured zuul routes from a configuration file
      */
     // (No idea why this is necessary some times)
-    public ZuulRoutes emergencyConfLoad() {
+    private ZuulRoutes emergencyConfLoad() {
         log.debug("Configured routes: " + zuulRoutes.getRoutes());
         var servletContext = RequestContext.getCurrentContext().getRequest().getServletContext();
         var webApplicationContext = WebApplicationContextUtils.getWebApplicationContext(servletContext);
@@ -104,7 +105,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * 
      * @return Request path of the user
      */
-    public String getProxyPath() {
+    private String getProxyPath() {
         var ctx = RequestContext.getCurrentContext();
         String proxyPath = (String) ctx.get(FilterConstants.PROXY_KEY);
         if (proxyPath == null) { // (No idea why this is necessary some times)
@@ -122,7 +123,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
      * @see https://stackoverflow.com/questions/36359915/
      *  authorization-header-not-passed-by-zuulproxy-starting-with-brixton-rc1
      */
-    public void allowAuthorizationHeader() {
+    private void allowAuthorizationHeader() {
         var ctx = RequestContext.getCurrentContext();
         // Alter ignored headers as per: https://gitter.im/spring-cloud/spring-cloud?at=56fea31f11ea211749c3ed22
         @SuppressWarnings("unchecked") Set<String> headers = (Set<String>) ctx.get("ignoredHeaders");
@@ -145,6 +146,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         return request;
     }
     /**
+     * {@inheritDoc}
      * Checks if the user is authorized to access the desired path. If not, the
      * request wont be forwarded.
      */
@@ -155,43 +157,17 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         Optional<String> header = Optional.ofNullable(request.getHeader(PROXY_AUTH_HEADER));
         var aclInterpreter = new AccessControlListInterpreter(zuulRoutes, proxyPath);
         if (aclInterpreter.isAclEnabled()) {
-            header.map(token -> new JwtAuthReader(jwtService, token, log))
+            String userIdent = header.map(token -> new JwtAuthReader(jwtService, token, log))
                 .flatMap(JwtAuthReader::getAuthenticatedUserIdent)
-                .filter(aclInterpreter::isUsernameAllowed)
-                .ifPresentOrElse(ident -> log.debug("Access granted to {}, user: {}", proxyPath, ident), 
-                    () ->  {
-                        log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
-                        blockRequest(HttpStatus.FORBIDDEN);
-                    }
-                );
+                .orElseThrow(AuthenticationException::new);
+            if (!aclInterpreter.isUsernameAllowed(userIdent)) {
+                log.info("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
+                throw new AuthorizationException(Identity.of(userIdent));
+            }
         } else {
             log.debug("ACL for {} is disabled - Allow all", proxyPath);
         }
         return null;
     }
 
-    /**
-     * Configure the zuul tool chain to not sending a response to the client which is
-     * equivalent to blocking the request. While doing this, it sets a proper HTTP
-     * status.
-     * 
-     * @param returnStatus - The HTTP status to set in the response
-     */
-    private void blockRequest(@Nonnull HttpStatus returnStatus) {
-        log.debug("Blocking access with status {}", returnStatus);
-        RequestContext ctx = RequestContext.getCurrentContext();
-        String message = null;
-        if (returnStatus == HttpStatus.FORBIDDEN) {
-            message = "API key not authorized for this location";
-        } else if (returnStatus == HttpStatus.UNAUTHORIZED) {
-            message = "Not authorized. Please use Proxy-Authorization header for authorization";
-        }
-        String errorJson = new ErrorDtoBuilder().newError(message, returnStatus, (String) ctx.get("proxy"))
-                .buildAsJson();
-        ctx.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
-        ctx.setResponseBody(errorJson);
-        ctx.removeRouteHost();
-        ctx.setSendZuulResponse(false);
-        ctx.setResponseStatusCode(returnStatus.value());
-    }
 }
