@@ -15,7 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +22,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,7 +56,6 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD) // clears database
 //checkstyle: stop exception type check
 public class AuthenticationSecurityRestIT {
 
@@ -218,6 +214,7 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DirtiesContext
     public void authenticationExpireTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
         user.setExpireDate(LocalDate.now().minusDays(1)); // user is expired
@@ -301,6 +298,7 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DirtiesContext
     public void jwtAuthLocalUserTest() throws Exception {
         var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
         userService.commit(user);
