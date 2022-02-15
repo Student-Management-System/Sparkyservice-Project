@@ -93,7 +93,7 @@ public class LockedJwtIT {
                 get(PROTECTED_PATH)
                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
                    .accept(MediaType.ALL))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
     }
 
 
