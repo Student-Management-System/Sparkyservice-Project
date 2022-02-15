@@ -20,12 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
-import net.ssehub.sparkyservice.api.auth.MemoryLoginDetailsService;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
-import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
-import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
+import net.ssehub.sparkyservice.api.auth.mapper.MemoryLoginDetailsService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**

@@ -8,8 +8,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
-import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtRepository;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**

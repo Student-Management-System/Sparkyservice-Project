@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth.storage;
+package net.ssehub.sparkyservice.api.auth.jwt.storage;
 
 import java.util.List;
 import java.util.Set;

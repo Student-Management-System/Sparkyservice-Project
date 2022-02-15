@@ -27,8 +27,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
-import net.ssehub.sparkyservice.api.auth.storage.JwtStorageService;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.testconf.JwtTestBeanConf;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LdapUserFactory;

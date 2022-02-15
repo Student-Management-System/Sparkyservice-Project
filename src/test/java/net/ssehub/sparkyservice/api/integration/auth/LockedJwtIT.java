@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;

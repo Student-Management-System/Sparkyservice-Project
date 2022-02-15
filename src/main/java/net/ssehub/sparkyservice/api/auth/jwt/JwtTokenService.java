@@ -22,7 +22,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
-import net.ssehub.sparkyservice.api.auth.storage.JwtCache;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;

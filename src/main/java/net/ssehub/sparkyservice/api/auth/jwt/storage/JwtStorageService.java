@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth.storage;
+package net.ssehub.sparkyservice.api.auth.jwt.storage;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -21,7 +21,7 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.util.SparkyUtil;
+import net.ssehub.sparkyservice.api.util.MiscUtil;
 
 /**
  * Provides service methods for querying a storage and deal with {@link JwtToken}.
@@ -58,7 +58,7 @@ public class JwtStorageService {
      * @return list of all stored tokens
      */
     public List<JwtToken> findAll() {
-        List<JpaJwtToken> jpaList = SparkyUtil.toList(notNull(repo.findAll()));
+        List<JpaJwtToken> jpaList = MiscUtil.toList(notNull(repo.findAll()));
         return jpaList.stream().map(JwtToken::new).collect(Collectors.toList());
     }
 

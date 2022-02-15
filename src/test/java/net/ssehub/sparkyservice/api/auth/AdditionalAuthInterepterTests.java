@@ -13,8 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.auth.storage.JwtRepository;
+import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.SparkyUser;

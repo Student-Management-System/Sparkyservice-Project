@@ -1,3 +1,4 @@
+package net.ssehub.sparkyservice.api.auth.mapper;
 //package net.ssehub.sparkyservice.api.auth;
 //
 //import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;

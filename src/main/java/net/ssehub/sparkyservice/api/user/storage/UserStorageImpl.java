@@ -24,7 +24,7 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.util.SparkyUtil;
+import net.ssehub.sparkyservice.api.util.MiscUtil;
 
 /**
  * Business logic for user database actions. 
@@ -230,7 +230,7 @@ public class UserStorageImpl implements UserStorageService {
             list = emptyList;
         }
         return notNull(
-            SparkyUtil.toList(notNull(list)).stream().map(UserStorageImpl::transformUser).collect(Collectors.toList())
+            MiscUtil.toList(notNull(list)).stream().map(UserStorageImpl::transformUser).collect(Collectors.toList())
         );
     }
     

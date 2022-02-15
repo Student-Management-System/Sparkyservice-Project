@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.annotation.DirtiesContext;
@@ -238,7 +240,7 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
-    @Disabled("CI-Servers firewal blocks access to ldap server")
+//    @Disabled("CI-Servers firewal blocks access to ldap server")
     public void storeUserAfterLdapAuthTest() throws Exception {
         var result = this.mvc
                 .perform(
@@ -312,7 +314,7 @@ public class AuthenticationSecurityRestIT {
                         .param("username", "testuser")
                         .accept(MediaType.APPLICATION_JSON))
                 .andReturn();
-        assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
+        assertEquals(200, result.getResponse().getStatus(), "Authentication not successful");
         var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
         this.mvc
             .perform(

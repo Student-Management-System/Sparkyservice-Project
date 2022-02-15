@@ -16,7 +16,7 @@ import javax.annotation.Nonnull;
  * 
  * @author marcel
  */
-public class SparkyUtil {
+public class MiscUtil {
 
     /**
      * Converts an iterable to List of the same type. 

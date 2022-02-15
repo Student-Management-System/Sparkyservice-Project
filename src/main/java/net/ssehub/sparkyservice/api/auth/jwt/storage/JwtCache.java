@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth.storage;
+package net.ssehub.sparkyservice.api.auth.jwt.storage;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
@@ -19,7 +19,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.ThreadSafe;
 
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
-import net.ssehub.sparkyservice.api.util.SparkyUtil;
+import net.ssehub.sparkyservice.api.util.MiscUtil;
 
 /**
  * Provides a thread safe cache for {@link JwtToken}.
@@ -104,7 +104,7 @@ public class JwtCache {
      * @return disbaled jits
      */
     public Set<UUID> getLockedJits() {
-        return SparkyUtil.toSet(tokenStore)
+        return MiscUtil.toSet(tokenStore)
             .stream()
             .filter(JwtToken::isLocked)
             .map(JwtToken::getJti)
@@ -133,7 +133,7 @@ public class JwtCache {
      * @return copy of currently locked token objects
      */
     public Set<JwtToken> getLockedTokenObjects() {
-        return SparkyUtil.toSet(tokenStore)
+        return MiscUtil.toSet(tokenStore)
             .stream()
             .filter(JwtToken::isLocked)
             .map(JwtToken::copy)
@@ -146,7 +146,7 @@ public class JwtCache {
      * @return Set of tokens in the cache
      */
     public Set<JwtToken> getCachedTokens() {
-        return SparkyUtil.toSet(tokenStore)
+        return MiscUtil.toSet(tokenStore)
             .stream()
             .map(JwtToken::copy)
             .collect(Collectors.toSet());

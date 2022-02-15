@@ -17,9 +17,9 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import net.ssehub.sparkyservice.api.auth.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.user.Identity;

@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth;
+package net.ssehub.sparkyservice.api.auth.jwt;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import java.util.Optional;
@@ -11,10 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 
-import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthTools;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
+import net.ssehub.sparkyservice.api.auth.AuthenticationInfoDto;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
