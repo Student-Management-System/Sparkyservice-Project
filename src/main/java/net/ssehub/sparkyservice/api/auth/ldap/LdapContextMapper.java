@@ -7,6 +7,7 @@ import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
+import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.user.LdapUser;
 import net.ssehub.sparkyservice.api.user.LdapUserFactory;
@@ -18,7 +19,8 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  * 
  * @author marcel
  */
-public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapper {
+@Service
+public final class LdapContextMapper implements UserDetailsContextMapper {
 
     /**
      * OID List.
@@ -33,7 +35,7 @@ public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapp
      * 
      * @param storageService - The used storage service used to store information after login
      */
-    public SparkyLdapUserDetailsMapper(UserStorageService storageService) {
+    public LdapContextMapper(UserStorageService storageService) {
         this.storageService = storageService;
     }
 
@@ -41,10 +43,14 @@ public final class SparkyLdapUserDetailsMapper implements UserDetailsContextMapp
     @Override
     public UserDetails mapUserFromContext(DirContextOperations ctx, String username,
             Collection<? extends GrantedAuthority> authorities) {
-        // we don't want LDAP Authroties here so we don't use them
-        var ldapUser = new LdapUserFactory().create(username, null, UserRole.DEFAULT /* maybe change later */, true);
+        /*
+         * we don't want LDAP Authorities here
+         * The following line specifies the default role all new users will have. This does not affect already existing
+         * ones.
+         */
+        var ldapUser = new LdapUserFactory().create(username, null, UserRole.DEFAULT, true);
         if (ctx != null) {
-            var ldapInfoExtractor = new LdapInformationExtractor(ctx);
+            var ldapInfoExtractor = new LdapInformationReader(ctx);
             ldapUser.setExpireDate(ldapInfoExtractor.getExpirationDate());
             ldapUser.setFullname(ldapInfoExtractor.getFullname());
             ldapUser.getSettings().setEmailAddress(ldapInfoExtractor.getEmail());

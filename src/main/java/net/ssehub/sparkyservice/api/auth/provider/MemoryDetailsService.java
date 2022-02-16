@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth.mapper;
+package net.ssehub.sparkyservice.api.auth.provider;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +19,7 @@ import net.ssehub.sparkyservice.api.util.NullHelpers;
  * @author marcel
  */
 @Service
-public class MemoryLoginDetailsService implements UserDetailsService {
+public class MemoryDetailsService implements UserDetailsService {
 
     @Value("${recovery.password:}")
     private String inMemoryPassword;

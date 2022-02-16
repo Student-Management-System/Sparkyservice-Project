@@ -16,7 +16,7 @@ import org.springframework.security.ldap.ppolicy.PasswordPolicyResponseControl;
  * 
  * @author marcel
  */
-class LdapInformationExtractor {
+class LdapInformationReader {
 
     @Nonnull
     private final DirContextOperations ldapContext;
@@ -26,7 +26,7 @@ class LdapInformationExtractor {
      * 
      * @param ldapContext - May holds information
      */
-    public LdapInformationExtractor(@Nonnull DirContextOperations ldapContext) {
+    public LdapInformationReader(@Nonnull DirContextOperations ldapContext) {
         this.ldapContext = ldapContext;
     }
 
