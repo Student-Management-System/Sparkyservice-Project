@@ -60,19 +60,6 @@ public class UnitTestDataConfiguration {
         return editUserDto;
     }
 
-    @Nonnull
-    public static JwtSettings sampleJwtConf() {
-        JwtSettings jwtConf = new JwtSettings();
-        var secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-        String secretString = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        jwtConf.setSecret(secretString);
-        jwtConf.setAudience("Y");
-        jwtConf.setHeader("Authorization");
-        jwtConf.setIssuer("TEST");
-        jwtConf.setType("Bearer");
-        return jwtConf;
-    }
-
     /**
      * .
      * @return UserStorageImpl

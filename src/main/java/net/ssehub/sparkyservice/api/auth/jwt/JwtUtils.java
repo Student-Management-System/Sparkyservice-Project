@@ -26,14 +26,14 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  * 
  * @author marcel
  */
-public class JwtAuthTools {
+class JwtUtils {
 
     public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
 
     /**
      * Disabled.
      */
-    private JwtAuthTools() {
+    private JwtUtils() {
     }
 
     /**

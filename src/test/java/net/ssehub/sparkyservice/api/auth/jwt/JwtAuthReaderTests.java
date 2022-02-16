@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.auth;
+package net.ssehub.sparkyservice.api.auth.jwt;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,14 +10,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtRepository;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -28,29 +26,23 @@ import net.ssehub.sparkyservice.api.user.UserRole;
  * @author marcel
  */
 @ExtendWith(SpringExtension.class)
-public class AdditionalAuthInterepterTests {
+@Import(JwtTestBeanConf.class)
+public class JwtAuthReaderTests {
     private static final String USER_NAME = "testuser";
     
+    @Autowired
     @Nonnull
-    private final JwtSettings confValues;
+    private JwtTokenService jwtTokenService;
 
-    @Nonnull
-    private final JwtTokenService jwtTokenService;
-
+    @Autowired
+    private JwtAuthReader reader;
+    
     @MockBean
     private JwtRepository mockedJwtRepo;
     
     private String jwtToken; 
     
     private SparkyUser user;
-
-    /**
-     * Setup jwt settings.
-     */
-    public AdditionalAuthInterepterTests() {
-        confValues = UnitTestDataConfiguration.sampleJwtConf();
-        this.jwtTokenService = new JwtTokenService(confValues);
-    }
 
     /**
      * Setup method creates a JWT token
@@ -68,17 +60,17 @@ public class AdditionalAuthInterepterTests {
     @Test
     @DisplayName("Test if token IDENT is extracted successful")
     public void positivTokenReturnTest() {
-        var reader = new JwtAuthReader(jwtTokenService, jwtToken);
         assertAll(
-            () -> assertTrue(reader.getAuthenticatedUserIdent().isPresent()),
-            () -> assertEquals(user.getIdentity(), reader.getAuthenticatedUserIdent().get())
+            () -> assertTrue(reader.getAuthenticatedUserIdent(jwtToken).isPresent()),
+            () -> assertEquals(user.getIdentity(), reader.getAuthenticatedUserIdent(jwtToken).get())
         );
     }
 
     @Test
     @DisplayName("Authentication with null as header test")
     public void nullHeaderTest() {
-        var reader = new JwtAuthReader(jwtTokenService, null);
-        assertTrue(reader.getAuthenticatedUserIdent().isEmpty(), "Actually there shouldn't be an authenticated user");
+        assertTrue(reader.getAuthenticatedUserIdent(null).isEmpty(), "There shouldn't be an authenticated user");
     }
+    
+    
 }

@@ -3,7 +3,6 @@ package net.ssehub.sparkyservice.api.auth;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -17,16 +16,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * A Filter which handles all authentication requests and actually handles the login.
@@ -38,22 +38,24 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private ObjectMapper jacksonObjectMapper;
     private final AuthenticationManager authenticationManager;
+    private final JwtAuthReader jwtReader;
     private final JwtTokenService jwtService;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
      * configuration. 
      * 
-     * @param authenticationManager
      * @param jwtService
+     * @param authenticationManager
+     * @param jwtReader
      * @param springOM The JSON object mapper used by spring for the REST interfaces.
      */
-    public AuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenService jwtService,
-        ObjectMapper springOM) {
-        
+    public AuthenticationFilter(AuthenticationManager authenticationManager, JwtAuthReader jwtReader, 
+            JwtTokenService jwtService, ObjectMapper springOM) {
+        this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
-        this.jwtService = jwtService;
+        this.jwtReader = jwtReader;
         this.jacksonObjectMapper = springOM;
     }
 
@@ -95,17 +97,11 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     @Nonnull
     private AuthenticationInfoDto createTokenAndInfo(@Nonnull SparkyUser user) {
         String jwt = jwtService.createFor(user);
-        Date expDate;
         try {
-            expDate = jwtService.readJwtToken(jwt).getExpirationDate();
+            return jwtReader.createAuthenticationInfoDto(jwt, user);
         } catch (JwtTokenReadException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Could not create Token. Maybe the server is misconfigured");
         }
-        var authDto = new AuthenticationInfoDto();
-        authDto.token.token = jwt;
-        authDto.token.expiration = DateUtil.toString(expDate);
-        authDto.user = user.ownDto();
-        return authDto;
     }
     
     /**

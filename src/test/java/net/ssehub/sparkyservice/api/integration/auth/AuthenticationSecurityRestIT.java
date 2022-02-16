@@ -304,7 +304,6 @@ public class AuthenticationSecurityRestIT {
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
-        assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var result = this.mvc
                 .perform(
                      post(ConfigurationValues.AUTH_LOGIN_URL)

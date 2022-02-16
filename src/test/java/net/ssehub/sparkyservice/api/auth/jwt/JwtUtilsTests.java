@@ -23,11 +23,11 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
- * Provides unit tests for {@link JwtAuthTools}.
+ * Provides unit tests for {@link JwtUtils}.
  * 
  * @author marcel
  */
-public class JwtAuthToolsTest {
+public class JwtUtilsTests {
 
     private JwtToken testToken; 
 
@@ -42,7 +42,6 @@ public class JwtAuthToolsTest {
         var id = new Identity("user", UserRealm.LOCAL);
         testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, id.asUsername(), UserRole.ADMIN);
     }
-
 
     /**
      * Setup {@link #confValues}. 
@@ -64,8 +63,8 @@ public class JwtAuthToolsTest {
     @Test
     @DisplayName("Test successful encoding and decoding")
     public void testEncodeTest() {
-        String jwtString = JwtAuthTools.encode(testToken, confValues);
-        assertDoesNotThrow(() -> JwtAuthTools.decodeAndExtract(jwtString, confValues.getSecret()));
+        String jwtString = JwtUtils.encode(testToken, confValues);
+        assertDoesNotThrow(() -> JwtUtils.decodeAndExtract(jwtString, confValues.getSecret()));
     }
 
     /**
@@ -73,8 +72,8 @@ public class JwtAuthToolsTest {
      */
     @Test
     public void testEncodingValuesTest() {
-        String jwtString = JwtAuthTools.encode(testToken, confValues);
-        JwtToken token = JwtAuthTools.decodeAndExtract(jwtString, confValues.getSecret());
+        String jwtString = JwtUtils.encode(testToken, confValues);
+        JwtToken token = JwtUtils.decodeAndExtract(jwtString, confValues.getSecret());
         assertAll(
             () -> assertNotNull(token.getExpirationDate()),
             () -> assertNotNull(token.getRemainingRefreshes()),

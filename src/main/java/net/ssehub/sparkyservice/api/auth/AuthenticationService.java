@@ -10,11 +10,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 
+/**
+ * Service for managing authentication infromation from users.
+ *
+ * @author marcel
+ */
 @Service
 @ParametersAreNonnullByDefault
 public class AuthenticationService {
@@ -22,12 +27,11 @@ public class AuthenticationService {
     @Nonnull
     private final UserExtractionService userExtractor;
 
-    @Nonnull
-    private final JwtTokenService jwtService;
+    private final JwtAuthReader jwtReader;
 
     @Autowired
-    public AuthenticationService(JwtTokenService jwtService, UserExtractionService userExtractor) {
-        this.jwtService = jwtService;
+    public AuthenticationService(JwtAuthReader jwtReader, UserExtractionService userExtractor) {
+        this.jwtReader = jwtReader;
         this.userExtractor = userExtractor;
     }
 
@@ -48,8 +52,8 @@ public class AuthenticationService {
      * @throws JwtTokenReadException
      */
     private void checkWrongAuthenticationStatusCause(HttpServletRequest request) throws JwtTokenReadException {
-        var jwtToken = request.getHeader(jwtService.getJwtConf().getHeader());
-        jwtService.readJwtToken(jwtToken); 
+        var jwtToken = request.getHeader(jwtReader.getJwtRequestHeader());
+        jwtReader.readJwtToken(jwtToken);
     }
 
     private AuthenticationInfoDto createAuthenticationInfoDto(Authentication auth) {
@@ -71,7 +75,7 @@ public class AuthenticationService {
      * @throws JwtTokenReadException When the token isn't valid
      */
     public AuthenticationInfoDto verifyJwtToken(String jwtString) throws JwtTokenReadException {
-        var auth = jwtService.readRefreshToAuthentication(jwtString, userExtractor);
+        var auth = jwtReader.readRefreshToAuthentication(jwtString, userExtractor);
         return createAuthenticationInfoDto(auth);
     }
 }

@@ -5,7 +5,6 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import com.netflix.zuul.context.RequestContext;
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.user.Identity;
 
@@ -39,8 +37,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     private ZuulRoutes zuulRoutes;
 
     @Autowired
-    @Nonnull
-    private JwtTokenService jwtService;
+    private JwtAuthReader jwtReader;
 
     @Override
     public String filterType() {
@@ -156,9 +153,10 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         Optional<String> header = Optional.ofNullable(request.getHeader(PROXY_AUTH_HEADER));
         var aclInterpreter = new AccessControlListInterpreter(zuulRoutes, proxyPath);
         if (aclInterpreter.isAclEnabled()) {
-            Identity user = notNull(header.map(token -> new JwtAuthReader(jwtService, token))
-                .flatMap(JwtAuthReader::getAuthenticatedUserIdent)
-                .orElseThrow(AuthenticationException::new));
+            Identity user = notNull(
+                header.flatMap(jwtReader::getAuthenticatedUserIdent)
+                    .orElseThrow(AuthenticationException::new)
+                );
             if (!aclInterpreter.isAllowed(user)) {
                 LOGGER.debug("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
                 throw new AuthorizationException( user);

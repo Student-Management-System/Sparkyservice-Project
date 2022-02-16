@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
 import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
@@ -83,6 +84,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private MemoryLoginDetailsService memoryDetailsService;
     
+    @Autowired
+    private JwtAuthReader jwtReader;
+    
     /**
      * JwtAuthenticationFilter requires ObjectMapper of REST framework, but cannot obtain it via autowiring as it is no
      * component. For this reason we obtain it here and pass it to the constrcutor.
@@ -92,7 +96,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private ObjectMapper jacksonObjectMapper;
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception {        
+    protected void configure(HttpSecurity http) throws Exception {       
+        var authenticationFilter = new AuthenticationFilter(authenticationManager(), jwtReader, jwtService, 
+                jacksonObjectMapper);
+        var authorizationFilter = new AuthorizationFilter(authenticationManager(), jwtReader);
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
@@ -107,8 +114,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), jwtService, jacksonObjectMapper))
-                .addFilter(new AuthorizationFilter(authenticationManager(), jwtService))
+                .addFilter(authenticationFilter)
+                .addFilter(authorizationFilter)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         fillJwtCache();

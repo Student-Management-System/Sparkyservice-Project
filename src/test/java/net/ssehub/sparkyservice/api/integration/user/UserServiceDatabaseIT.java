@@ -17,10 +17,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtTestStorageBeanConf;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
-import net.ssehub.sparkyservice.api.testconf.JwtTestBeanConf;
 import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
 import net.ssehub.sparkyservice.api.user.LocalUserFactory;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -37,7 +38,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @ContextConfiguration(
-    classes = { UnitTestDataConfiguration.class, JwtTestBeanConf.class, UserServiceDatabaseIT.BeanConf.class }
+    classes = { UnitTestDataConfiguration.class, JwtTestStorageBeanConf.class, UserServiceDatabaseIT.BeanConf.class }
 )
 @EnableJpaRepositories("net.ssehub.sparkyservice.api")
 public class UserServiceDatabaseIT {
@@ -63,6 +64,9 @@ public class UserServiceDatabaseIT {
 
     @Autowired
     private JwtTokenService jwtService;
+    
+    @Autowired
+    private JwtAuthReader authReader;
 
     @Autowired
     private UserService userService;
@@ -80,7 +84,8 @@ public class UserServiceDatabaseIT {
         editDto.role = UserRole.ADMIN;
         SparkyUser user = new LocalUserFactory().create(NICK_NAME, new Password(NEW_PASSWORD), editDto.role, true);
         storageService.commit(user);
-        Authentication authContext = jwtService.readToAuthentication(jwtService.createFor(user));
+        
+        Authentication authContext = authReader.readToAuthentication(jwtService.createFor(user));
 
         String newFullname = "SOMETHING ELSE THAN BEFORE";
         editDto.fullName = newFullname;

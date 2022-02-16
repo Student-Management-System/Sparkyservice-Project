@@ -17,9 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
-import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthTools;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 
 /**
@@ -30,7 +29,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 public class AuthorizationFilter extends BasicAuthenticationFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationFilter.class);
-    private final JwtTokenService jwtService;
+    private final JwtAuthReader jwtReader;
 
     /**
      * JWT Authorization filter for paths which are configured in the authentication manager. 
@@ -39,11 +38,11 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
      * authentication object. 
      * 
      * @param authenticationManager
-     * @param service Jwt service used for decoding jwt tokens
+     * @param jwtReader
      */
-    public AuthorizationFilter(AuthenticationManager authenticationManager, JwtTokenService service) {
+    public AuthorizationFilter(AuthenticationManager authenticationManager, JwtAuthReader jwtReader) {
         super(authenticationManager);
-        this.jwtService = service;
+        this.jwtReader = jwtReader;
     }
 
     @Override
@@ -66,10 +65,8 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
      * @return Token object with the values of the JWT token
      */
     private @Nullable Authentication getAuthentication(HttpServletRequest request) {
-        String header = jwtService.getJwtConf().getHeader();
-        var jwt = request.getHeader(header);
-        Optional<Authentication> optTokenObj = Optional.ofNullable(jwt)
-            .map(this::getAuthenticationFromJwt);
+        var jwt = request.getHeader(jwtReader.getJwtRequestHeader());
+        Optional<Authentication> optTokenObj = Optional.ofNullable(jwt).map(this::getAuthentication);
         optTokenObj.ifPresentOrElse(
             token -> LOG.debug("Successful authorization of: {}", token.getName()),
             () -> LOG.info("Denied access to token: {}", jwt)
@@ -81,12 +78,12 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
      * Get information from JWT token. 
      * 
      * @param jwt
-     * @return Token with content described at {@link JwtAuthTools#readJwtToken(String, String)}
+     * @return Token with content described at {@link JwtUtils#readJwtToken(String, String)}
      */
-    private Authentication getAuthenticationFromJwt(@Nonnull String jwt) {
+    private Authentication getAuthentication(@Nonnull String jwt) {
         Authentication authentication = null;
         try {
-            authentication = jwtService.readToAuthentication(jwt);
+            authentication = this.jwtReader.getAuthentication(jwt);
         } catch (JwtTokenReadException e1) {
             LOG.debug("Non valid JWT Token was provided for authorization: {}", jwt);
         }
