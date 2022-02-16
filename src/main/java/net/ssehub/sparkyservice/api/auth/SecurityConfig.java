@@ -1,4 +1,4 @@
-package net.ssehub.sparkyservice.api.conf;
+package net.ssehub.sparkyservice.api.auth;
 
 import java.util.List;
 
@@ -18,16 +18,15 @@ import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAu
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
-import net.ssehub.sparkyservice.api.auth.AuthorizationFilter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
-import net.ssehub.sparkyservice.api.auth.ldap.SparkyLdapUserDetailsMapper;
-import net.ssehub.sparkyservice.api.auth.mapper.MemoryLoginDetailsService;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.auth.ldap.LdapContextMapper;
+import net.ssehub.sparkyservice.api.auth.provider.LocalDbDetailsMapper;
+import net.ssehub.sparkyservice.api.auth.provider.MemoryDetailsService;
+import net.ssehub.sparkyservice.api.conf.ControllerPath;
 
 /**
  * Springs security configuration loaded at startup.
@@ -73,7 +72,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private String inMemoryUser;
     
     @Autowired
-    private UserStorageService storageService;
+    private LdapContextMapper ldapContextMapper;
     
     @Autowired
     private JwtTokenService jwtService;
@@ -82,10 +81,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtStorageService jwtStorageService;
 
     @Autowired
-    private MemoryLoginDetailsService memoryDetailsService;
+    private MemoryDetailsService memoryDetailsService;
     
     @Autowired
     private JwtAuthReader jwtReader;
+    
+    @Autowired
+    private LocalDbDetailsMapper localDetailsMapper;
     
     /**
      * JwtAuthenticationFilter requires ObjectMapper of REST framework, but cannot obtain it via autowiring as it is no
@@ -139,6 +141,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
         configureInMemory(auth);
+        auth.userDetailsService(localDetailsMapper);
         configureLdap(auth);
     }
 
@@ -164,13 +167,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      */
     public void configureLdap(AuthenticationManagerBuilder auth) throws Exception {
         if (ldapEnabled) {
-            var ldapMapper = new SparkyLdapUserDetailsMapper(storageService);
             if (ldapAd) {
                 ActiveDirectoryLdapAuthenticationProvider adProvider = 
                         new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
                 adProvider.setConvertSubErrorCodesToExceptions(true);
                 adProvider.setUseAuthenticationRequestCredentials(true);
-                adProvider.setUserDetailsContextMapper(ldapMapper);
+                adProvider.setUserDetailsContextMapper(ldapContextMapper);
                 if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
                     adProvider.setSearchFilter(ldapUserDnPattern);
                 }
@@ -184,7 +186,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .managerPassword(ldapPrincipalPassword)
                     .and()
                     .userDnPatterns(ldapUserDnPattern)
-                    .userDetailsContextMapper(ldapMapper);
+                    .userDetailsContextMapper(ldapContextMapper);
             }
         }
     }
