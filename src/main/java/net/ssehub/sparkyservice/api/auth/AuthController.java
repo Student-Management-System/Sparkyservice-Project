@@ -139,7 +139,7 @@ public class AuthController {
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({ Exception.class })
     public ErrorDto handleException(Exception  ex) {
-        LOG.warn("Unexcepted exception was thrown" + ex.getMessage() + "on path: " + servletContext.getContextPath() );
+        LOG.warn("Unexcepted exception was thrown on path: " + servletContext.getContextPath(), ex);
         return new ErrorDtoBuilder()
                 .newError(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, "")
                 .build();

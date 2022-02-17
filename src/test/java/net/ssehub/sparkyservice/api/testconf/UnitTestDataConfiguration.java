@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.api.testconf;
 
 import java.time.LocalDate;
-import java.util.Base64;
 
 import javax.annotation.Nonnull;
 
@@ -9,9 +8,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.UserRealm;

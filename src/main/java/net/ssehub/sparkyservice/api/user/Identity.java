@@ -56,7 +56,10 @@ public class Identity {
      * @return Identity representationof the given username
      */
     @Nonnull
-    public static Identity of(String username) {
+    public static Identity of(@Nullable String username) {
+        if (username == null) {
+            throw new IllegalArgumentException("Null is not an identity");
+        }
         var content = username.split(SEPERATOR);
         if (content.length != 2) {
             throw new IllegalArgumentException("Not a valid username. Missing user or realm.");

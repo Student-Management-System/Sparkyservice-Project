@@ -64,7 +64,7 @@ public class AuthenticationService {
 
     public AuthenticationInfoDto extractAuthenticationInfoDto(Authentication auth) {
         // TODO merge this method - it is a possible duplicate
-        var user = extractionService.extract(auth); // TODO check what happens here
+        var user = extractionService.extract(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = user.ownDto();
         if (auth.getCredentials() instanceof TokenDto) {

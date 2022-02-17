@@ -157,7 +157,7 @@ public class UserStorageImpl implements UserStorageService {
             .flatMap(name -> repository.findByuserNameAndRealm(name, realm))
             .map(UserStorageImpl::transformUser)
             .orElseThrow(
-                () -> new UserNotFoundException(username + "@" + realm + " not found in storage.")));
+                () -> new UserNotFoundException(username + "@" + realm + " not found in storage")));
     } 
 
     /**

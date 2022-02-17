@@ -45,7 +45,7 @@ public class SetAuthenticationFilter extends BasicAuthenticationFilter {
             filterChain.doFilter(request, response);            
         } catch (Exception e) {
             // dont log verbose here! Don't make custom exception handling. This filter is called every request.
-            LOG.debug("{} could not authentication with JWT on request", request.getRequestURI());
+            LOG.debug(request.getRequestURI() + " could not authentication with JWT on request", e);
             filterChain.doFilter(request, response);
         }
     }
