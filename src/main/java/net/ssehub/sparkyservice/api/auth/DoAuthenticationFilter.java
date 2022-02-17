@@ -16,7 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -32,14 +32,15 @@ import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
  * A Filter which handles all authentication requests and actually handles the login.
  * @author marcel
  */
-public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+public class DoAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     
-    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DoAuthenticationFilter.class);
 
-    private ObjectMapper jacksonObjectMapper;
+    private final ObjectMapper jacksonObjectMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtAuthReader jwtReader;
     private final JwtTokenService jwtService;
+    private final HandlerExceptionResolver resolver;
 
     /**
      * Constructor for the general Authentication filter. In most cases filters are set in the spring security 
@@ -50,12 +51,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
      * @param jwtReader
      * @param springOM The JSON object mapper used by spring for the REST interfaces.
      */
-    public AuthenticationFilter(AuthenticationManager authenticationManager, JwtAuthReader jwtReader, 
-            JwtTokenService jwtService, ObjectMapper springOM) {
+    public DoAuthenticationFilter(AuthenticationManager authenticationManager, JwtAuthReader jwtReader, 
+            JwtTokenService jwtService, ObjectMapper springOM, HandlerExceptionResolver resolver) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         setFilterProcessesUrl(ConfigurationValues.AUTH_LOGIN_URL);
         this.jwtReader = jwtReader;
+        this.resolver = resolver;
         this.jacksonObjectMapper = springOM;
     }
 
@@ -69,6 +71,21 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         assertSparkyUser(authentication);
         return authentication;
     }
+    
+    /**
+     * Technically it could happen that an administrator configures spring to not return a supported implementation.
+     * This is a check at runtime for this.
+     * 
+     * @param auth - Current authentication object where the principal is checked
+     */
+    private static void assertSparkyUser(Authentication auth) {
+        Optional.of(auth)
+            .map(a -> a.getPrincipal())
+            .filter(SparkyUser.class::isInstance)
+            .map(SparkyUser.class::cast)
+            .orElseThrow(() -> new RuntimeException("Spring authentication didn't provide a "
+                    + "valid authentication object after authentication."));
+    }
 
     /**
      * {@inheritDoc}.
@@ -78,24 +95,26 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain, Authentication authentication) {
-
-        LOG.info("Successful authentication with JWT: {}@", authentication.getName());
-        Optional.of(authentication)
-            .map(a -> a.getPrincipal())
-            .map(SparkyUser.class::cast)
-            .map(this::createTokenAndInfo)
-            .ifPresent(dto -> setResponseValue(notNull(response), notNull(dto)));
+        LOG.info("Successful authentication: {}", authentication.getName());
+        try {
+            var user = notNull(Optional.of((SparkyUser) authentication.getPrincipal()).orElseThrow());
+            var dto = createToken(user);
+            setResponseValue(notNull(response), dto);
+        } catch (Exception e) {
+            LOG.error("Could not complete authentication request (authentication attempt was successful)", e);
+            resolver.resolveException(request, response, null, e);
+        }
     }
 
     /**
-     * Creates an DTO which holds all information of the user the given (authenticated) user and generates an JWT
+     * Creates an DTO which holds all information (authenticated) user and generates an JWT
      * token for this user. The generated token can be used for authorization. 
      * 
      * @param user
      * @return DTO with user information and generated JWT token
      */
     @Nonnull
-    private AuthenticationInfoDto createTokenAndInfo(@Nonnull SparkyUser user) {
+    private AuthenticationInfoDto createToken(@Nonnull SparkyUser user) {
         String jwt = jwtService.createFor(user);
         try {
             return jwtReader.createAuthenticationInfoDto(jwt, user);
@@ -125,28 +144,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     /**
-     * Technically it could happen that an administrator configures spring to not return a supported implementation.
-     * This is a check at runtime for this.
-     * 
-     * @param auth - Current authentication object where the principal is checked
-     */
-    private static void assertSparkyUser(Authentication auth) {
-        Optional.of(auth)
-            .map(a -> a.getPrincipal())
-            .filter(SparkyUser.class::isInstance)
-            .map(SparkyUser.class::cast)
-            .orElseThrow(() -> new RuntimeException("Spring authentication didn't provide a "
-                    + "valid authentication object after authentication."));
-    }
-
-    /**
      * Method reads the {@link CredentialsDto} from a given request and transform
      * them into a AuthenticationToken.
      * 
      * @param request
      * @return contains the username and password used for authentication
      */
-    public static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(
+    private static @Nonnull UsernamePasswordAuthenticationToken extractCredentialsFromHttpRequest(
             HttpServletRequest request) {
         String username = request.getParameter("username");
         String password = request.getParameter("password");

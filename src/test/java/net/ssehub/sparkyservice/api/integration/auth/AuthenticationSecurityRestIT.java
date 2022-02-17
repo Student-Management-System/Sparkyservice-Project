@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +36,7 @@ import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthController;
-import net.ssehub.sparkyservice.api.auth.AuthenticationFilter;
+import net.ssehub.sparkyservice.api.auth.DoAuthenticationFilter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
@@ -142,7 +143,7 @@ public class AuthenticationSecurityRestIT {
     
     /**
      * Test for {@link AuthController#authenticate(String, String)} 
-     * (currently realized with {@link AuthenticationFilter}). <br>
+     * (currently realized with {@link DoAuthenticationFilter}). <br>
      * Real authentication test with a given password and username. Tests if return status code is 200 (OK). <br><br>
      * 
      * In order to run this tests, the credentials must have set in test.properties.
@@ -263,7 +264,7 @@ public class AuthenticationSecurityRestIT {
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .accept(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
     }
     
     /**
@@ -373,6 +374,7 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DisplayName("Test if a memory users JWT can be verified through controller method")
     public void jwtVerifyTest() throws Exception {
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
         var dto = new CredentialsDto();

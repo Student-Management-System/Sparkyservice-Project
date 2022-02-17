@@ -24,8 +24,6 @@ import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
@@ -74,7 +72,7 @@ public class JwtAuthReader {
         Optional<Identity> fullUserNameRealm;
         try {
             fullUserNameRealm = notNull(
-                Optional.of(getAuthentication(jwt)).map(this::getUsername).map(Identity::of)
+                Optional.of(readToAuthentication(jwt)).map(this::getUsername).map(Identity::of)
             );
         } catch (JwtTokenReadException e) {
             log.debug("Could not read JWT token: {}", e.getMessage());
@@ -137,18 +135,6 @@ public class JwtAuthReader {
         throw new JwtTokenReadException("Illegal access. User does not match with JWT subject"); // TODO write tests
     }
     
-
-    /**
-     * Returns the token object with information of JWT token.
-     * 
-     * @param jwt
-     * @return information defined by {@link JwtUtils#readJwtToken(String, String)}.
-     * @throws JwtTokenReadException
-     */
-    public Authentication getAuthentication(@Nullable String jwt) throws JwtTokenReadException {
-        return readToAuthentication(jwt);
-    }
-    
     /**
      * Reads information out of the given JWT token to an authentication object. <br>
      * The returned authentication contains:<br>
@@ -163,7 +149,7 @@ public class JwtAuthReader {
      * @return Springs authentication token
      */
     @Nonnull
-    public UsernamePasswordAuthenticationToken readToAuthentication(@Nullable String jwtString) 
+    public Authentication readToAuthentication(@Nullable String jwtString) 
             throws JwtTokenReadException {
         JwtToken tokenObj = readJwtToken(jwtString);
         var tokenDto = new TokenDto();
@@ -186,7 +172,7 @@ public class JwtAuthReader {
     public JwtToken readJwtToken(@Nullable String jwtString) throws JwtTokenReadException {
         try {
             if (jwtString == null) {
-                throw new IllegalArgumentException("Couldn't decode JWT Token with given information");
+                throw new IllegalArgumentException("Decode of null token not possible");
             } else {
                 JwtToken tokenObj = JwtUtils.decodeAndExtract(jwtString, jwtSecret);
                 if (jwtService.isJitNonLocked(tokenObj.getJti())) {
@@ -213,43 +199,13 @@ public class JwtAuthReader {
             throw new JwtTokenReadException(exception.getMessage());
         }
     }
-    
-    /**
-     * Reads information out of the given JWT token and tries to refreshes them with information from a storage
-     * to make sure the given information are valid.
-     * The returned authentication contains:<br>
-     * 
-     * <ul>
-     * <li>{@link Authentication#getPrincipal()} => {@link SparkyUser}</li>
-     * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
-     * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
-     * </ul>
-     * 
-     * @param jwtString - JWT token as string
-     * @param service - Transformer which should be used for completing information from a storage
-     * @throws JwtTokenReadException
-     * @return Springs authentication token
-     */
-    @Nonnull
-    public Authentication readRefreshToAuthentication(@Nullable String jwtString, UserExtractionService service) 
-            throws JwtTokenReadException {
-        var authenticationObject = readToAuthentication(jwtString);
-        try {
-            var user = service.extractAndRefresh(authenticationObject);
-            authenticationObject = new UsernamePasswordAuthenticationToken(
-                user, authenticationObject.getCredentials(), user.getAuthorities()
-            );
-        } catch (UserNotFoundException e) {
-            log.debug("No storage refresh operation after reading a JWT token: {}", e.getMessage()); 
-        }
-        return authenticationObject;
-    }
-    
+
     /**
      * The header name where the JWT can be found in the request.
      * 
      * @return .
      */
+    // TODO maybe remove --> try to only use at a point
     public String getJwtRequestHeader() {
         return this.jwtHeader;
     }

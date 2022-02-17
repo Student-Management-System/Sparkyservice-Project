@@ -3,9 +3,11 @@ package net.ssehub.sparkyservice.api.auth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -15,6 +17,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -89,6 +93,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private LocalDbDetailsMapper localDetailsMapper;
     
+    @Autowired
+    private AuthenticationService authService;
+    
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver resolver;
+    
     /**
      * JwtAuthenticationFilter requires ObjectMapper of REST framework, but cannot obtain it via autowiring as it is no
      * component. For this reason we obtain it here and pass it to the constrcutor.
@@ -99,17 +110,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {       
-        var authenticationFilter = new AuthenticationFilter(authenticationManager(), jwtReader, jwtService, 
-                jacksonObjectMapper);
-        var authorizationFilter = new AuthorizationFilter(authenticationManager(), jwtReader);
+        var authenticationFilter = new DoAuthenticationFilter(authenticationManager(), jwtReader, jwtService, 
+                jacksonObjectMapper, resolver);
+        var authorizationFilter = new SetAuthenticationFilter(authenticationManager(), authService);
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
-            /*
-             * Any other path except own api are allowed by other micro services. 
-             * They are probably supervised by Zuul.
-             */
-            //.antMatchers("/**").hasAnyRole(UserRole.SERVICE.name(), UserRole.ADMIN.name())
             .antMatchers(ControllerPath.SWAGGER).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_AUTH).permitAll()
             .antMatchers(ControllerPath.AUTHENTICATION_VERIFY).permitAll()
@@ -120,6 +126,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(authorizationFilter)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
         fillJwtCache();
     }
 

@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -25,7 +27,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
@@ -42,16 +43,19 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 @RestController
 @Tag(name = "auth-controller", description = "Controller for realm authentication with JWT")
 public class AuthController {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(SetAuthenticationFilter.class);
 
     @Autowired
-    private ServletContext servletContext;
-    @Autowired
     private AuthenticationService authService;
+    
+    @Autowired
+    private ServletContext servletContext;
 
     /**
      * This method does nothing. The method header is important to let swagger list
      * this authentication method. The authentication is handled through
-     * {@link AuthenticationFilter} which listens on the same path than this
+     * {@link DoAuthenticationFilter} which listens on the same path than this
      * method.
      * 
      * @param credentials - Contains username and password
@@ -126,30 +130,18 @@ public class AuthController {
     /**
      * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
      * on the thrown exception.
-     * 
-     * @param ex - Can be  AccessViolationException.class, MissingDataException.class, UserNotFoundException.class 
-     * @return Informational ErrorDto which is comparable with the  default Spring Error Text
-     */
-    @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    @ExceptionHandler({ AuthenticationException.class, MissingDataException.class, UserNotFoundException.class, 
-        JwtTokenReadException.class })
-    public ErrorDto handleUserEditException(Exception ex) {
-        return new ErrorDtoBuilder().newUnauthorizedError(ex.getMessage(), servletContext.getContextPath()).build();
-    }
-
-    /**
-     * Exception and Error handler for this Controller Class. It produces a new informational ErrorDto based
-     * on the thrown exception.
      * This method catches any exception which is not already catched by another handler method. 
      * This avoids leaking internal error messages to the user. 
      * 
-     * @param ex - Any excetpion.
+     * @param ex
      * @return Informational ErrorDto which is comparable with the  default Spring Error Text
      */
     @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler({ Exception.class })
     public ErrorDto handleException(Exception  ex) {
-        // TODO build log
-        return new ErrorDtoBuilder().newUnauthorizedError(null, servletContext.getContextPath()).build();
+        LOG.warn("Unexcepted exception was thrown" + ex.getMessage() + "on path: " + servletContext.getContextPath() );
+        return new ErrorDtoBuilder()
+                .newError(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, "")
+                .build();
     }
 }

@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -14,6 +16,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Service for managing authentication infromation from users.
@@ -25,14 +28,17 @@ import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 public class AuthenticationService {
 
     @Nonnull
-    private final UserExtractionService userExtractor;
+    private final UserStorageService userStorage;
 
     private final JwtAuthReader jwtReader;
 
+    private final UserExtractionService extractionService;
+    
     @Autowired
-    public AuthenticationService(JwtAuthReader jwtReader, UserExtractionService userExtractor) {
+    public AuthenticationService(JwtAuthReader jwtReader, UserStorageService userStorage, UserExtractionService extractionService) {
         this.jwtReader = jwtReader;
-        this.userExtractor = userExtractor;
+        this.extractionService = extractionService;
+        this.userStorage = userStorage;
     }
 
     public AuthenticationInfoDto checkAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request) 
@@ -41,7 +47,7 @@ public class AuthenticationService {
             checkWrongAuthenticationStatusCause(request);
             throw new AuthenticationException();
         } else {
-            return createAuthenticationInfoDto(auth);
+            return extractAuthenticationInfoDto(auth);
         }
     }
 
@@ -56,9 +62,9 @@ public class AuthenticationService {
         jwtReader.readJwtToken(jwtToken);
     }
 
-    private AuthenticationInfoDto createAuthenticationInfoDto(Authentication auth) {
+    public AuthenticationInfoDto extractAuthenticationInfoDto(Authentication auth) {
         // TODO merge this method - it is a possible duplicate
-        var user = userExtractor.extract(auth);
+        var user = extractionService.extract(auth); // TODO check what happens here
         var dto = new AuthenticationInfoDto();
         dto.user = user.ownDto();
         if (auth.getCredentials() instanceof TokenDto) {
@@ -66,7 +72,33 @@ public class AuthenticationService {
         }
         return dto;
     }
+    
+    /**
+     * Creates an DTO which holds all information of the user the given (authenticated) user and generates an JWT
+     * token for this user. The generated token can be used for authorization. 
+     * 
+     * @param user
+     * @return DTO with user information and generated JWT token
+     */
+    
 
+    /**
+     * Creates an authentication token for spring with an JWT token which it extracts from the request.
+     * 
+     * @param request
+     * @return Token object with the values of the JWT token
+     */
+    @Nonnull
+    public  Authentication extractAuthentication(HttpServletRequest request) {
+        var jwt = Optional.ofNullable(request.getHeader("Proxy-Authorization"))
+                .orElse(request.getHeader("Authorization"));
+        try {
+            return jwtReader.readToAuthentication(jwt);
+        } catch (JwtTokenReadException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+    
     /**
      * Verifies the status of a token.
      * 
@@ -75,7 +107,6 @@ public class AuthenticationService {
      * @throws JwtTokenReadException When the token isn't valid
      */
     public AuthenticationInfoDto verifyJwtToken(String jwtString) throws JwtTokenReadException {
-        var auth = jwtReader.readRefreshToAuthentication(jwtString, userExtractor);
-        return createAuthenticationInfoDto(auth);
+        return jwtReader.createAuthenticationInfoDto(jwtString, userStorage);
     }
 }
