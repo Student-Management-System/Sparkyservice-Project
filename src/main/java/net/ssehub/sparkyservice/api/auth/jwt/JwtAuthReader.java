@@ -20,10 +20,13 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import net.ssehub.sparkyservice.api.auth.AuthenticationInfoDto;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
 
@@ -105,7 +108,7 @@ public class JwtAuthReader {
     public @Nonnull AuthenticationInfoDto createAuthenticationInfoDto(String jwt, UserStorageService service) 
             throws JwtTokenReadException {
         JwtToken tokenObj = readJwtToken(jwt);
-        SparkyUser user = service.findUser(tokenObj.getSubject());
+        SparkyUser user = userFrom(tokenObj, service);
         var authDto = new AuthenticationInfoDto();
         authDto.user = user.ownDto();
         authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());
@@ -208,6 +211,28 @@ public class JwtAuthReader {
     // TODO maybe remove --> try to only use at a point
     public String getJwtRequestHeader() {
         return this.jwtHeader;
+    }
+    
+    private SparkyUser userFrom(JwtToken token, UserStorageService service) {
+        var password = new Password("", "UNKWN");
+        var ident = Identity.of(token.getSubject());
+        SparkyUser user;
+        try {
+            user = service.findUser(ident);
+        } catch (UserNotFoundException e) {
+            if (ident.realm() == UserRealm.MEMORY) {
+                var perms = token.getTokenPermissionRoles().toArray(UserRole[]::new);
+                if (perms.length != 1) {
+                    throw new UnsupportedOperationException("Currently only one"
+                            + " permission role per token is supported");
+                }
+                user = UserRealm.MEMORY.getUserFactory()
+                    .create(token.getSubject(), password, perms[0], !token.isLocked());
+            } else {
+                throw e;
+            }
+        }
+        return user;
     }
 
 }

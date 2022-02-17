@@ -10,22 +10,14 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Simple user transformer which does the necessary work. Tries to make a compromise between performance
@@ -35,9 +27,6 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  */
 @Service
 public class SimpleExtractionImpl implements UserExtractionService {
-
-    @Autowired
-    private UserStorageService storageService;
 
     /**
      * Get a role from a GrantedAuthority. Only a single authority is used (the first one). 
@@ -52,93 +41,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
         return UserRole.getEnum(authList[0]);
     }
 
-    @Override
-    @Nonnull
-    public SparkyUser extractAndRefresh(@Nullable UserDetails details) throws UserNotFoundException {
-        SparkyUser user;
-        if (details == null) {
-            throw new UserNotFoundException("Cant find null user");
-        } else if (details instanceof SparkyUser) {
-            user = (SparkyUser) details;
-        } else if (details instanceof User) { // mocked Spring user - always memory
-            // TODO
-            var springUser = (User) details;
-            user = notNull(transfromSpringUser(springUser).orElseThrow());
-        } else {
-            throw new UnsupportedOperationException("Unkown user type");
-        }
-        return user;
-    }
-
-    private static Optional<SparkyUser> transfromSpringUser(User details) {
-        Optional<SparkyUser> optUser = Optional.empty();
-        String passwordString = details.getPassword();
-        if (passwordString != null) {
-            var password = new Password(passwordString, "UNKWN");
-            optUser = Optional.of(
-                UserRealm.MEMORY.getUserFactory()
-                    .create(details.getUsername(), password, getRole(details.getAuthorities()) , details.isEnabled())
-            );
-        }
-        return optUser;
-    }
-
-    @Override
-    @Nonnull
-    // TODO weg?
-    public SparkyUser extendAndRefresh(@Nullable AuthenticatedPrincipal principal) throws UserNotFoundException {
-        if (principal == null) {
-            throw new UserNotFoundException("Principal was null");
-        }
-        return storageService.findUser(principal.getName());
-    }
-
-    @Override
-    @Nonnull
-    public SparkyUser extractAndRefresh(@Nullable Authentication auth) throws MissingDataException {
-        Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow(MissingDataException::new);
-        return notNull(
-            fromUserDetails(principal)
-                .or(() -> fromAuthenticationPrincipal(principal))
-                .or(() -> Optional.of(extract(auth)))
-                .orElseThrow(() -> new UnsupportedOperationException("Not supported to extend from this auth"))
-        );
-    }
-
-    private Optional<SparkyUser> fromUserDetails(Object obj) {
-        Optional<SparkyUser> user; 
-        try {
-            user = Optional.ofNullable(obj)
-                .filter(p -> UserDetails.class.isAssignableFrom(p.getClass()))
-                .map(UserDetails.class::cast)
-                .map(this::extractAndRefresh);
-        } catch (UserNotFoundException e) {
-            user = Optional.empty();
-        }
-        return user;
-    }
-
-    // TODO weg
-    private Optional<SparkyUser> fromAuthenticationPrincipal(Object obj) {
-        Optional<SparkyUser> user;
-        try {
-            user = Optional.of(storageService.findUser((String) obj));
-        } catch (UserNotFoundException e) {
-            user = Optional.empty();
-        }
-        return user;
-    }
-
-    @Override
-    @Nonnull
-    public SparkyUser extractAndRefresh(@Nullable UserDto user) throws MissingDataException {
-        if (user == null) {
-            throw new MissingDataException("UserDto was null");
-        }
-        return storageService.findUser(user.username);
-    }
-
-    /**
+    /*
      * Creates a SparkyUser without looking in the database for additional information. Is not suitable 
      * for editing purposes. Get a fresh copy from a storage in that case.
      */
@@ -146,10 +49,11 @@ public class SimpleExtractionImpl implements UserExtractionService {
     @Nonnull
     public SparkyUser extract(@Nullable Authentication auth) {
         try {
-            Object principal = Optional.ofNullable(auth).map(a -> a.getPrincipal()).orElseThrow();
+            if (auth == null) {
+                throw new NoSuchElementException();
+            }
             return notNull(
-                fromUserDetails(principal)
-                    .or(() -> tryExtractInformation(notNull(auth)))
+                    tryExtractInformation(auth)
                     .orElseThrow()
             );
         } catch (NoSuchElementException e) {
@@ -164,7 +68,7 @@ public class SimpleExtractionImpl implements UserExtractionService {
      * @return User with information present from the authentication object
      * @throws MissingDataException When the principal is not an {@link SparkysAuthPrincipal}
      */
-    private Optional<SparkyUser> tryExtractInformation(@Nonnull Authentication auth) {
+    private static Optional<SparkyUser> tryExtractInformation(@Nonnull Authentication auth) {
         String username = auth.getName();
         Password pw = extractPassword(auth);
         // TODO check the content of principal and username

@@ -2,11 +2,9 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -17,9 +15,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * Helper class for working with JWT Tokens during Authentication seperated in an extra class for testing purposes.
@@ -27,8 +23,6 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
  * @author marcel
  */
 class JwtUtils {
-
-    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
 
     /**
      * Disabled.
@@ -89,28 +83,5 @@ class JwtUtils {
                 .setId(tokenObj.getJti().toString())
                 .compact()
         );
-    }
-
-    /**
-     * Returns a date where a JWT token of user should expire. 
-     * 
-     * @param user
-     * @return Date where the validity of a JWT token should end for the given user
-     */
-    @Nonnull
-    public static java.util.Date createJwtExpirationDate(SparkyUser user) {
-        @Nonnull java.util.Date expirationDate;
-        @Nonnull Supplier<LocalDate> defaultServiceExpirationDate = () -> LocalDate.now().plusYears(10);
-
-        if (user.getRole() == UserRole.SERVICE) {
-            expirationDate = notNull(
-                user.getExpireDate()
-                    .map(DateUtil::toUtilDate)
-                    .orElse(DateUtil.toUtilDate(defaultServiceExpirationDate.get()))
-            );
-        } else {
-            expirationDate = new java.util.Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS);
-        }
-        return expirationDate;
     }
 }
