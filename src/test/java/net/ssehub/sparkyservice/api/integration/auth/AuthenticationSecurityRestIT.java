@@ -249,8 +249,8 @@ public class AuthenticationSecurityRestIT {
                 .andReturn();
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUser(new Identity("gauss", UserRealm.LDAP)), 
-                "User was not stored into " + UserRealm.LDAP + " realm.");
+        assertNotNull(userService.findUser(new Identity("gauss", UserRealm.UNIHI)), 
+                "User was not stored into " + UserRealm.UNIHI + " realm.");
     }
     
     /**

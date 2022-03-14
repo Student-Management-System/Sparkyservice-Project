@@ -65,7 +65,7 @@ public class UserStorageServiceTests {
         this.user = user1;
         
         // To simulate a working database, user with the same name should be in different realms
-        var user2 = UserRealm.LDAP.getUserFactory().create(USER_NAME, null, UserRole.DEFAULT, false);
+        var user2 = UserRealm.UNIHI.getUserFactory().create(USER_NAME, null, UserRole.DEFAULT, false);
         var user2Jpa = user2.getJpa();
         user2Jpa.setId(2);
         

@@ -14,7 +14,7 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
- * Manages the login requests and returns users from {@link UserRealm#MEMORY}.
+ * Manages the login requests and returns users from {@link UserRealm#RECOVERY}.
  * 
  * @author marcel
  */
@@ -35,7 +35,7 @@ public class MemoryDetailsService implements UserDetailsService {
         if (username.equals(inMemoryUser)) {
             String encrPw = NullHelpers.notNull(encoder.encode(inMemoryPassword));
             var password = new Password(encrPw, encoder.getClass().getSimpleName());
-            var memUser = UserRealm.MEMORY.getUserFactory()
+            var memUser = UserRealm.RECOVERY.getUserFactory()
                     .create(inMemoryUser, password, UserRole.ADMIN, true);
             return memUser;
         }

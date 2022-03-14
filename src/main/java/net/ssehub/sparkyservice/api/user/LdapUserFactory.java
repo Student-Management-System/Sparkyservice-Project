@@ -31,7 +31,7 @@ public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser
     }
 
     /**
-     * Implementation of {@link SparkyUser} for {@link UserRealm#LDAP}. 
+     * Implementation of {@link SparkyUser} for {@link UserRealm#UNIHI}. 
      * Specials:<br>
      * 
      * <ul><li>  Doesn't contains a password and can't change a password

@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.auth.jwt;
 
-import static net.ssehub.sparkyservice.api.user.UserRealm.MEMORY;
+import static net.ssehub.sparkyservice.api.user.UserRealm.RECOVERY;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.time.LocalDate;
@@ -96,7 +96,7 @@ public class JwtTokenService {
         JwtToken tokenObj;
         UUID jit = UUID.randomUUID();
         log.trace("Created JWT token with jit {}", jit.toString());
-        if (user.getIdentity().realm() == MEMORY) {
+        if (user.getIdentity().realm() == RECOVERY) {
             var expTime = LocalDateTime.now().plusHours(1);
             Date out = notNull(Date.from(expTime.atZone(ZoneId.systemDefault()).toInstant()));
             tokenObj = new JwtToken(jit, out, user.getUsername(), user.getRole());

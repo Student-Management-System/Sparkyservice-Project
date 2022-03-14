@@ -122,7 +122,7 @@ public class StorageServiceImplDatabaseTests {
 
     @Test
     public void findMultipleEntriesUsingOnlyNickname() throws UserNotFoundException {
-        var user = UserRealm.LDAP.getUserFactory().create(TEST_USER.nickname(), null, UserRole.DEFAULT, true);
+        var user = UserRealm.UNIHI.getUserFactory().create(TEST_USER.nickname(), null, UserRole.DEFAULT, true);
         storageService.commit(user);
         var users = storageService.findUsers(TEST_USER.nickname());
         assertEquals(2, users.size());

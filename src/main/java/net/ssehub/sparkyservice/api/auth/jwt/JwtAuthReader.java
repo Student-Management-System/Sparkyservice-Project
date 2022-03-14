@@ -220,13 +220,13 @@ public class JwtAuthReader {
         try {
             user = service.findUser(ident);
         } catch (UserNotFoundException e) {
-            if (ident.realm() == UserRealm.MEMORY) {
+            if (ident.realm() == UserRealm.RECOVERY) {
                 var perms = token.getTokenPermissionRoles().toArray(UserRole[]::new);
                 if (perms.length != 1) {
                     throw new UnsupportedOperationException("Currently only one"
                             + " permission role per token is supported");
                 }
-                user = UserRealm.MEMORY.getUserFactory()
+                user = UserRealm.RECOVERY.getUserFactory()
                     .create(token.getSubject(), password, perms[0], !token.isLocked());
             } else {
                 throw e;

@@ -49,7 +49,7 @@ public class JwtAuthReaderTests {
      */
     @BeforeEach
     public void setUpConfValues() {
-        var user = UserRealm.LDAP.getUserFactory().create(USER_NAME, null, UserRole.ADMIN, true);
+        var user = UserRealm.UNIHI.getUserFactory().create(USER_NAME, null, UserRole.ADMIN, true);
         this.user = user;
         this.jwtToken = jwtTokenService.createFor(user);
     }

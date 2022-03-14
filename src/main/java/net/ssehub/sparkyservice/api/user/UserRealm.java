@@ -12,13 +12,13 @@ public enum UserRealm {
             return new LocalUserFactory();
         }
     },
-    LDAP {
+    UNIHI {
         @Override
         public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new LdapUserFactory();
         }
     },
-    MEMORY {
+    RECOVERY {
         @Override
         public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new MemoryUserFactory();

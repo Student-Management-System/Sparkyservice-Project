@@ -19,7 +19,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
  */
 public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUserDetails {
 
-    public @Nonnull static final UserRealm ASSOCIATED_REALM = UserRealm.LDAP;
+    public @Nonnull static final UserRealm ASSOCIATED_REALM = UserRealm.UNIHI;
     private static final long serialVersionUID = -2155556837850826196L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -59,6 +59,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      * @param copyMe
      * @see #create(String, UserRole, boolean)
      */
+    // TODO this is currently unused ?
     LdapUser(SparkyUser copyMe) {
         this(copyMe.getIdentity(), copyMe.getRole(), copyMe.isEnabled());
         if (copyMe instanceof LdapUser) {
@@ -111,7 +112,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     @Override
     @Nonnull
     public User getJpa() {
-        var jpaUser = new User(ident.nickname(), UserRealm.LDAP, isEnabled(), getRole());
+        var jpaUser = new User(ident.nickname(), UserRealm.UNIHI, isEnabled(), getRole());
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);
