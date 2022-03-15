@@ -1,8 +1,5 @@
 package net.ssehub.sparkyservice.api.routing;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
-import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,14 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.netflix.zuul.filters.support.FilterConstants;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.user.Identity;
 
@@ -35,9 +32,9 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
 
     @Autowired
     private ZuulRoutes zuulRoutes;
-
+    
     @Autowired
-    private JwtAuthReader jwtReader;
+    private JwtAuthConverter jwtConverter;
 
     @Override
     public String filterType() {
@@ -141,6 +138,7 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
         LOGGER.debug("Forward target: {} or {}", ctx.get(FilterConstants.FORWARD_TO_KEY), ctx.get("routeHost"));
         return request;
     }
+    
     /**
      * {@inheritDoc}
      * Checks if the user is authorized to access the desired path. If not, the
@@ -150,16 +148,13 @@ public class ZuulAuthorizationFilter extends ZuulFilter {
     public Object run() {
         HttpServletRequest request = logAndGetRequest();
         String proxyPath = getProxyPath();
-        Optional<String> header = Optional.ofNullable(request.getHeader(PROXY_AUTH_HEADER));
         var aclInterpreter = new AccessControlListInterpreter(zuulRoutes, proxyPath);
         if (aclInterpreter.isAclEnabled()) {
-            Identity user = notNull(
-                header.flatMap(jwtReader::getAuthenticatedUserIdent)
-                    .orElseThrow(AuthenticationException::new)
-                );
-            if (!aclInterpreter.isAllowed(user)) {
-                LOGGER.debug("Denied access to {} with: {}", proxyPath, header.orElseGet(() -> "<no auth token>"));
-                throw new AuthorizationException( user);
+            Authentication auth  = jwtConverter.convert(request); // throws AuthenticationException
+            var ident = Identity.of(auth.getName());
+            if (!aclInterpreter.isAllowed(ident)) {
+                LOGGER.debug("Denied access to path {} from user {}", proxyPath, auth.getName());
+                throw new AuthorizationException(ident);
             }
         } else {
             LOGGER.debug("ACL for {} is disabled - Allow all", proxyPath);

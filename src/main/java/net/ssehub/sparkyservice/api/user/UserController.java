@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,7 +48,6 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
  */
 @RestController
 @Tag(name = "user-controller", description = "Controller for user managment")
-
 public class UserController {
 
     /**
@@ -192,18 +190,6 @@ public class UserController {
     })
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
         storageService.deleteUser(username, realm);
-    }
-
-    /**
-     * Exception handler for {@link UserController} for exceptions which occur during user edititation. 
-     * @param ex
-     * @return ErrorDTO with all collected information about the error
-     */
-    @ResponseStatus(code = HttpStatus.FORBIDDEN)
-    @ExceptionHandler(AccessDeniedException.class)
-    public ErrorDto handleAccessViolationException(AccessDeniedException ex) {
-        return new ErrorDtoBuilder().newError(ex.getMessage(), HttpStatus.FORBIDDEN,
-                servletContext.getContextPath()).build();
     }
 
     /**

@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -208,8 +208,8 @@ public class AuthenticationSecurityRestIT {
         assumeTrue(userService.isUserInStorage(user));
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
-        var result = mvcPeformLogin("testuser", "password");
-        assertEquals(UNAUTHORIZED.value(), result.getResponse().getStatus());
+        var request = createAuthenticationRequest("testuser", "password");
+        this.mvc.perform(request).andExpect(status().isUnauthorized()).andDo(print());
     }
     /**
      * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 

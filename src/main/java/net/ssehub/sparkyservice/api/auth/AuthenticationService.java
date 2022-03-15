@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
@@ -38,45 +39,34 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 public class AuthenticationService {
     
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationService.class);
-    private @Nonnull final UserStorageService userStorage;
-    private final JwtAuthReader jwtReader;
-    private final UserExtractionService extractionService;
-    private final ContextAuthenticationManager contextAuthManager;
-    private final JwtTokenService jwtService;
+
+    @Autowired
+    private @Nonnull UserStorageService userStorage;
     
     @Autowired
-    public AuthenticationService(JwtAuthReader jwtReader, UserStorageService userStorage, 
-            UserExtractionService extractionService, JwtTokenService jwtService, 
-            ContextAuthenticationManager contextAuthManager) {
-        this.jwtReader = jwtReader;
-        this.extractionService = extractionService;
-        this.userStorage = userStorage;
-        this.contextAuthManager = contextAuthManager;
-        this.jwtService = jwtService;
-    }
+    private JwtAuthReader jwtReader;
+    
+    @Autowired
+    private UserExtractionService extractionService;
+    
+    @Autowired
+    private ContextAuthenticationManager contextAuthManager;
+    
+    @Autowired
+    private JwtTokenService jwtService;
+    
+    @Autowired
+    private JwtAuthConverter jwtRequestConverter;
 
-    public AuthenticationInfoDto checkAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request) 
-            throws JwtTokenReadException {
+    public AuthenticationInfoDto checkAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request) {
         if (auth == null) {
-            checkWrongAuthenticationStatusCause(request);
+            jwtRequestConverter.convert(request); // should throw something which contains error message
             throw new AuthenticationException();
         } else {
             return extractAuthenticationInfoDto(auth);
         }
     }
 
-    /**
-     * This method will throw something and shows the reason why the authorization through JWT token failed.
-     * 
-     * @param request
-     * @throws JwtTokenReadException
-     */
-    private void checkWrongAuthenticationStatusCause(HttpServletRequest request) throws JwtTokenReadException {
-        var jwtToken = request.getHeader(jwtReader.getJwtRequestHeader());
-        jwtReader.readJwtToken(jwtToken);
-    }
-
-    
     /**
      * Creates an DTO which holds all information of the user the given (authenticated) user and generates an JWT
      * token for this user. The generated token can be used for authorization. 

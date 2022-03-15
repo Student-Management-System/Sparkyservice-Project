@@ -71,9 +71,8 @@ public class SimpleExtractionImpl implements UserExtractionService {
     private static Optional<SparkyUser> tryExtractInformation(@Nonnull Authentication auth) {
         String username = auth.getName();
         Password pw = extractPassword(auth);
-        // TODO check the content of principal and username
-        return Optional.ofNullable(auth.getPrincipal())
-            .map(String.class::cast).map(Identity::of)
+        return Optional.ofNullable(auth.getName())
+            .map(Identity::of)
             .map(id -> id.realm().getUserFactory().create(username, pw, getRole(auth.getAuthorities()), false));
     }
 
