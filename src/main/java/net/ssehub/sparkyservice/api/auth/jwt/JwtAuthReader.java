@@ -43,11 +43,7 @@ public class JwtAuthReader {
 
     @Nonnull
     private final JwtTokenService jwtService;
-
-    @Nonnull
-    private final String jwtSecret;
-    
-    private final String jwtHeader;
+    private final JwtSettings jwtConf;
 
     /**
      * Authentication reader for a specific JWT token. 
@@ -57,8 +53,7 @@ public class JwtAuthReader {
      */
     public JwtAuthReader(final JwtTokenService service, final JwtSettings conf) {
         this.jwtService = service;
-        this.jwtSecret = conf.getSecret();
-        this.jwtHeader = conf.getHeader();
+        this.jwtConf = conf;
     }
 
     /**
@@ -133,6 +128,7 @@ public class JwtAuthReader {
             authDto.user = user.ownDto();
             authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());
             authDto.token.token = jwt;
+            authDto.token.key = jwtConf.getPrefix();
             return authDto;
         } 
         throw new JwtTokenReadException("Illegal access. User does not match with JWT subject"); // TODO write tests
@@ -158,6 +154,7 @@ public class JwtAuthReader {
         var tokenDto = new TokenDto();
         tokenDto.expiration = DateUtil.toString(tokenObj.getExpirationDate());
         tokenDto.token = jwtString;
+        tokenDto.key = jwtConf.getPrefix();
         return new UsernamePasswordAuthenticationToken(
                 tokenObj.getSubject(), tokenDto, tokenObj.getTokenPermissionRoles()
         );
@@ -177,7 +174,7 @@ public class JwtAuthReader {
             if (jwtString == null) {
                 throw new IllegalArgumentException("Decode of null token not possible");
             } else {
-                JwtToken tokenObj = JwtUtils.decodeAndExtract(jwtString, jwtSecret);
+                JwtToken tokenObj = JwtUtils.decodeAndExtract(jwtString, jwtConf.getSecret());
                 if (jwtService.isJitNonLocked(tokenObj.getJti())) {
                     return tokenObj;
                 } else {
@@ -210,7 +207,7 @@ public class JwtAuthReader {
      */
     // TODO maybe remove --> try to only use at a point
     public String getJwtRequestHeader() {
-        return this.jwtHeader;
+        return this.jwtConf.getHeader();
     }
     
     private SparkyUser userFrom(JwtToken token, UserStorageService service) {

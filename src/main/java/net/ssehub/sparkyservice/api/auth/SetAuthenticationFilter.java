@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 /**
@@ -21,7 +22,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 public class SetAuthenticationFilter extends BasicAuthenticationFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SetAuthenticationFilter.class);
-    private final AuthenticationService authService;
+    private final AuthenticationConverter converter;
 
     /**
      * JWT authentication filter for paths which are configured in the
@@ -30,9 +31,9 @@ public class SetAuthenticationFilter extends BasicAuthenticationFilter {
      * @param authenticationManager
      * @param authService
      */
-    public SetAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationService authService) {
+    public SetAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationConverter converter) {
         super(authenticationManager);
-        this.authService = authService;
+        this.converter = converter;
     }
 
     @Override
@@ -40,7 +41,7 @@ public class SetAuthenticationFilter extends BasicAuthenticationFilter {
             throws IOException, ServletException {
         LOG.debug("Requested URI: {}", request.getRequestURI());
         try {
-            var authentication = authService.extractAuthentication(request);
+            var authentication = converter.convert(request);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);            
         } catch (Exception e) {

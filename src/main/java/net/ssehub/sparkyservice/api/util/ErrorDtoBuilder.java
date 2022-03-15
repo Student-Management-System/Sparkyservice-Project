@@ -22,10 +22,17 @@ public class ErrorDtoBuilder {
     private HttpStatus returnStatus;
     private String message;
 
+    @Deprecated
+    public ErrorDtoBuilder() {}
+    
     /**
      * Creates a new instance which creates customizable {@link ErrorDto} objects.
      */
-    public ErrorDtoBuilder() {}
+    public ErrorDtoBuilder(@Nullable String customMessage, 
+            @Nonnull HttpStatus status) {
+        message = customMessage;
+        returnStatus = status;
+    }
 
     /**
      * Factory template method for an unauthorized HTTP error. 
@@ -35,7 +42,8 @@ public class ErrorDtoBuilder {
      * @return DTO for an unauthorized HTTP Error
      */
     public @Nonnull ErrorDtoBuilder newUnauthorizedError(@Nullable String customMessage, @Nullable String path) {
-        return newError(message, HttpStatus.UNAUTHORIZED, path);
+        //TODO löschen
+        return newError(message, HttpStatus.UNAUTHORIZED).withUrlPath(path);
     }
 
     /**
@@ -46,11 +54,20 @@ public class ErrorDtoBuilder {
      * @param path Served HTTP Path
      * @return this builder
      */
+    @Deprecated
     public @Nonnull ErrorDtoBuilder newError(@Nullable String customMessage, 
-            @Nonnull HttpStatus status, @Nullable String path) {
+            @Nonnull HttpStatus status) {
         message = customMessage;
         returnStatus = status;
-        urlPath = path;
+        return this;
+    }
+    
+    @Deprecated
+    public @Nonnull ErrorDtoBuilder newError(@Nullable String customMessage, 
+            @Nonnull HttpStatus status, String path) {
+        message = customMessage;
+        returnStatus = status;
+        this.urlPath = path;
         return this;
     }
 
@@ -83,7 +100,7 @@ public class ErrorDtoBuilder {
      * @param timestamp
      * @return this
      */
-    public @Nonnull ErrorDtoBuilder setTimestamp(@Nonnull HttpTimestamp timestamp) {
+    public @Nonnull ErrorDtoBuilder withTimestamp(@Nonnull HttpTimestamp timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -94,7 +111,7 @@ public class ErrorDtoBuilder {
      * @param urlPath
      * @return this
      */
-    public @Nonnull ErrorDtoBuilder setUrlPath(@Nullable String urlPath) {
+    public @Nonnull ErrorDtoBuilder withUrlPath(@Nullable String urlPath) {
         this.urlPath = urlPath;
         return this;
     }

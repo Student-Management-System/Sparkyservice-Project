@@ -5,10 +5,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +19,7 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
@@ -23,11 +27,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
-import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
 import net.ssehub.sparkyservice.api.auth.ldap.LdapContextMapper;
@@ -45,7 +46,7 @@ import net.ssehub.sparkyservice.api.conf.ControllerPath;
 @EnableGlobalMethodSecurity(securedEnabled = true)
 //checkstyle: stop exception type check
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    @Value("${ldap.urls:}")
+    @Value("${ldap.urls:none}")
     private String ldapUrls;
     
     @Value("${ldap.base.dn:}")
@@ -63,10 +64,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${ldap.enabled:false}")
     private boolean ldapEnabled;
 
-    @Value("${ldap.domain:}")
+    @Value("${ldap.ad.domain:}")
     private String ldapFullDomain;
 
-    @Value("${ldap.ad:false}")
+    @Value("${ldap.ad.enabled:false}")
     private boolean ldapAd;
 
     @Value("${recovery.enabled:false}")
@@ -81,9 +82,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private LdapContextMapper ldapContextMapper;
     
-    @Autowired
-    private JwtTokenService jwtService;
-
     @Autowired 
     private JwtStorageService jwtStorageService;
 
@@ -91,31 +89,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private MemoryDetailsService memoryDetailsService;
     
     @Autowired
-    private JwtAuthReader jwtReader;
-    
-    @Autowired
     private LocalDbDetailsMapper localDetailsMapper;
     
     @Autowired
-    private AuthenticationService authService;
+    private JwtAuthConverter authConverter;
     
     @Autowired
     @Qualifier("handlerExceptionResolver")
     private HandlerExceptionResolver resolver;
-    
-    /**
-     * JwtAuthenticationFilter requires ObjectMapper of REST framework, but cannot obtain it via autowiring as it is no
-     * component. For this reason we obtain it here and pass it to the constrcutor.
-     * Solution based on: https://stackoverflow.com/a/30725492
-     */
+
     @Autowired
-    private ObjectMapper jacksonObjectMapper;
+    private PasswordEncoder pwEncoder;
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception {       
-        var authenticationFilter = new DoAuthenticationFilter(authenticationManager(), jwtReader, jwtService, 
-                jacksonObjectMapper, resolver);
-        var authorizationFilter = new SetAuthenticationFilter(authenticationManager(), authService);
+    protected void configure(HttpSecurity http) throws Exception {
+        // todo use springs auth filter ? 
+        var authorizationFilter = new SetAuthenticationFilter(authenticationManager(), authConverter);
         http.cors().and()
             .csrf().disable()
             .authorizeRequests()
@@ -125,7 +114,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(ControllerPath.HEARTBEAT).permitAll()            
             .antMatchers(ControllerPath.AUTHENTICATION_CHECK).authenticated()
             .and()
-                .addFilter(authenticationFilter)
                 .addFilter(authorizationFilter)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -150,55 +138,63 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        configureInMemory(auth);
-        auth.userDetailsService(localDetailsMapper);
-        configureLdap(auth);
-    }
-
-    /**
-     * Configures in memory authentication service.
-     * 
-     * @param auth - Current builder which is configure with inMemory authentication
-     */
-    public void configureInMemory(AuthenticationManagerBuilder auth) throws Exception {
         if (inMemoryEnabled) {
             if (inMemoryPassword.isEmpty()) {
-                throw new Exception("Set recovery.password or disable the account");
+                throw new UnsupportedOperationException("Set recovery.password or disable the account");
             }
-            auth.userDetailsService(memoryDetailsService);
+            auth.authenticationProvider(memoryAuthProvider());
+        }
+        auth.authenticationProvider(localDbAuthProvider());
+        if (ldapEnabled) {
+            if (ldapAd) {
+                auth.authenticationProvider(adLdapAuthProvider()).eraseCredentials(false);;
+            } else {
+                /*
+                 * For LDAP Login. Currently this is disabled because we cant provide this as bean to use it in 
+                 * a the ContextAuthenticationManager  
+                 */
+//                auth.ldapAuthentication()
+//                .contextSource()
+//                .url(ldapUrls + ldapBaseDn)
+//                .managerDn(ldapSecurityPrincipal)
+//                .managerPassword(ldapPrincipalPassword)
+//                .and()
+//                .userDnPatterns(ldapUserDnPattern)
+//                .userDetailsContextMapper(ldapContextMapper);
+                throw new UnsupportedOperationException("Currently only AD is supported for LDAP connections.");
+            }
         }
     }
 
-    /**
-     * Configures LDAP as login provider.
-     * 
-     * @param auth
-     * @throws Exception 
-     */
-    public void configureLdap(AuthenticationManagerBuilder auth) throws Exception {
-        if (ldapEnabled) {
-            if (ldapAd) {
-                ActiveDirectoryLdapAuthenticationProvider adProvider = 
-                        new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
-                adProvider.setConvertSubErrorCodesToExceptions(true);
-                adProvider.setUseAuthenticationRequestCredentials(true);
-                adProvider.setUserDetailsContextMapper(ldapContextMapper);
-                if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
-                    adProvider.setSearchFilter(ldapUserDnPattern);
-                }
-                auth.authenticationProvider(adProvider);
-                auth.eraseCredentials(false);
-            } else {
-                auth.ldapAuthentication()
-                    .contextSource()
-                    .url(ldapUrls + ldapBaseDn)
-                    .managerDn(ldapSecurityPrincipal)
-                    .managerPassword(ldapPrincipalPassword)
-                    .and()
-                    .userDnPatterns(ldapUserDnPattern)
-                    .userDetailsContextMapper(ldapContextMapper);
-            }
+   @ConditionalOnProperty(value = "recovery.enabled", havingValue = "true")
+   @Bean("memoryAuthProvider")
+   public AuthenticationProvider memoryAuthProvider() {
+        var prov = new DaoAuthenticationProvider();
+        prov.setUserDetailsService(memoryDetailsService);
+        prov.setPasswordEncoder(pwEncoder);
+        return prov;
+    }
+    
+    @Bean("localDbAuthProvider")
+    public AuthenticationProvider localDbAuthProvider() {
+        var prov = new DaoAuthenticationProvider();
+        prov.setUserDetailsService(localDetailsMapper);
+        prov.setPasswordEncoder(pwEncoder);
+        return prov;
+    }
+    
+    @Bean("adLdapAuthProvider")
+    @ConditionalOnProperty(value = "ldap.ad.enabled", havingValue = "true")
+    public AuthenticationProvider adLdapAuthProvider() {
+        ActiveDirectoryLdapAuthenticationProvider adProvider = 
+                new ActiveDirectoryLdapAuthenticationProvider(ldapFullDomain, ldapUrls);
+        adProvider.setConvertSubErrorCodesToExceptions(true);
+        adProvider.setUseAuthenticationRequestCredentials(true);
+        adProvider.setUserDetailsContextMapper(ldapContextMapper);
+        if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
+            adProvider.setSearchFilter(ldapUserDnPattern);
         }
+        return adProvider;
     }
 
     @Bean("authenticationManager")

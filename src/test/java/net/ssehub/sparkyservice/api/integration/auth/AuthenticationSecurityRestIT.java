@@ -1,22 +1,26 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,19 +28,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.ssehub.sparkyservice.api.auth.AuthController;
-import net.ssehub.sparkyservice.api.auth.DoAuthenticationFilter;
+import net.ssehub.sparkyservice.api.auth.AuthenticationInfoDto;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
@@ -53,7 +60,6 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  * 
  * @author marcel
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -76,7 +82,10 @@ public class AuthenticationSecurityRestIT {
     @Value("${jwt.prefix}")
     private String jwtTokenPrefix;
     private MockMvc mvc;
-
+    
+    @Autowired
+    private ObjectMapper objMapper;
+    
     /**
      * Setup is run before each tests and initialize the web context for mocking.
      */
@@ -105,9 +114,9 @@ public class AuthenticationSecurityRestIT {
                 .andReturn();
         int resultStatus = result.getResponse().getStatus();
         assertAll(
-            () -> assertNotEquals(404, resultStatus, "Authentication site was not found"),
-            () -> assertNotEquals(403, resultStatus, "Security confgiuration is wrong. A guest could not reach "
-                        + "the authentication site")
+            () -> assertNotEquals(NOT_FOUND.value(), resultStatus, "Authentication site was not found"),
+            () -> assertNotEquals(FORBIDDEN.value(), resultStatus, "Security configuration is wrong."
+                        + "Non authorized user must access the login site.")
         );
     }
 
@@ -117,13 +126,14 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DisplayName("Test if user can access the login page. Expected bad request since no body is provided ")
     public void guestAuthAccesabilityTest() throws Exception {
         this.mvc
             .perform(
                  post(ConfigurationValues.AUTH_LOGIN_URL)
-                     .contentType(MediaType.TEXT_PLAIN)
-                     .accept(MediaType.TEXT_PLAIN))
-            .andExpect(status().isUnauthorized());
+                     .contentType(MediaType.APPLICATION_JSON)
+                     .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest());
     }
 
     /**
@@ -133,12 +143,8 @@ public class AuthenticationSecurityRestIT {
      */
     @IntegrationTest
     public void negativeAuthenticationTest() throws Exception {
-        this.mvc.perform(
-                post(ConfigurationValues.AUTH_LOGIN_URL)
-                   .param("password", "sasd")
-                   .param("username", "user")
-                   .accept(MediaType.TEXT_PLAIN))
-            .andExpect(status().isUnauthorized());
+        var req = createAuthenticationRequest("user", "wrongpw");
+        mvc.perform(req).andExpect(status().isUnauthorized());
     }
     
     /**
@@ -159,13 +165,7 @@ public class AuthenticationSecurityRestIT {
                 + "test.properties");
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
                 + " test.properties");
-        this.mvc
-            .perform(
-                 post(ConfigurationValues.AUTH_LOGIN_URL)
-                    .param("password", inMemoryPassword)
-                    .param("username", inMemoryUser)
-                    .accept(MediaType.TEXT_PLAIN))
-            .andExpect(status().isOk());
+        mvcPeformLogin(inMemoryUser, inMemoryPassword);
     }
 
     /**
@@ -187,26 +187,11 @@ public class AuthenticationSecurityRestIT {
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
                 + " test.properties");
         
-        var result = this.mvc
-            .perform(
-                 post(ConfigurationValues.AUTH_LOGIN_URL)
-                    .param("password", inMemoryPassword)
-                    .param("username", inMemoryUser)
-                    .accept(MediaType.TEXT_PLAIN))
-            .andReturn();
-        assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
-                + "another problem.");
-        assumeTrue(jwtTokenHeader != null && jwtTokenPrefix != null, "You must set jwt.token.header and "
-                + "jwt.token.prefix in test.properties in oder to run this test.");
-        String partialHeader = result.getResponse().getHeader(jwtTokenHeader);
-        assertAll(
-            () -> assertNotNull(partialHeader, "No jwt token was returned during authentication"),
-            () -> assertTrue(partialHeader.startsWith(jwtTokenPrefix), "Tokenheader does not start with the desired "
-                 + "prefix."),
-            () -> assertFalse(partialHeader.endsWith(jwtTokenPrefix), "The token header was found but no content "
-                 + "which could be a JWT token")
-        );
-
+        var request = createAuthenticationRequest(inMemoryUser, inMemoryPassword);
+        this.mvc.perform(request)
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().string(containsString(jwtTokenPrefix)));
     }
     
     /**
@@ -223,13 +208,8 @@ public class AuthenticationSecurityRestIT {
         assumeTrue(userService.isUserInStorage(user));
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
-        this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .param("password", "password")
-                        .param("username", "testuser")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+        var result = mvcPeformLogin("testuser", "password");
+        assertEquals(UNAUTHORIZED.value(), result.getResponse().getStatus());
     }
     /**
      * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 
@@ -240,16 +220,10 @@ public class AuthenticationSecurityRestIT {
     @IntegrationTest
 //    @Disabled("CI-Servers firewal blocks access to ldap server")
     public void storeUserAfterLdapAuthTest() throws Exception {
-        var result = this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .param("password", "password")
-                        .param("username", "gauss")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
+        var result = mvcPeformLogin("sparkm", "");
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUser(new Identity("gauss", UserRealm.UNIHI)), 
+        assertNotNull(userService.findUser(new Identity("sparkm", UserRealm.UNIHI)), 
                 "User was not stored into " + UserRealm.UNIHI + " realm.");
     }
     
@@ -276,21 +250,12 @@ public class AuthenticationSecurityRestIT {
     @IntegrationTest
     public void jwtAuthMemoryUser() throws Exception {
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
-        var result = this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .param("password", inMemoryPassword)
-                        .param("username", inMemoryUser)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
-        assertTrue(result.getResponse().getStatus() == 200, "Authentication not successful");
-        String tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
-        this.mvc
-            .perform(
-                get(ControllerPath.AUTHENTICATION_CHECK)
-                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
-                   .accept(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(status().isOk());
+        var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
+        assertEquals(OK.value(), result.getResponse().getStatus(), "Authentication not successful");
+        
+        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        assumeTrue(jwt != null, "No JWT token response");
+        mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
 
     /**
@@ -305,21 +270,11 @@ public class AuthenticationSecurityRestIT {
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
-        var result = this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .param("password", "password")
-                        .param("username", "testuser")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
-        assertEquals(200, result.getResponse().getStatus(), "Authentication not successful");
-        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
-        this.mvc
-            .perform(
-                get(ControllerPath.AUTHENTICATION_CHECK)
-                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
-                   .accept(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(status().isOk());
+        var result = mvcPeformLogin("testuser", "password");
+        assertEquals(OK.value(), result.getResponse().getStatus(), "Authentication not successful");
+        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        assumeTrue(jwt != null, "No JWT token response");
+        mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
 
     /**
@@ -329,43 +284,21 @@ public class AuthenticationSecurityRestIT {
      */
     @IntegrationTest
     public void jwtAuthLdapUserTest() throws Exception {
-        var result = this.mvc
-            .perform(
-                 post(ConfigurationValues.AUTH_LOGIN_URL)
-                    .param("password", "password")
-                    .param("username", "gauss")
-                    .accept(MediaType.APPLICATION_JSON))
-            .andReturn();
+        var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is"
                     + "another problem.");
-        var tokenHeader = result.getResponse().getHeader(jwtTokenHeader);
-        this.mvc
-            .perform(
-                get(ControllerPath.AUTHENTICATION_CHECK)
-                   .header(HttpHeaders.AUTHORIZATION, tokenHeader)
-                   .accept(MediaType.APPLICATION_JSON_VALUE))
+        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
+    }
+
+    @IntegrationTest
+    @DisplayName("Test if authentication with JSON Dto is successful")
+    public void authJsonTest() throws Exception {
+        assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
+        mvc.perform(createAuthenticationRequest(inMemoryUser, inMemoryPassword))
             .andExpect(status().isOk());
     }
-
-    /**
-     * Tests an authentication attempt with in memory username as password where the data is send as http content
-     * in JSON format. 
-     * 
-     * @throws Exception
-     */
-    @IntegrationTest
-    public void jwtAuthJsonSerializeTest() throws Exception {
-        //assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
-        final String jsonCredentials = 
-                "{ \"username\": \"" + inMemoryUser + "\" , \"password\": \"" + inMemoryPassword + "\"}";
-        this.mvc
-                .perform(
-                     post(ConfigurationValues.AUTH_LOGIN_URL)
-                     .content(jsonCredentials)
-                     .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
-
+    
     /**
      * Testing the {@link ControllerPath#AUTHENTICATION_VERIFY} controller. 
      * <br>
@@ -377,25 +310,60 @@ public class AuthenticationSecurityRestIT {
     @DisplayName("Test if a memory users JWT can be verified through controller method")
     public void jwtVerifyTest() throws Exception {
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
-        var dto = new CredentialsDto();
-        dto.password = inMemoryPassword;
-        dto.username = inMemoryUser;
-        ObjectMapper mapper = new ObjectMapper();
-        String credentials = mapper.writeValueAsString(dto);
-        var authResult = this.mvc
-            .perform(
-                 post(ConfigurationValues.AUTH_LOGIN_URL)
-                    .content(credentials)
-                    .accept(MediaType.APPLICATION_JSON))
-            .andReturn();
-        assumeTrue(authResult.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
+        var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
+        assumeTrue(result.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
         
-        var tokenHeader = authResult.getResponse().getHeader(jwtTokenHeader).replace(jwtTokenPrefix, "");
-        this.mvc
-            .perform(
-                get(ControllerPath.AUTHENTICATION_VERIFY)
-                   .param("jwtToken", tokenHeader)
-                   .accept(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(status().isOk());
+        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        mvc.perform(createJwtVerifyRequest(jwt)).andExpect(status().isOk());
+    }
+    
+    @IntegrationTest
+    @DisplayName("Test if auth with specified realm is successfull")
+    public void authSpecifiedRealmTest() throws Exception {
+        assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
+        @SuppressWarnings("null")
+        var ident = new Identity(inMemoryUser, UserRealm.RECOVERY);
+        var resultCode = mvcPeformLogin(ident.asUsername(), inMemoryPassword).getResponse().getStatus();
+        assertEquals(OK.value(), resultCode);
+    }
+    
+    public String createCredentialsJson(String username, String password) throws JsonProcessingException {
+        var dto = new CredentialsDto();
+        dto.password = password;
+        dto.username = username;
+        return objMapper.writeValueAsString(dto);
+    }
+    
+    public MockHttpServletRequestBuilder createJwtVerifyRequest(String tokenHeader) throws Exception {
+        return get(ControllerPath.AUTHENTICATION_VERIFY)
+           .param("jwtToken", tokenHeader)
+           .accept(MediaType.APPLICATION_JSON_VALUE);
+    }
+    
+    public MvcResult mvcPeformLogin(String username, String password) throws Exception {
+        var request = createAuthenticationRequest(username, password);
+        return this.mvc
+            .perform(request)
+            .andReturn();
+    }
+
+    private MockHttpServletRequestBuilder createAuthenticationRequest(String username, String password) throws JsonProcessingException {
+        String jsonCredentials = createCredentialsJson(username, password);
+        var request = post(ConfigurationValues.AUTH_LOGIN_URL)
+                .content(jsonCredentials)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+        return request;
+    }
+    
+    public MockHttpServletRequestBuilder createWhoamiRequest(String tokenHeader) throws Exception {
+        return get(ControllerPath.AUTHENTICATION_CHECK)
+            .header(HttpHeaders.AUTHORIZATION, tokenHeader)
+            .accept(MediaType.APPLICATION_JSON_VALUE);
+    }
+    
+    public AuthenticationInfoDto readWhoamiResponse(MockHttpServletResponse response) throws JsonMappingException, JsonProcessingException, UnsupportedEncodingException {
+        String content = response.getContentAsString();
+        return objMapper.readValue(content, AuthenticationInfoDto.class);
     }
 }

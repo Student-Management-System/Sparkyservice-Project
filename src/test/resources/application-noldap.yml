@@ -7,13 +7,8 @@ spring:
   jpa:
     spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
 
-# https://www.forumsys.com/2014/02/22/online-ldap-test-server/
 ldap:
-    enabled: true
-    urls: ldap://localhost:4564
-    ad:
-       enabled: true
-       domain: pcds.uni-hildesheim.de
+    enabled: false
 
 jwt:
    secret: kjsdfsdkjfjhdskfhsdlkfsdlfkjsaddklusdklfjdsksdlkfjsadlkfjsdaflkjsdflkj
