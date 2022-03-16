@@ -151,26 +151,24 @@ public class UserController {
     }
 
     /**
-     * Searches a specific user in the database and returns (a subset) of information. 
+     * Searches a specific user in the database.. 
      * 
-     * @param realm
-     * @param username
+     * @param username must include realm information
      * @param auth
      * @return Information about the requested user - maybe they are not complete
      * @throws MissingDataException
      */
     @Operation(summary = "Gets a unique user", security = { @SecurityRequirement(name = "bearer-key") })
     @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "Return user"),
-        @ApiResponse(responseCode = "403", description = "User is not authorized"),
-        @ApiResponse(responseCode = "401", description = "User is not authenticated "),
-        @ApiResponse(responseCode = "404", description = "The desired user or realm was not found") 
+            @ApiResponse(responseCode = "200", description = "Gives information about a desired user"),
+            @ApiResponse(responseCode = "403", description = "User is not allowed to see the information"),
+            @ApiResponse(responseCode = "401", description = "User is not authenticated"),
+            @ApiResponse(responseCode = "404", description = "The desired user was not found") 
     })
     @GetMapping(ControllerPath.USERS_GET_SINGLE)
-    public UserDto getUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username,
-            Authentication auth) throws MissingDataException {
-        log.trace("Request for searching a user: {}@{}", username, realm);
-        return userService.searchForSingleUser(realm, username, auth);
+    public UserDto getUser(@PathVariable("username") String username, Authentication auth) {
+        log.trace("Request for searching a user: {}", username);
+        return userService.searchForSingleUser(username, auth);
     }
 
     /**
@@ -189,6 +187,7 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "User is not authenticated "),
         @ApiResponse(responseCode = "404", description = "The desired user was not found") 
     })
+    // TODO change path variable
     public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
         storageService.deleteUser(username, realm);
     }

@@ -222,7 +222,7 @@ public class UserControllerRestIT {
         var user = createTestUserInStorage(userService);
         
         MvcResult result = this.mvc
-                .perform(get(ControllerPath.USERS_GET_SINGLE, UserRealm.UNIHI, "testuser")
+                .perform(get(ControllerPath.USERS_GET_SINGLE, "unused", user.getIdentity().asUsername()) //TODO remove second path variable
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultHandlers.print())

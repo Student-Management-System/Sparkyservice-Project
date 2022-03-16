@@ -63,14 +63,16 @@ public class UserService {
      * Searches for user informations in the database about the requested user. Only information for which the
      * authenticated user is permitted to see, are present in the returned DTO.
      * 
-     * @param realm Identifies the desired user
      * @param username Identifies the desired user
      * @param auth Probably holds authentication information - when not the access is denied
      * @return User information
      */
-    public UserDto searchForSingleUser(UserRealm realm, String username, Authentication auth) {
-        SparkyUser authenticatedUser = transformerService.extract(auth);
-        if (authenticatedUser.getRole() != UserRole.ADMIN && !username.equals(authenticatedUser.getUsername())) {
+    public UserDto searchForSingleUser(String username, Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .filter(a -> a.getAuthority().equals(UserRole.ADMIN.getAuthority()))
+                .findAny()
+                .isPresent();
+        if (!isAdmin && !username.equals(auth.getName())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
