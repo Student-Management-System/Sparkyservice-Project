@@ -1,18 +1,13 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,7 +15,9 @@ import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -98,29 +95,6 @@ public class AuthenticationSecurityRestIT {
     }
 
     /**
-     * Test for {@link AuthController#authenticate(String, String)}. <br>
-     * Tests the security configuration if the authentication site is accessible for guests. It ignores other errors
-     * like Internal Server Errors (the whole 5XX Status group). 
-     * 
-     * @throws Exception
-     */
-    @IntegrationTest
-    public void securityGuestAuthAccesabilityTest() throws Exception {
-        MvcResult result = this.mvc
-                .perform(
-                    post(ConfigurationValues.AUTH_LOGIN_URL)
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .accept(MediaType.TEXT_PLAIN))
-                .andReturn();
-        int resultStatus = result.getResponse().getStatus();
-        assertAll(
-            () -> assertNotEquals(NOT_FOUND.value(), resultStatus, "Authentication site was not found"),
-            () -> assertNotEquals(FORBIDDEN.value(), resultStatus, "Security configuration is wrong."
-                        + "Non authorized user must access the login site.")
-        );
-    }
-
-    /**
      * Tests if the authentication would return an Unauthorized status code if the request doesn't provide credentials.
      * 
      * @throws Exception
@@ -165,7 +139,8 @@ public class AuthenticationSecurityRestIT {
                 + "test.properties");
         assumeFalse(inMemoryUser == null || inMemoryEnabled.isBlank(), "Recovery user must be set in"
                 + " test.properties");
-        mvcPeformLogin(inMemoryUser, inMemoryPassword);
+        var req = createAuthenticationRequest(inMemoryUser, inMemoryPassword);
+        mvc.perform(req).andExpect(status().isOk());
     }
 
     /**
@@ -209,7 +184,7 @@ public class AuthenticationSecurityRestIT {
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var request = createAuthenticationRequest("testuser", "password");
-        this.mvc.perform(request).andExpect(status().isUnauthorized()).andDo(print());
+        this.mvc.perform(request).andExpect(status().isForbidden());
     }
     /**
      * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 
@@ -218,12 +193,13 @@ public class AuthenticationSecurityRestIT {
      * @throws Exception
      */
     @IntegrationTest
-//    @Disabled("CI-Servers firewal blocks access to ldap server")
+    @Disabled("No test AD server available")
     public void storeUserAfterLdapAuthTest() throws Exception {
-        var result = mvcPeformLogin("sparkm", "");
+        var username = "";
+        var result = mvcPeformLogin(username, "");
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUser(new Identity("sparkm", UserRealm.UNIHI)), 
+        assertNotNull(userService.findUser(new Identity(username, UserRealm.UNIHI)), 
                 "User was not stored into " + UserRealm.UNIHI + " realm.");
     }
     
@@ -290,7 +266,7 @@ public class AuthenticationSecurityRestIT {
         var jwt = readWhoamiResponse(result.getResponse()).token.token;
         mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
-
+    
     @IntegrationTest
     @DisplayName("Test if authentication with JSON Dto is successful")
     public void authJsonTest() throws Exception {

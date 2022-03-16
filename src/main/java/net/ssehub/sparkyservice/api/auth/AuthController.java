@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,10 +59,11 @@ public class AuthController {
     @ApiResponses(value = { 
         @ApiResponse(responseCode = "200", description = "Authentication success"),
             
-        @ApiResponse(responseCode = "200", description = "Authentication failed", 
+        @ApiResponse(responseCode = "401", description = "Authentication failed", 
             content = @Content(mediaType = "application/json", 
             schema = @Schema(implementation = ErrorDto.class)))
     })
+    @PreAuthorize("permitAll()")
     public AuthenticationInfoDto authenticate(@Valid @Nonnull @NotNull @RequestBody CredentialsDto credentials) {
         return authService.authenticateAndGenerateJwt(credentials);
     }
@@ -93,11 +95,7 @@ public class AuthController {
                        schema = @Schema(implementation = ErrorDto.class))) })
     public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
             HttpServletRequest request) {
-        try {
-            return authService.checkAuthenticationStatus(auth, notNull(request));            
-        } catch (JwtTokenReadException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No correct authorization", e);
-        }
+        return authService.checkAuthenticationStatus(auth, notNull(request));            
     }
 
     /*

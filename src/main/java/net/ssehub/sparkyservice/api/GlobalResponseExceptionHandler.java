@@ -5,6 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -20,25 +21,31 @@ public class GlobalResponseExceptionHandler extends ResponseEntityExceptionHandl
 
     @ExceptionHandler(value = { IllegalArgumentException.class, IllegalStateException.class })
     protected ResponseEntity<Object> handleConflict(RuntimeException ex, WebRequest request) {
-        var responseDto = new ErrorDtoBuilder(ex.getMessage(), HttpStatus.BAD_REQUEST)
-                .withUrlPath(request.getContextPath())
-                .build();
-        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), HttpStatus.CONFLICT, request);
+        var status = HttpStatus.BAD_REQUEST;
+        var responseDto = new ErrorDtoBuilder(ex.getMessage(), status).build();
+        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), status, request);
     }
         
     @ExceptionHandler(value = { AuthenticationException.class, JwtTokenReadException.class})
     protected ResponseEntity<Object> handleMissingOrWrongAuthentication(RuntimeException ex, WebRequest request) {
-        var responseDto = new ErrorDtoBuilder(ex.getMessage(), HttpStatus.UNAUTHORIZED)
-                .withUrlPath(request.getContextPath())
-                .build();
-        //TODO test ob das dto wirklich angezeigt wird
-        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+        var status = HttpStatus.UNAUTHORIZED;
+        var responseDto = new ErrorDtoBuilder("No authentication header provided." + ex.getMessage(), status).build();
+        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), status, request);
     }
+    
+    @ExceptionHandler(value = { BadCredentialsException.class } )
+    protected ResponseEntity<Object> handleBadCredentials(RuntimeException ex, WebRequest request) {
+        var status = HttpStatus.UNAUTHORIZED;
+        var responseDto = new ErrorDtoBuilder(ex.getMessage(), status).build();
+        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), status, request);
+    }
+    
     
     @ExceptionHandler(value = { AuthorizationException.class, AccessDeniedException.class})
     protected ResponseEntity<Object> handleAuthorization(RuntimeException ex, WebRequest request) {
-        String bodyOfResponse = "";
-        return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+        var status = HttpStatus.FORBIDDEN;
+        var responseDto = new ErrorDtoBuilder(ex.getMessage(), status).build();
+        return handleExceptionInternal(ex, responseDto, new HttpHeaders(), status, request);
     }
     
     @ExceptionHandler(value = { org.springframework.ldap.CommunicationException.class })

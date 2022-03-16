@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
@@ -201,8 +202,9 @@ public class UserController {
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = UserNotFoundException.class)
     public ErrorDto handleUserNotFoundException(Exception ex) {
-        return new ErrorDtoBuilder().newError("User target not found", 
-                HttpStatus.NOT_FOUND, servletContext.getContextPath()).build();
+        return new ErrorDtoBuilder("User target not found", HttpStatus.NOT_FOUND)
+                .withUrlPath(servletContext.getContextPath())
+                .build();
     }
 
     /**
@@ -212,9 +214,10 @@ public class UserController {
      * @return ErrorDTO with all collected information about the error
      */
     @ResponseStatus(code = HttpStatus.CONFLICT)
-    @ExceptionHandler(DuplicateEntryException.class)
-    public ErrorDto handleDuplicateEntryException(UserEditException ex) {
-        return new ErrorDtoBuilder().newError(null, HttpStatus.CONFLICT, servletContext.getContextPath()).build();
+    @ExceptionHandler({ DuplicateEntryException.class, DataIntegrityViolationException.class })
+    public ErrorDto handleDuplicateEntryException(RuntimeException ex) {
+        log.warn("Duplicate entry attempt", ex);
+        return new ErrorDtoBuilder("Possible duplicate", HttpStatus.CONFLICT).build();
     }
 
     /**
@@ -226,7 +229,9 @@ public class UserController {
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(UserEditException.class)
     public ErrorDto handleUserEditException(UserEditException ex) {
-        return new ErrorDtoBuilder().newError(null, HttpStatus.BAD_REQUEST, servletContext.getContextPath()).build();
+        return new ErrorDtoBuilder(ex.getMessage(), HttpStatus.BAD_REQUEST)
+                .withUrlPath(servletContext.getContextPath())
+                .build();
     }
 
     /**
@@ -240,7 +245,8 @@ public class UserController {
     public ErrorDto handleException(Exception ex) {
         log.info("Exception in user controller: {}", ex.getCause());
         log.debug("" +  ex.getStackTrace());
-        return new ErrorDtoBuilder().newError(ex.getClass().getName(), HttpStatus.INTERNAL_SERVER_ERROR,
-                servletContext.getContextPath()).build();
+        return new ErrorDtoBuilder(ex.getClass().getName(), HttpStatus.INTERNAL_SERVER_ERROR)
+                .withUrlPath(servletContext.getContextPath())
+                .build();
     }
 }
