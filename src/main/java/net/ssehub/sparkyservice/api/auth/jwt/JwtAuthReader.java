@@ -1,9 +1,5 @@
 package net.ssehub.sparkyservice.api.auth.jwt;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
-import java.util.Optional;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -54,42 +50,6 @@ public class JwtAuthReader {
     public JwtAuthReader(final JwtTokenService service, final JwtSettings conf) {
         this.jwtService = service;
         this.jwtConf = conf;
-    }
-
-    /**
-     * Extracts a full username from a JWT token which can be used as full identifier. <br>
-     * Style: <code>user@REALM</code>
-     * <br><br>
-     * In order to do this, the given authHeader must be a valid token (with Bearer keyword).
-     * 
-     * @param jwt
-     * @return Optional username with. Optional is empty when no valid token was given (error is written to debug logger
-     *         when present)
-     */
-    public @Nonnull Optional<Identity> getAuthenticatedUserIdent(@Nullable String jwt) {
-        Optional<Identity> fullUserNameRealm;
-        try {
-            fullUserNameRealm = notNull(
-                Optional.of(readToAuthentication(jwt)).map(this::getUsername).map(Identity::of)
-            );
-        } catch (JwtTokenReadException e) {
-            log.debug("Could not read JWT token: {}", e.getMessage());
-            fullUserNameRealm = notNull(Optional.empty());
-        }
-        return fullUserNameRealm;
-    }
-
-    /**
-     * Creates a full identifier from authentication. Awaits {@link SparkysAuthPrincipal} as principal object.
-     * <br>
-     * Style: <code>user@REALM</code>
-     * 
-     * @param auth - Typically extracted by an JWT token
-     * @return fullIdentName
-     */
-    private String getUsername(Authentication auth) {
-        // TODO check if this is possible never null and annotate this method
-        return (String) auth.getPrincipal();
     }
 
     /**
@@ -198,16 +158,6 @@ public class JwtAuthReader {
             log.debug("Request to parse empty or null JWT : {} failed : {}", jwtString, exception.getMessage());
             throw new JwtTokenReadException(exception.getMessage());
         }
-    }
-
-    /**
-     * The header name where the JWT can be found in the request.
-     * 
-     * @return .
-     */
-    // TODO maybe remove --> try to only use at a point
-    public String getJwtRequestHeader() {
-        return this.jwtConf.getHeader();
     }
     
     private SparkyUser userFrom(JwtToken token, UserStorageService service) {

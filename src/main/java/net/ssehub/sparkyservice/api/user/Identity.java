@@ -57,13 +57,10 @@ public class Identity {
      */
     @Nonnull
     public static Identity of(@Nullable String username) {
-        if (username == null) {
-            throw new IllegalArgumentException("Null is not an identity");
-        }
-        var content = username.split(SEPERATOR);
-        if (content.length != 2) {
+        if (username == null || !validateFormat(username)) {
             throw new IllegalArgumentException("Not a valid username. Missing user or realm.");
         }
+        var content = username.split(SEPERATOR);
         String nickname = notNull(content[0]);
         UserRealm realm;
         try {
@@ -72,6 +69,10 @@ public class Identity {
             realm = UserRealm.UNKNOWN;
         }
         return new Identity(nickname, realm);
+    }
+    
+    public static boolean validateFormat(@Nullable String username) {
+        return username != null && username.split(SEPERATOR).length == 2;
     }
 
     @Override
