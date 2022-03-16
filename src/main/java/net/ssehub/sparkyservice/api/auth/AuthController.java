@@ -64,7 +64,7 @@ public class AuthController {
             schema = @Schema(implementation = ErrorDto.class)))
     })
     @PreAuthorize("permitAll()")
-    public AuthenticationInfoDto authenticate(@Valid @Nonnull @NotNull @RequestBody CredentialsDto credentials) {
+    public AuthenticationInfoDto login(@Valid @Nonnull @NotNull @RequestBody CredentialsDto credentials) {
         return authService.authenticateAndGenerateJwt(credentials);
     }
 
@@ -93,7 +93,7 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Not authenticated",
                 content = @Content(mediaType = "application/json",
                        schema = @Schema(implementation = ErrorDto.class))) })
-    public AuthenticationInfoDto checkTokenAuthenticationStatus(@Nullable Authentication auth,
+    public AuthenticationInfoDto whoAmI(@Nullable Authentication auth,
             HttpServletRequest request) {
         return authService.checkAuthenticationStatus(auth, notNull(request));            
     }

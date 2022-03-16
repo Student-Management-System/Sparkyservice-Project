@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author marcel
  */
 //checkstyle: stop visibility modifier check
-public class TokenDto implements Serializable {
+public class JwtDto implements Serializable {
     private static final long serialVersionUID = 6425173137954338569L;
     public String key;
     public String token;
@@ -31,7 +31,7 @@ public class TokenDto implements Serializable {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        TokenDto other = (TokenDto) obj;
+        JwtDto other = (JwtDto) obj;
         if (expiration == null) {
             if (other.expiration != null)
                 return false;

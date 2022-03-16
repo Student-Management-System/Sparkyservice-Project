@@ -232,7 +232,7 @@ public class AuthenticationSecurityRestIT {
         var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
         assertEquals(OK.value(), result.getResponse().getStatus(), "Authentication not successful");
         
-        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        var jwt = readWhoamiResponse(result.getResponse()).jwt.token;
         assumeTrue(jwt != null, "No JWT token response");
         mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
@@ -251,7 +251,7 @@ public class AuthenticationSecurityRestIT {
         
         var result = mvcPeformLogin("testuser", "password");
         assertEquals(OK.value(), result.getResponse().getStatus(), "Authentication not successful");
-        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        var jwt = readWhoamiResponse(result.getResponse()).jwt.token;
         assumeTrue(jwt != null, "No JWT token response");
         mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
@@ -266,7 +266,7 @@ public class AuthenticationSecurityRestIT {
         var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is"
                     + "another problem.");
-        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        var jwt = readWhoamiResponse(result.getResponse()).jwt.token;
         mvc.perform(createWhoamiRequest(jwt)).andExpect(status().isOk());
     }
     
@@ -292,7 +292,7 @@ public class AuthenticationSecurityRestIT {
         var result = mvcPeformLogin(inMemoryUser, inMemoryPassword);
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication with JWT Token was not successful");
         
-        var jwt = readWhoamiResponse(result.getResponse()).token.token;
+        var jwt = readWhoamiResponse(result.getResponse()).jwt.token;
         mvc.perform(createJwtVerifyRequest(jwt)).andExpect(status().isOk());
     }
     

@@ -6,7 +6,7 @@ package net.ssehub.sparkyservice.api.conf;
  * @author marcel
  */
 public final class ControllerPath {
-    public static final String GLOBAL_PREFIX = "/api/v1";
+    public static final String GLOBAL_PREFIX = "/api/v2";
     public static final String HEARTBEAT = GLOBAL_PREFIX + "/heartbeat"; 
 
     public static final String SWAGGER = "swagger-ui.html";
@@ -20,8 +20,8 @@ public final class ControllerPath {
     public static final String USERS_GET_SINGLE = USERS_DELETE;
     public static final String USERS_GET_ALL = USERS_PREFIX;
 
-    public static final String AUTHENTICATION_AUTH = GLOBAL_PREFIX + "/authenticate";
-    public static final String AUTHENTICATION_CHECK = AUTHENTICATION_AUTH + "/check";
-    public static final String AUTHENTICATION_VERIFY = AUTHENTICATION_AUTH + "/verify";
+    public static final String AUTHENTICATION_AUTH = GLOBAL_PREFIX + "/login";
+    public static final String AUTHENTICATION_CHECK = GLOBAL_PREFIX + "/whoAmI";
+    public static final String AUTHENTICATION_VERIFY = GLOBAL_PREFIX + "/verify";
        
 }

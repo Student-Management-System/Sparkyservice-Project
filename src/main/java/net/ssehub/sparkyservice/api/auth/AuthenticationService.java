@@ -25,7 +25,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.provider.ContextAuthenticationManager;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
-import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
@@ -79,8 +79,8 @@ public class AuthenticationService {
         var user = extractionService.extract(auth);
         var dto = new AuthenticationInfoDto();
         dto.user = user.ownDto();
-        if (auth.getCredentials() instanceof TokenDto) {
-            dto.token = (TokenDto) auth.getCredentials();
+        if (auth.getCredentials() instanceof JwtDto) {
+            dto.jwt = (JwtDto) auth.getCredentials();
         }
         return dto;
     }

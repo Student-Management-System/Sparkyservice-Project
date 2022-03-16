@@ -21,7 +21,7 @@ import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.dto.TokenDto;
+import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
@@ -66,8 +66,8 @@ public class JwtAuthReader {
         SparkyUser user = userFrom(tokenObj, service);
         var authDto = new AuthenticationInfoDto();
         authDto.user = user.ownDto();
-        authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());
-        authDto.token.token = jwt;
+        authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
+        authDto.jwt.token = jwt;
         return authDto;
     }
     
@@ -86,9 +86,9 @@ public class JwtAuthReader {
         if (tokenUser.equals(user.getIdentity())) {
             var authDto = new AuthenticationInfoDto();
             authDto.user = user.ownDto();
-            authDto.token.expiration = DateUtil.toString(tokenObj.getExpirationDate());
-            authDto.token.token = jwt;
-            authDto.token.key = jwtConf.getPrefix();
+            authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
+            authDto.jwt.token = jwt;
+            authDto.jwt.key = jwtConf.getPrefix();
             return authDto;
         } 
         throw new JwtTokenReadException("Illegal access. User does not match with JWT subject"); // TODO write tests
@@ -99,7 +99,7 @@ public class JwtAuthReader {
      * The returned authentication contains:<br>
      * <ul>
      * <li>{@link Authentication#getPrincipal()} => String which can be used for {@link Identity} creation
-     * <li>{@link Authentication#getCredentials()} => {@link TokenDto}</li>
+     * <li>{@link Authentication#getCredentials()} => {@link JwtDto}</li>
      * <li>{@link Authentication#getAuthorities()} => (single) {@link UserRole}</li>
      * </ul>
      * 
@@ -111,7 +111,7 @@ public class JwtAuthReader {
     public Authentication readToAuthentication(@Nullable String jwtString) 
             throws JwtTokenReadException {
         JwtToken tokenObj = readJwtToken(jwtString);
-        var tokenDto = new TokenDto();
+        var tokenDto = new JwtDto();
         tokenDto.expiration = DateUtil.toString(tokenObj.getExpirationDate());
         tokenDto.token = jwtString;
         tokenDto.key = jwtConf.getPrefix();
