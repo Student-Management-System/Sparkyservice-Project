@@ -1,0 +1,30 @@
+server:
+   port: 8080
+db:
+   user: testdb
+   password: testdb
+   name: testdb
+   addr: 10.0.3.105
+   
+spring:
+   profiles:
+      include: debugging
+
+zuul:
+   routes:
+      heart:
+         url: forward:api/v2/heartbeat
+      stmgmt:
+         url: http://147.172.178.30:3000/
+ldap:
+   enabled: true
+   url: ldap://localhost:4564
+   basedn: pcds.uni-hildesheim.de
+
+jwt:
+   secret: k3l2j4ljsy89/()213kjlA?efDAS"§31fdskj23&$%$(jkdasjldkj329)))jdskajf
+
+recovery:
+   enabled: true
+   password: abcdefgh
+   

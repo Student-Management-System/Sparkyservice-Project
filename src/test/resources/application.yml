@@ -5,3 +5,6 @@ loggin:
         net:
             ssehub:
                 sparkyservice: debug
+zuul:
+    ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+    sensitive-headers: Cookie,Set-Cookie

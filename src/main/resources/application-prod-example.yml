@@ -1,0 +1,28 @@
+# MANDATORY
+db:
+   name:
+   addr:
+   user:
+   password: 
+jwt:
+   secret: SECRET
+
+# OPTIONAL
+server:
+   port: 80
+zuul:
+   routes:
+      stmgmt:
+         url: URL
+         acl: none
+recovery:
+   enaled: false
+   password: PASSWORD
+   user: adminuser
+ldap:
+   enabled: false
+   ad: true
+   basedn: null
+   url: null
+   userdn: null
+debug: false

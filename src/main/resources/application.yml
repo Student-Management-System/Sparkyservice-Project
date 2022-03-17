@@ -1,24 +1,67 @@
 version: ${pom.version}
 build:
-    date: $timestamp}
+   date: $timestamp}
 springdoc: # Todo remove patch version here
-    version: ${pom.version}
-
-spring:
-    profiles:
-        active: release
-    banner:
-        location: classpath:banner.txt
-
+   version: ${pom.version}
+   banner:
+      location: classpath:banner.txt
 zuul:
-    ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
-    sensitive-headers: Cookie,Set-Cookie
-    
+   ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
+   sensitive-headers: Cookie,Set-Cookie
+ribbon:
+   eureka:
+      enabled: false
+jwt:
+   prefix: Bearer
+   type: JWT
+   audience: Sparkyservice APPS
+   
+---
+spring:
+   profiles: prod
+   jpa:
+      show-sql: false
+      hibernate:
+         ddl-auto: update
+      properties:
+         connection:
+            pool_size: 7
+jwt:
+   issuer: Sparkyservice API
 logging:
-    level:
-        com:
-            zaxxer: 
-                hikari: OFF
-                
-                
-                
+   level:
+      com:
+         zaxxer:
+            hikari: OFF
+      root: INFO
+      org:
+         springframework: ERROR
+      net:
+         ssehub:
+            sparkyservice: INFO
+debug: false
+
+---
+spring:
+   profiles: postgres
+   datasource:
+      driverClassName: org.postgresql.Driver
+      driver-class-name: org.postgresql.Driver
+      url: jdbc:postgresql://%s/%s
+   jpa:
+      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      
+---
+spring:
+   profiles: debugging
+debug: true
+logging:
+   level:
+      root: INFO
+      org:
+         springframework:
+            web: WARN
+         hibernate: ERROR
+      net:
+         ssehub:
+            sparkyservice: DEBUG
