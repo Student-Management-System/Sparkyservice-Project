@@ -20,23 +20,17 @@ Short summary:
 1. Create a file called `application-prod.yml` alongside the JAR file (or into `src/main/resources` when using maven).
 2. Copy the example content from the wiki into it
 3. Adapt the values to your needs
-  
-To create the database tables on the very first start, set the following configuration inside your spring profile (and remove it aftewards):
-
-```
-spring:
-	jpa:
-		hibernate:
-			ddl-auto: create
-```
 
 ## Starting
 
 To run the jar run:
 
-	java -jar -Dspring.profiles.active=prod,postgres sparkyservice-spring-boot.jar
+    java -jar -Dspring.profiles.active=prod,postgres sparkyservice-spring-boot.jar
 
 Change the profiles to your need. See: [Configuration](https://github.com/Student-Management-System/Sparkyservice-Project/wiki/Properties)
+To create the database tables on the very first start, use the `dbsetup` profile like this:
+
+    java -jar -Dspring.profiles.active=prod,postgres,dbsetup sparkyservice-spring-boot.jar
 
 # Development
 coming soon

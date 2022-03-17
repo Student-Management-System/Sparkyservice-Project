@@ -1,14 +1,25 @@
 server:
    port: 8080
 db:
-   user: testdb
-   password: testdb
+   user: root
+   password: root
    name: testdb
-   addr: 10.0.3.105
+   addr: localhost:5432
    
 spring:
    profiles:
-      include: debugging
+      include: debug
+   datasource:
+      continueOnError: true
+ldap:
+   enabled: true
+   url: ldap://ldap.forumsys.com:389
+   basedn: dc=example,dc=com
+   user: cn=read-only-admin,dc=example,dc=com
+   password: password
+   userdn: uid={0}
+   #url: ldap://localhost:4564
+   #basedn: pcds.uni-hildesheim.de
 
 zuul:
    routes:
@@ -16,10 +27,6 @@ zuul:
          url: forward:api/v2/heartbeat
       stmgmt:
          url: http://147.172.178.30:3000/
-ldap:
-   enabled: true
-   url: ldap://localhost:4564
-   basedn: pcds.uni-hildesheim.de
 
 jwt:
    secret: k3l2j4ljsy89/()213kjlA?efDAS"§31fdskj23&$%$(jkdasjldkj329)))jdskajf
@@ -27,4 +34,3 @@ jwt:
 recovery:
    enabled: true
    password: abcdefgh
-   

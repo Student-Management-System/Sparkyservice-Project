@@ -15,14 +15,17 @@ jwt:
    prefix: Bearer
    type: JWT
    audience: Sparkyservice APPS
+spring:
+   application:
+      name: Sparkyservice
    
 ---
 spring:
    profiles: prod
    jpa:
       show-sql: false
-      hibernate:
-         ddl-auto: update
+     # hibernate:
+     #    ddl-auto: update
       properties:
          connection:
             pool_size: 7
@@ -53,7 +56,7 @@ spring:
       
 ---
 spring:
-   profiles: debugging
+   profiles: debug
 debug: true
 logging:
    level:
@@ -65,3 +68,10 @@ logging:
       net:
          ssehub:
             sparkyservice: DEBUG
+ 
+---
+spring:
+   profiles: dbsetup
+   jpa:
+      hibernate: 
+         ddl-auto: create
