@@ -52,7 +52,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = {TestUserConfiguration.class})
-@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @AutoConfigureTestDatabase(replace=Replace.AUTO_CONFIGURED)
 //checkstyle: stop exception type check
 public class UserControllerRestIT {
@@ -62,6 +62,9 @@ public class UserControllerRestIT {
 
     @Autowired 
     private UserStorageService userService; 
+    
+    @Autowired
+    private ObjectMapper mapper;
 
     private MockMvc mvc;
 
@@ -265,7 +268,7 @@ public class UserControllerRestIT {
         assumeTrue(result.getResponse().getStatus() == 200);
         
         String dtoArrayString = result.getResponse().getContentAsString();
-        var dtoArray = new ObjectMapper().readValue(dtoArrayString, UserDto[].class);
+        var dtoArray = mapper.readValue(dtoArrayString, UserDto[].class);
         assertEquals(2, dtoArray.length);
     }
     

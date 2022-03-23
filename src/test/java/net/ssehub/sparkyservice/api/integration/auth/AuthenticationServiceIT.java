@@ -1,5 +1,8 @@
 package net.ssehub.sparkyservice.api.integration.auth;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -10,10 +13,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 
 import net.ssehub.sparkyservice.api.auth.AuthenticationService;
+import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
+import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
@@ -24,7 +30,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace=Replace.AUTO_CONFIGURED)
-@ActiveProfiles("noldap")
+@ActiveProfiles("test")
 public class AuthenticationServiceIT {
 
     @Autowired
@@ -80,6 +86,34 @@ public class AuthenticationServiceIT {
         creds.password = inMemoryPassword;
         var resultAuth = authService.authenticate(creds);
         assertTrue(resultAuth.isAuthenticated());
+    }
+    
+    @IntegrationTest
+    @DisplayName("Test if ldap user login is possible")
+    public void loginLdapTest() {
+        var creds = new CredentialsDto();
+        var ident = new Identity("test", UserRealm.UNIHI);
+        creds.username = ident.asUsername();
+        creds.password = "secret";
+        assertDoesNotThrow(() -> authService.authenticate(creds));
+    }
+    
+    @IntegrationTest
+    @DisplayName("Test if auth attempt with bad credentials fails with correct exception")
+    public void negativeLoginTest() {
+        var creds = new CredentialsDto();
+        creds.username = "aaaaaaaa";
+        creds.password = "";
+        assertThrows(BadCredentialsException.class, () -> authService.authenticate(creds));
+    }
+    
+    @IntegrationTest
+    @DisplayName("Test if unkown realm auth attempt is denied properly")
+    public void negativeUnkownRealmTest() {
+        var creds = new CredentialsDto();
+        creds.username = "aaaaaaaa@asdasd";
+        creds.password = "asdasd";
+        assertThrows(AuthenticationException.class, () -> authService.authenticate(creds));
     }
 
 }

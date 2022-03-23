@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.auth.provider.ContextAuthenticationManager;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
@@ -50,7 +50,7 @@ public class AuthenticationService {
     private UserExtractionService extractionService;
     
     @Autowired
-    private ContextAuthenticationManager contextAuthManager;
+    private AuthenticationManagerResolver<CredentialsDto> contextManagerResolver;
     
     @Autowired
     private JwtTokenService jwtService;
@@ -118,7 +118,7 @@ public class AuthenticationService {
             LOG.debug("Username null not allowed");
             throw new AuthenticationException();
         }
-        AuthenticationManager manager = contextAuthManager.credentialsContextResolver().resolve(credentials);
+        AuthenticationManager manager = contextManagerResolver.resolve(credentials);
         LOG.debug("Attempt authentication: {}", credentials.username);
         var authAttempt = new UsernamePasswordAuthenticationToken(credentials.username.trim(), credentials.password);
         var authentication = manager.authenticate(authAttempt);

@@ -9,17 +9,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationConverter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Filter which handles checks authentication information with JWT.
  * 
  * @author marcel
  */
-public class SetAuthenticationFilter extends BasicAuthenticationFilter {
+public class SetAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(SetAuthenticationFilter.class);
     private final AuthenticationConverter converter;
@@ -31,8 +30,7 @@ public class SetAuthenticationFilter extends BasicAuthenticationFilter {
      * @param authenticationManager
      * @param authService
      */
-    public SetAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationConverter converter) {
-        super(authenticationManager);
+    public SetAuthenticationFilter(AuthenticationConverter converter) {
         this.converter = converter;
     }
 
