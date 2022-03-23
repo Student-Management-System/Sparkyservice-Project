@@ -1,20 +1,27 @@
+db:
+   user: sa
+   password: password 
 spring:
   datasource:
     url: jdbc:h2:mem:mydb
-    username: sa
-    password: password
     driverClassName: org.h2.Driver
   jpa:
-    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+       ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
 
 # https://www.forumsys.com/2014/02/22/online-ldap-test-server/
 ldap:
-    enabled: true
-    urls: ldap://localhost:4564
-    ad:
-       enabled: true
-       domain: pcds.uni-hildesheim.de
-
+    enabled: false 
+    url: ldap://ldap.forumsys.com:389
+    userdn: cn=read-only-admin,dc=example,dc=com
+    password: password
+    #ad: true
+    #url: ldap://127.0.0.1:10389
+    #userdn: uid=admin,ou=system
+    #password: secret
+    #basedn: wimpi.net
+    
 jwt:
    secret: kjsdfsdkjfjhdskfhsdlkfsdlfkjsaddklusdklfjdsksdlkfjsadlkfjsdaflkjsdflkj
    header: Authorization

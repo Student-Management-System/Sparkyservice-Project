@@ -1,16 +1,26 @@
 package net.ssehub.sparkyservice.api.auth.provider;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.ldap.core.support.BaseLdapPathContextSource;
+import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
+import org.springframework.security.ldap.authentication.BindAuthenticator;
+import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
+import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
+import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
 
 import net.ssehub.sparkyservice.api.auth.ldap.LdapContextMapper;
 import net.ssehub.sparkyservice.api.user.UserRealm;
@@ -54,11 +64,11 @@ public class ProviderConfig {
     @Value("${ldap.basedn:}")
     private String ldapBaseDn;
 
-    @Value("${ldap.username:}")
-    private String ldapSecurityPrincipal;
+    @Value("${ldap.user:}")
+    private String ldapUser;
 
     @Value("${ldap.password:}")
-    private String ldapPrincipalPassword;
+    private String ldapPassword;
 
     @Value("${ldap.userdn:}")
     private String ldapUserDnPattern;
@@ -90,24 +100,36 @@ public class ProviderConfig {
     @Autowired
     private PasswordEncoder pwEncoder;
     
+    @Bean
+    public LdapContextSource contextSource() {
+        var ldapSource= new DefaultSpringSecurityContextSource(List.of(ldapUrl), ldapBaseDn);
+        if (!ldapUser.isBlank() && !ldapPassword.isBlank()) {
+            ldapSource.setPassword(ldapPassword);
+            ldapSource.setUserDn(ldapUser);
+        }
+        return ldapSource;
+    }
+    
     // TODO enable normal LDAP login
-//    @Bean("ldapAuthProvider")
+    @Bean("ldapAuthProvider")
+    @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
 //    @ConditionalOnProperty(value = "ldap.enabled", havingValue = "true")
-//    public LdapAuthenticationProvider authenticationProvider(LdapAuthenticator authenticator) {
-//        return new LdapAuthenticationProvider(authenticator);
-//    }
-//
-//    @Bean
-//    public BindAuthenticator authenticator(BaseLdapPathContextSource contextSource) {
-//        String searchBase = "ou=people";
-//        String filter = "(uid={0})";
-//        FilterBasedLdapUserSearch search =
-//            new FilterBasedLdapUserSearch(searchBase, filter, contextSource);
-//        BindAuthenticator authenticator = new BindAuthenticator(contextSource);
-//        authenticator.setUserSearch(search);
-//        return authenticator;
-//    }
-//    
+//    @ConditionalOnPropertyS(value = "ldap.ad.enabled", havingValue = "false")
+    public SparkyProvider authenticationProvider(LdapAuthenticator authenticator) {
+        var prov = new LdapAuthenticationProvider(authenticator);
+        prov.setUserDetailsContextMapper(ldapContextMapper);
+        return new SparkyProvider(UserRealm.UNIHI, prov, 3);
+    }
+
+    @Bean
+    public BindAuthenticator authenticator(BaseLdapPathContextSource contextSource) {
+        String searchBase = "";
+        FilterBasedLdapUserSearch search =
+            new FilterBasedLdapUserSearch(searchBase, ldapUserDnPattern, contextSource);
+        BindAuthenticator authenticator = new BindAuthenticator(contextSource);
+        authenticator.setUserSearch(search);
+        return authenticator;
+    }
 
     @ConditionalOnProperty(value = "recovery.enabled", havingValue = "true")
     @Bean("memoryAuthProvider")
@@ -127,7 +149,7 @@ public class ProviderConfig {
     }
 
     @Bean("adLdapAuthProvider")
-    @ConditionalOnProperty(value = "ldap.ad.enabled", havingValue = "true")
+    @ConditionalOnProperty(value = "ldap.ad", havingValue = "true")
     public SparkyProvider adLdapAuthProvider() {
         ActiveDirectoryLdapAuthenticationProvider adProvider = new ActiveDirectoryLdapAuthenticationProvider(ldapBaseDn,
                 ldapUrl);
