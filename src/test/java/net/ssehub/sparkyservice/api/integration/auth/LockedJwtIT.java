@@ -85,7 +85,7 @@ public class LockedJwtIT {
      * @throws Exception
      */
     @IntegrationTest
-    @DisplayName("Test request is not routed with locked JWT")
+    @DisplayName("Test if request is not routed with locked JWT")
     public void routingJwtLockedTest() throws Exception {
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtString;
         this.mvc

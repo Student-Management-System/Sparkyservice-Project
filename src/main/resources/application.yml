@@ -64,11 +64,12 @@ logging:
       org:
          springframework:
             web: WARN
+            boot:
+               autoconfigure: ERROR
          hibernate: ERROR
       net:
          ssehub:
             sparkyservice: DEBUG
- 
 ---
 spring:
    profiles: dbsetup
