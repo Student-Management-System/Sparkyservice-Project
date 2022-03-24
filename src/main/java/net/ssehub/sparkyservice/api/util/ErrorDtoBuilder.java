@@ -35,18 +35,6 @@ public class ErrorDtoBuilder {
     }
 
     /**
-     * Factory template method for an unauthorized HTTP error. 
-     * 
-     * @param customMessage
-     * @param path
-     * @return DTO for an unauthorized HTTP Error
-     */
-    public @Nonnull ErrorDtoBuilder newUnauthorizedError(@Nullable String customMessage, @Nullable String path) {
-        //TODO löschen
-        return newError(message, HttpStatus.UNAUTHORIZED).withUrlPath(path);
-    }
-
-    /**
      * Creates a new error message dto.
      * 
      * @param customMessage Own error message; when null, a default message is set

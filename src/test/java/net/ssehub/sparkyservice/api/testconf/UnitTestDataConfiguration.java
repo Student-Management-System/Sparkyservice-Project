@@ -6,15 +6,12 @@ import javax.annotation.Nonnull;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 
-import net.ssehub.sparkyservice.api.conf.SpringConfig;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
@@ -65,13 +62,4 @@ public class UnitTestDataConfiguration {
         return new UserStorageImpl();
     } 
 
-    /**
-     * .
-     * @return Default user transformer from {@link SpringConfig#userTransformer()}
-     */
-    @Bean
-    @Primary
-    public UserExtractionService userTransformer() {
-        return new SpringConfig().userTransformer();
-    }
 }

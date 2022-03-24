@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.modification.UserEditException;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -31,9 +30,6 @@ public class UserService {
     @Autowired
     private UserStorageService storageService;
 
-    @Autowired
-    private UserExtractionService transformerService;
-
     /**
      * Modify values of a user specified by a DTO. User can only edit himself or needs to be an admin in order to modify
      * other user values. Authorization information will be extracted from authentication context. 
@@ -43,7 +39,7 @@ public class UserService {
      * @return Modified user representation
      */
     public UserDto modifyUser(@Nonnull UserDto userDto, @Nonnull Authentication auth) {
-        SparkyUser authenticatedUser = transformerService.extract(auth);
+        SparkyUser authenticatedUser = storageService.findUser(auth.getName());
         Predicate<SparkyUser> selfEdit = user -> user.getUsername().equals(userDto.username);
         if (authenticatedUser.getRole() == UserRole.ADMIN || selfEdit.test(authenticatedUser)) {
             SparkyUser targetUser = storageService.findUser(userDto.username);

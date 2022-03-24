@@ -12,10 +12,12 @@ import javax.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -34,6 +36,7 @@ import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
+import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
  * Provides tests for JWTs locking and refreshing mechanisms. 
@@ -46,7 +49,7 @@ import net.ssehub.sparkyservice.api.user.UserRole;
 @ActiveProfiles("test")
 @TestPropertySource(locations = {"classpath:test-routing.properties"})
 //checkstyle: stop exception type check
-public class LockedJwtIT {
+public class LockedJwtStatucCodeIT {
 
     // "service@local" must be allowed in test-routing.properties for PROTECTED_PATH
     private static final String USERNAME = "service"; 
@@ -58,6 +61,9 @@ public class LockedJwtIT {
     @Autowired private JwtTokenService jwtService; 
     @Autowired private MockMvc mvc;
     private String jwtString;
+    
+    @MockBean
+    private UserStorageService userStorageService;
     
     /*
      * Hotfix:
@@ -72,6 +78,7 @@ public class LockedJwtIT {
         JwtCache.initNewCache();
         assertNotNull(zuulRoutes.getRoutes());
         var user = LocalUserDetails.newLocalUser(USERNAME, "test", UserRole.SERVICE);
+        
         this.jwtString = jwtService.createFor(user);
         Set<JwtToken> lockedToken = JwtCache.getInstance().getCachedTokens();
         lockedToken.forEach(t -> t.setLocked(true));
@@ -125,29 +132,12 @@ public class LockedJwtIT {
     @DisplayName("Test if user can't authorize with locked JWT")
     public void authorizeLockedTest() throws Exception {
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtString;
+        Mockito.when(userStorageService.findUser(TEST_USER.getIdentity())).thenReturn(TEST_USER);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
                    .header(jwtConf.getHeader(), fullTokenHeader)
                    .accept(MediaType.ALL))
             .andExpect(status().isUnauthorized());
-    }
-
-    /**
-     * Test if a user can authorize (via authorization check controller) when his token is non locked.
-     * 
-     * @throws Exception
-     */
-    @IntegrationTest
-    @DisplayName("Test if user can authorize with NON locked JWT")
-    public void route() throws Exception {
-        String newJwtToken = jwtService.createFor(TEST_USER);
-        String fullTokenHeader = jwtConf.getPrefix() + " " + newJwtToken;
-        this.mvc
-            .perform(
-                get(ControllerPath.AUTHENTICATION_CHECK)
-                    .header(jwtConf.getHeader(), fullTokenHeader)
-                    .accept(MediaType.ALL))
-            .andExpect(status().is2xxSuccessful());
     }
 }

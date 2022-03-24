@@ -26,7 +26,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -47,41 +46,20 @@ public class AuthenticationService {
     private JwtAuthReader jwtReader;
     
     @Autowired
-    private UserExtractionService extractionService;
-    
-    @Autowired
     private AuthenticationManagerResolver<CredentialsDto> contextManagerResolver;
     
     @Autowired
     private JwtTokenService jwtService;
     
     @Autowired
-    private JwtAuthConverter jwtRequestConverter;
+    private JwtAuthConverter converter;
 
-    public AuthenticationInfoDto checkAuthenticationStatus(@Nullable Authentication auth, HttpServletRequest request) {
-        if (auth == null) {
-            jwtRequestConverter.convert(request); // should throw something which contains error message
-            throw new AuthenticationException();
-        } else {
-            return extractAuthenticationInfoDto(auth);
-        }
-    }
-
-    /**
-     * Creates an DTO which holds all information of the user the given (authenticated) user and generates an JWT
-     * token for this user. The generated token can be used for authorization. 
-     * 
-     * @param user
-     * @return DTO with user information and generated JWT token
-     */
-    public AuthenticationInfoDto extractAuthenticationInfoDto(Authentication auth) {
-        // TODO merge this method - it is a possible duplicate
-        var user = extractionService.extract(auth);
+    public AuthenticationInfoDto checkAuthenticationStatus(HttpServletRequest request) {
+        Authentication auth = converter.convert(request);
+        var jwt = (JwtDto) auth.getCredentials();
         var dto = new AuthenticationInfoDto();
-        dto.user = user.ownDto();
-        if (auth.getCredentials() instanceof JwtDto) {
-            dto.jwt = (JwtDto) auth.getCredentials();
-        }
+        dto.jwt = jwt;
+        dto.user = userStorage.findUser(auth.getName()).ownDto();
         return dto;
     }
 

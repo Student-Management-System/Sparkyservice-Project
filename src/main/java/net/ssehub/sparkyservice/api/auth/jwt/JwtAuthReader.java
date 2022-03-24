@@ -22,6 +22,7 @@ import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
+import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 import net.ssehub.sparkyservice.api.util.DateUtil;
@@ -64,13 +65,9 @@ public class JwtAuthReader {
             throws JwtTokenReadException {
         JwtToken tokenObj = readJwtToken(jwt);
         SparkyUser user = userFrom(tokenObj, service);
-        var authDto = new AuthenticationInfoDto();
-        authDto.user = user.ownDto();
-        authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
-        authDto.jwt.token = jwt;
-        return authDto;
+        return createAuthenticationInfoDto(jwt, tokenObj, user.ownDto());
     }
-    
+
     /**
      * Builds an authentication DTO with from the token and the given user. 
      * 
@@ -84,16 +81,21 @@ public class JwtAuthReader {
         JwtToken tokenObj = readJwtToken(jwt);
         Identity tokenUser = Identity.of(tokenObj.getSubject());
         if (tokenUser.equals(user.getIdentity())) {
-            var authDto = new AuthenticationInfoDto();
-            authDto.user = user.ownDto();
-            authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
-            authDto.jwt.token = jwt;
-            authDto.jwt.key = jwtConf.getPrefix();
-            return authDto;
+            return createAuthenticationInfoDto(jwt, tokenObj, user.ownDto());
         } 
         throw new JwtTokenReadException("Illegal access. User does not match with JWT subject"); // TODO write tests
     }
-    
+
+    @Nonnull
+    private AuthenticationInfoDto createAuthenticationInfoDto(String jwt, JwtToken tokenObj, UserDto user) {
+        var authDto = new AuthenticationInfoDto();
+        authDto.user = user;
+        authDto.jwt.key = jwtConf.getPrefix();
+        authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
+        authDto.jwt.token = jwt;
+        return authDto;
+    }
+
     /**
      * Reads information out of the given JWT token to an authentication object. <br>
      * The returned authentication contains:<br>

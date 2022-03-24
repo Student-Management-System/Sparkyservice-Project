@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
-import net.ssehub.sparkyservice.api.user.extraction.SimpleExtractionImpl;
-import net.ssehub.sparkyservice.api.user.extraction.UserExtractionService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
@@ -61,17 +59,6 @@ public class SpringConfig {
     @Bean
     public Validator validator() {
         return new LocalValidatorFactoryBean();
-    }
-
-    /**
-     * Defines the UserTranfsformer Bean.
-     * 
-     * @return Using {@link SimpleExtractionImpl}
-     */
-    @Bean
-    @Primary
-    public UserExtractionService userTransformer() {
-        return new SimpleExtractionImpl();
     }
 
     /**

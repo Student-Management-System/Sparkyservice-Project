@@ -22,7 +22,7 @@ import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
-import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
+
 
 //checkstyle: stop exception type check
 /**

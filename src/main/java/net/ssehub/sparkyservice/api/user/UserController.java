@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
 import net.ssehub.sparkyservice.api.user.modification.UserEditException;
 import net.ssehub.sparkyservice.api.user.storage.DuplicateEntryException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
@@ -116,7 +115,7 @@ public class UserController {
     })
     @Secured({ UserRole.FullName.DEFAULT, UserRole.FullName.ADMIN })
     public UserDto editUser(@RequestBody @NotNull @Nonnull @Valid UserDto userDto, @Nonnull Authentication auth)
-            throws UserNotFoundException, MissingDataException {
+            throws UserNotFoundException {
         log.trace("Request for creating editing a user");
         return userService.modifyUser(userDto, auth);
     }

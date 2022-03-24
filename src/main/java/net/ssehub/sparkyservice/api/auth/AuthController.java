@@ -1,17 +1,14 @@
 package net.ssehub.sparkyservice.api.auth;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
-
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +26,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
-import net.ssehub.sparkyservice.api.user.extraction.MissingDataException;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 
 /**
@@ -93,9 +89,8 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Not authenticated",
                 content = @Content(mediaType = "application/json",
                        schema = @Schema(implementation = ErrorDto.class))) })
-    public AuthenticationInfoDto whoAmI(@Nullable Authentication auth,
-            HttpServletRequest request) {
-        return authService.checkAuthenticationStatus(auth, notNull(request));            
+    public AuthenticationInfoDto whoAmI(@Nonnull HttpServletRequest request) {
+        return authService.checkAuthenticationStatus(request);      
     }
 
     /*
