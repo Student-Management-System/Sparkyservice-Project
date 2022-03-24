@@ -1,8 +1,9 @@
 package net.ssehub.sparkyservice.api.user;
 
-import java.util.Optional;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     private static final long serialVersionUID = 2606418064897651578L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
-    @Nonnull
+    @Nullable
     private Password password;
 
     /**
@@ -34,7 +35,7 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
      * @param password
      * @param role
      */
-    public MemoryUser(@Nonnull String nickname, @Nonnull Password password, @Nonnull UserRole role) {
+    public MemoryUser(@Nonnull String nickname, @Nullable Password password, @Nonnull UserRole role) {
         super(new Identity(nickname, UserRealm.RECOVERY), role);
         this.password = password;
     }
@@ -45,8 +46,16 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     }
 
     @Override
+    @Nullable
     public String getPassword() {
-        return password.getPasswordString();
+        final Password password = this.password;
+        String pwString;
+        if (password == null) {
+            pwString = null;
+        } else {
+            pwString = password.getPasswordString();
+        }
+        return pwString;
     }
 
     @Override
@@ -77,16 +86,25 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
     }
 
     @Override
-    public boolean equals(Object object) {
-        return Optional.ofNullable(object)
-            .flatMap(obj -> super.equalsCheck(obj, this))
-            .map(user -> user.password)
-            .filter(password::equals)
-            .isPresent();
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof MemoryUser)) {
+            return false;
+        }
+        MemoryUser other = (MemoryUser) obj;
+        return Objects.equals(password, other.password);
     }
 
     @Override
     public int hashCode() {
-        return super.getHashCodeBuilder().append(password).toHashCode();
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(password);
+        return result;
     }
 }

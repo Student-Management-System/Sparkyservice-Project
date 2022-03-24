@@ -20,8 +20,8 @@ public class MemoryUserFactory implements AbstractSparkyUserFactory<MemoryUser> 
     @Nonnull
     public MemoryUser create(@Nullable String nickname, @Nullable Password password, @Nullable UserRole role,
             boolean isEnabled) {
-        if (nickname == null || role == null || password == null) {
-            throw new IllegalArgumentException("Username, password and role are mandatory");
+        if (nickname == null || role == null) {
+            throw new IllegalArgumentException("Username and role are mandatory");
         }
         var newUser = new MemoryUser(nickname, password, role);
         newUser.setExpireDate((LocalDate) null);

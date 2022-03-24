@@ -3,12 +3,11 @@ package net.ssehub.sparkyservice.api.user;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
@@ -139,120 +138,30 @@ abstract class AbstractSparkyUser implements SparkyUser {
         this.fullname = fullname;
     }
 
-    /**
-     * Generated equals method.
-     * 
-     * @param obj
-     * @return <code>true</code> when fields of this abstract class are equal
-     */
-    private boolean isEquals(Object obj) {
-        var localSettings = settings;
-        var localFullname = fullname;
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        AbstractSparkyUser other = (AbstractSparkyUser) obj;
-        if (databaseId != other.databaseId) {
-            return false;
-        }
-        if (!expirationDate.equals(other.expirationDate)) {
-            return false;
-        }
-        if (localFullname == null) {
-            if (other.fullname != null) {
-                return false;
-            }
-        } else if (!localFullname.equals(other.fullname)) {
-            return false;
-        }
-        if (isEnabled != other.isEnabled) {
-            return false;
-        }
-        if (role != other.role) {
-            return false;
-        }
-        if (localSettings == null) {
-            if (other.settings != null) {
-                return false;
-            }
-        } else if (!localSettings.equals(other.settings)) {
-            return false;
-        }
-        if (!ident.equals(other.ident)) {
-            return false;
-        }
-        return true;
-    }
-   
     @Override
     @Nonnull
     public UserDto ownDto() {
         return this.getRole().getPermissionTool().asDto(this);
     }
-    
-    /**
-     * Checks if the given object in manner of this (abstract) class. When the returned optional has a value, 
-     * it is safe to assume the object is an instance of this type. 
-     * Only check the special cases of the implementation afterwards.
-     * <br>
-     * Example usage: (just an example - {@link #settings} are already checked by this method <br>
-     * <code>
-     * return Optional.ofNullable(object) <br>
-     *     .flatMap(obj -> super.equalsCheck(obj, this))<br>
-     *     .map(user -> user.getSettings())<br>
-     *     .filter(Objects::nonNull)<br>
-     *     .filter(notNull(settings)::equals)<br>
-     *     .isPresent();
-     * </code>
-     * @param <T>
-     * @param object - Check target
-     * @param classInstance - Is casted to this instance
-     * @return Optional instance of the class given class - empty optional when the object is not an instance 
-     * nor equals.
-     */
-    @SuppressWarnings("unchecked")
-    <T extends AbstractSparkyUser> Optional<T> equalsCheck(@Nullable Object object, @Nonnull T classInstance) {
-        return (Optional<T>) Optional.ofNullable(object)
-                .filter(classInstance.getClass()::isInstance)
-                .map(classInstance.getClass()::cast)
-                .filter(this::isEquals);
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof AbstractSparkyUser)) {
+            return false;
+        }
+        AbstractSparkyUser other = (AbstractSparkyUser) obj;
+        return databaseId == other.databaseId && Objects.equals(expirationDate, other.expirationDate)
+                && Objects.equals(fullname, other.fullname) && Objects.equals(ident, other.ident)
+                && isEnabled == other.isEnabled && role == other.role && Objects.equals(settings, other.settings);
     }
 
-    /**
-     * Hashcodebuilder for {@link SparkyUser}. This builder contains all fields used by this abstract class.
-     * 
-     * @return HashCodeBuilder which already has all fields of this abstract class appended
-     */
-    HashCodeBuilder getHashCodeBuilder() {
-        return new HashCodeBuilder(17, 37)
-            .append(this.databaseId)
-            .append(this.isEnabled)
-            .append(this.expirationDate)
-            .append(this.ident)
-            .append(this.fullname)
-            .append(this.settings);
+    @Override
+    public int hashCode() {
+        return Objects.hash(databaseId, expirationDate, fullname, ident, isEnabled, role, settings);
     }
-
-    /**
-     * {@inheritDoc}
-     * <br>
-     * It is recommended to make use of {@link #equalsCheck(Object, AbstractSparkyUser)}.
-     */
-    public abstract boolean equals(Object object);
-
-    /**
-     * {@inheritDoc}
-     * <br> 
-     * It is recommended to make use of {@link #getHashCodeBuilder()} to get a hash of all fields used by this abstract
-     * implementation.
-     */
-    public abstract int hashCode();
     
     /**
      * {@inheritDoc}

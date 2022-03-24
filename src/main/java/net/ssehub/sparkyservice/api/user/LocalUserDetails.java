@@ -3,6 +3,7 @@ package net.ssehub.sparkyservice.api.user;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -254,16 +255,25 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
     }
 
     @Override
-    public boolean equals(@Nullable Object object) {
-        return Optional.ofNullable(object)
-            .flatMap(obj -> super.equalsCheck(obj, this))
-            .map(user -> user.getPasswordEntity())
-            .filter(this.getPasswordEntity()::equals)
-            .isPresent();
+    public boolean equals(@Nullable Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof LocalUserDetails)) {
+            return false;
+        }
+        LocalUserDetails other = (LocalUserDetails) obj;
+        return Objects.equals(encoder, other.encoder) && Objects.equals(passwordEntity, other.passwordEntity);
     }
 
     @Override
     public int hashCode() {
-        return super.getHashCodeBuilder().append(passwordEntity).toHashCode();
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(encoder, passwordEntity);
+        return result;
     }
 }

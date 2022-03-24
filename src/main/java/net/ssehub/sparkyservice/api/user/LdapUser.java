@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.user;
 
-import java.util.Optional;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
@@ -127,17 +127,25 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     }
 
     @Override
-    public boolean equals(Object object) {
-        Optional<LdapUser> optDn = Optional.ofNullable(object).flatMap(obj -> super.equalsCheck(obj, this));
-        if (dn == null) {
-            return optDn.map(u -> u.getDn() == null).orElse(false);
-        } else {
-            return optDn.map(u -> u.getDn()).filter(dn::equals).isPresent();
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
         }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof LdapUser)) {
+            return false;
+        }
+        LdapUser other = (LdapUser) obj;
+        return Objects.equals(dn, other.dn);
     }
 
     @Override
     public int hashCode() {
-        return getHashCodeBuilder().append(dn).toHashCode();
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + Objects.hash(dn);
+        return result;
     }
 }
