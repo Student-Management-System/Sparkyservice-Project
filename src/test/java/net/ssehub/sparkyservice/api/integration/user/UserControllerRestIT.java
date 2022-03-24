@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -161,6 +162,7 @@ public class UserControllerRestIT {
      * @throws Exception
      */
     @IntegrationTest
+    @DisplayName("Test if user with insufficant permission can't delete user")
     @WithMockUser(username = "admin", roles = "DEFAULT")
     public void securityNonAdminDeleteTest() throws Exception {
         var user = UserRealm.UNIHI.getUserFactory().create("testuser", null, UserRole.DEFAULT, true);
@@ -187,7 +189,7 @@ public class UserControllerRestIT {
         .perform(delete(ControllerPath.USERS_DELETE, UserRealm.UNIHI, "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.TEXT_PLAIN))
-            .andExpect(status().isForbidden()); 
+            .andExpect(status().isUnauthorized()); 
     }
 
     /**

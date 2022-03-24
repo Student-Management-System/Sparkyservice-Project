@@ -189,7 +189,7 @@ public class AuthenticationSecurityRestIT {
         
         assumeTrue(inMemoryPassword != null && inMemoryEnabled.equals("true"));
         var request = createAuthenticationRequest("testuser", "password");
-        this.mvc.perform(request).andExpect(status().isForbidden());
+        this.mvc.perform(request).andExpect(status().isUnauthorized());
     }
     /**
      * LDAP authentication test. After a successful authentication, a profile of the LDAP user should be stored into 
