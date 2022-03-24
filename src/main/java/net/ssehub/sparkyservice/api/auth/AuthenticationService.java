@@ -16,6 +16,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
@@ -23,7 +24,10 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
+import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -59,8 +63,21 @@ public class AuthenticationService {
         var jwt = (JwtDto) auth.getCredentials();
         var dto = new AuthenticationInfoDto();
         dto.jwt = jwt;
-        dto.user = userStorage.findUser(auth.getName()).ownDto();
+        if (Identity.of(auth.getName()).realm() == UserRealm.RECOVERY) {
+            dto.user = userFromAuthenticationOnly(auth).ownDto();
+        } else {
+            dto.user = userStorage.findUser(auth.getName()).ownDto();            
+        }
         return dto;
+    }
+    
+    private static SparkyUser userFromAuthenticationOnly(Authentication auth) {
+        var ident = Identity.of(auth.getName());
+        var role = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(UserRole::getEnum).findFirst()
+                .orElse(UserRole.DEFAULT);
+        return ident.realm().getUserFactory().create(ident.nickname(),null, role, true);
     }
 
     /**
