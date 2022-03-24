@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
+import javax.annotation.Nonnull;
+
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 
@@ -24,6 +26,7 @@ public interface UserModificationService {
      * @param user
      * @return DTO with values from the given user
      */
+    @Nonnull
     UserDto asDto(SparkyUser user);
 }
 

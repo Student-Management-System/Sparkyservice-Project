@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ public class AdminUserModificationImpl implements UserModificationService {
      * @param user
      * @return The given user as DTO with all fields.
      */
+    @Nonnull
     public UserDto asDto(SparkyUser user) {
         PersonalSettings settings = user.getSettings();
         UserDto dto = lowerPermService.asDto(user);

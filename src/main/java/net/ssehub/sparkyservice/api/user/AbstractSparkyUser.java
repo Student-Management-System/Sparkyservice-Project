@@ -191,6 +191,7 @@ abstract class AbstractSparkyUser implements SparkyUser {
     }
    
     @Override
+    @Nonnull
     public UserDto ownDto() {
         return this.getRole().getPermissionTool().asDto(this);
     }

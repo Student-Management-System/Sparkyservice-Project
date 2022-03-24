@@ -38,6 +38,7 @@ public class DefaultUserModificationImpl implements UserModificationService {
      * {@inheritDoc}.
      */
     @Override
+    @Nonnull
     public UserDto asDto(SparkyUser user) {
         var dto = new UserDto();
         dto.role = user.getRole();

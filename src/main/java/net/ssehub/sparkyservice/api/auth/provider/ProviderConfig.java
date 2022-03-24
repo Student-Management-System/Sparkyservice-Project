@@ -1,7 +1,5 @@
 package net.ssehub.sparkyservice.api.auth.provider;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -102,7 +100,7 @@ public class ProviderConfig {
     
     @Bean
     public LdapContextSource contextSource() {
-        var ldapSource= new DefaultSpringSecurityContextSource(List.of(ldapUrl), ldapBaseDn);
+        var ldapSource= new DefaultSpringSecurityContextSource(ldapUrl + "/" + ldapBaseDn);
         if (!ldapUser.isBlank() && !ldapPassword.isBlank()) {
             ldapSource.setPassword(ldapPassword);
             ldapSource.setUserDn(ldapUser);
@@ -110,11 +108,8 @@ public class ProviderConfig {
         return ldapSource;
     }
     
-    // TODO enable normal LDAP login
     @Bean("ldapAuthProvider")
     @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
-//    @ConditionalOnProperty(value = "ldap.enabled", havingValue = "true")
-//    @ConditionalOnPropertyS(value = "ldap.ad.enabled", havingValue = "false")
     public SparkyProvider authenticationProvider(LdapAuthenticator authenticator) {
         var prov = new LdapAuthenticationProvider(authenticator);
         prov.setUserDetailsContextMapper(ldapContextMapper);

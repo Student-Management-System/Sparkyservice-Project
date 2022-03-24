@@ -166,5 +166,6 @@ public interface SparkyUser extends UserDetails {
      * 
      * @return This object as DTO
      */
+    @Nonnull
     UserDto ownDto();
 }
