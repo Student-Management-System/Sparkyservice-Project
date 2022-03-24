@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -83,9 +82,6 @@ public class AuthController {
     @GetMapping(value = ControllerPath.AUTHENTICATION_CHECK)
     @ApiResponses(value = { 
         @ApiResponse(responseCode = "200", description = "Authentication status is good"),
-        @ApiResponse(responseCode = "403", description = "Not authenticated",
-                content = @Content(mediaType = "application/json",
-                       schema = @Schema(implementation = ErrorDto.class))),
         @ApiResponse(responseCode = "401", description = "Not authenticated",
                 content = @Content(mediaType = "application/json",
                        schema = @Schema(implementation = ErrorDto.class))) })
