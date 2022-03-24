@@ -12,10 +12,12 @@ spring:
 
 # https://www.forumsys.com/2014/02/22/online-ldap-test-server/
 ldap:
-    enabled: false 
+    enabled: true
     url: ldap://ldap.forumsys.com:389
-    userdn: cn=read-only-admin,dc=example,dc=com
+    basedn: dc=example,dc=com
+    user: cn=read-only-admin,dc=example,dc=com
     password: password
+    userdn: uid={0}
     #ad: true
     #url: ldap://127.0.0.1:10389
     #userdn: uid=admin,ou=system
