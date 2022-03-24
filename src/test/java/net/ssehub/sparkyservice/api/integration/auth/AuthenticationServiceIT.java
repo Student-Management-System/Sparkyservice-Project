@@ -130,7 +130,7 @@ public class AuthenticationServiceIT {
     }
     
     @IntegrationTest
-    @Disabled("Test if realm is added to username when missing")
+    @DisplayName("Test if realm is added to username when missing")
     public void addRealmAuthTest() {
         assumeFalse(Identity.validateFormat(inMemoryPassword));
         var creds = new CredentialsDto(inMemoryUser, inMemoryPassword);
