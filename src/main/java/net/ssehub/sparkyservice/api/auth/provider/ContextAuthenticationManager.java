@@ -1,11 +1,12 @@
 package net.ssehub.sparkyservice.api.auth.provider;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
-import net.ssehub.sparkyservice.api.auth.provider.ProviderConfig.SparkyProvider;
+import net.ssehub.sparkyservice.api.auth.provider.ProviderConfig.SingleSparkyProviderConfig;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
@@ -35,8 +36,8 @@ public class ContextAuthenticationManager {
             this.providers = providers;
         }
         
-        public MultiProviderAuthManager(SparkyProvider... providers) {
-            this.providers = providers;
+        public MultiProviderAuthManager(Collection<AuthenticationProvider> providers) {
+            this.providers = providers.toArray(AuthenticationProvider[]::new);
         }
 
         @Override
@@ -69,8 +70,12 @@ public class ContextAuthenticationManager {
         
     }
     
-    @Autowired
-    private List<SparkyProvider> provider;
+    private List<SingleSparkyProviderConfig> sortedProviderConfigs;
+    
+    public ContextAuthenticationManager(List<SingleSparkyProviderConfig> provider) {
+        super();
+        this.sortedProviderConfigs = provider.stream().sorted(this::providerSortStrategy).collect(Collectors.toList());
+    }
 
     @Bean
     public AuthenticationManagerResolver<CredentialsDto> credentialsContextResolver() {
@@ -83,17 +88,19 @@ public class ContextAuthenticationManager {
     }
     
     public AuthenticationManager globalManager() {
-        var sortedProvider = provider.stream().sorted(this::providerSortStrategy).toArray(SparkyProvider[]::new);
+        var sortedProvider = sortedProviderConfigs.stream()
+                .map(SingleSparkyProviderConfig::getProvider)
+                .collect(Collectors.toList());
         return auth -> new MultiProviderAuthManager(sortedProvider).authenticate(auth);
     }
 
     @Bean
     public AuthenticationManagerResolver<UserRealm> realmContextResolver() {
         return realm -> {
-            var foundProviders = provider.stream()
+            var foundProviders = sortedProviderConfigs.stream()
                     .filter(po -> po.supports(realm))
-                    .sorted(this::providerSortStrategy)
-                    .toArray(SparkyProvider[]::new);
+                    .map(SingleSparkyProviderConfig::getProvider)
+                    .collect(Collectors.toList());
             return new MultiProviderAuthManager(foundProviders);
         };
     }
@@ -105,9 +112,8 @@ public class ContextAuthenticationManager {
             return globalManager();
         }
     }
-
     
-    private int providerSortStrategy(SparkyProvider first, SparkyProvider second) {
+    private int providerSortStrategy(SingleSparkyProviderConfig first, SingleSparkyProviderConfig second) {
         return first.getWeight() - second.getWeight();
     }
 }

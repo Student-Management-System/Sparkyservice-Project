@@ -10,8 +10,6 @@ import org.springframework.ldap.core.support.BaseLdapPathContextSource;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
@@ -26,25 +24,15 @@ import net.ssehub.sparkyservice.api.user.UserRealm;
 @Configuration
 public class ProviderConfig {
     
-    public class SparkyProvider implements AuthenticationProvider {
+    public class SingleSparkyProviderConfig {
         private final UserRealm supportedRealm;
         private final AuthenticationProvider provider;
         private final int weight;
         
-        public SparkyProvider(UserRealm supportedRealm, AuthenticationProvider provider, int priorityWeight) {
+        public SingleSparkyProviderConfig(UserRealm supportedRealm, AuthenticationProvider provider, int priorityWeight) {
             this.weight = priorityWeight; // TODO test for this
             this.supportedRealm = supportedRealm;
             this.provider = provider;
-        }
-
-        @Override
-        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-            return provider.authenticate(authentication);
-        }
-        
-        @Override
-        public boolean supports(Class<?> authentication) {
-            return provider.supports(authentication);
         }
         
         public boolean supports(UserRealm realm) {
@@ -53,6 +41,10 @@ public class ProviderConfig {
 
         public int getWeight() {
             return weight;
+        }
+
+        public AuthenticationProvider getProvider() {
+            return provider;
         }
     }
     
@@ -110,10 +102,10 @@ public class ProviderConfig {
     
     @Bean("ldapAuthProvider")
     @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
-    public SparkyProvider authenticationProvider(LdapAuthenticator authenticator) {
+    public SingleSparkyProviderConfig authenticationProvider(LdapAuthenticator authenticator) {
         var prov = new LdapAuthenticationProvider(authenticator);
         prov.setUserDetailsContextMapper(ldapContextMapper);
-        return new SparkyProvider(UserRealm.UNIHI, prov, 3);
+        return new SingleSparkyProviderConfig(UserRealm.UNIHI, prov, 3);
     }
 
     @Bean
@@ -128,24 +120,24 @@ public class ProviderConfig {
 
     @ConditionalOnProperty(value = "recovery.enabled", havingValue = "true")
     @Bean("memoryAuthProvider")
-    public SparkyProvider memoryAuthProvider() {
+    public SingleSparkyProviderConfig memoryAuthProvider() {
         var prov = new DaoAuthenticationProvider(); 
         prov.setUserDetailsService(memoryDetailsService);
         prov.setPasswordEncoder(pwEncoder);
-        return new SparkyProvider(UserRealm.RECOVERY, prov, 3);
+        return new SingleSparkyProviderConfig(UserRealm.RECOVERY, prov, 3);
     }
 
     @Bean("localDbAuthProvider")
-    public SparkyProvider localDbAuthProvider() {
+    public SingleSparkyProviderConfig localDbAuthProvider() {
         var prov = new DaoAuthenticationProvider();
         prov.setUserDetailsService(localDetailsMapper);
         prov.setPasswordEncoder(pwEncoder);
-        return new SparkyProvider(UserRealm.LOCAL, prov, 2);
+        return new SingleSparkyProviderConfig(UserRealm.LOCAL, prov, 2);
     }
 
     @Bean("adLdapAuthProvider")
     @ConditionalOnProperty(value = "ldap.ad", havingValue = "true")
-    public SparkyProvider adLdapAuthProvider() {
+    public SingleSparkyProviderConfig adLdapAuthProvider() {
         ActiveDirectoryLdapAuthenticationProvider adProvider = new ActiveDirectoryLdapAuthenticationProvider(ldapBaseDn,
                 ldapUrl);
         adProvider.setConvertSubErrorCodesToExceptions(true);
@@ -154,6 +146,6 @@ public class ProviderConfig {
         if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
             adProvider.setSearchFilter(ldapUserDnPattern);
         }
-        return new SparkyProvider(UserRealm.UNIHI, adProvider, 1);
+        return new SingleSparkyProviderConfig(UserRealm.UNIHI, adProvider, 1);
     }
 }
