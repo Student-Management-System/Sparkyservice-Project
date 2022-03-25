@@ -104,6 +104,7 @@ public class AuthenticationServiceIT {
     
     @IntegrationTest
     @DisplayName("Test if ldap user login is possible")
+    @Disabled("Disabled for CI/CD because of the firewall settings") // TODO
     public void loginLdapTest() {
         // default credentials from: https://www.forumsys.com/2014/02/22/online-ldap-test-server/
         var ident = new Identity("gauss", UserRealm.UNIHI);

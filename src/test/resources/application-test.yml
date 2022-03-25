@@ -12,7 +12,7 @@ spring:
 
 # https://www.forumsys.com/2014/02/22/online-ldap-test-server/
 ldap:
-    enabled: true
+    enabled: false
     url: ldap://ldap.forumsys.com:389
     basedn: dc=example,dc=com
     user: cn=read-only-admin,dc=example,dc=com
