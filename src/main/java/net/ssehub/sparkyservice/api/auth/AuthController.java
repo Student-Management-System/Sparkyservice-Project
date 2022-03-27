@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,6 +26,7 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
+import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 
 /**
@@ -38,18 +40,15 @@ public class AuthController {
     
     @Autowired
     private AuthenticationService authService;
-    
+
     /**
-     * This method does nothing. The method header is important to let swagger list
-     * this authentication method. The authentication is handled through
-     * {@link DoAuthenticationFilter} which listens on the same path than this
-     * method.
+     * Authenticates a user.
      * 
-     * @param credentials - Contains username and password
-     * @return Information like JWT token when user was successfully authenticated
+     * @param credentials used for authentication
+     * @return
      */
     @Operation(summary = "Authentication / Login", 
-            description = "Authenticates the a user with a given nickname. Can contain realm information to specify ")
+            description = "Authenticates the a user with a given nickname. Can be used without realm information")
     @PostMapping(value = ControllerPath.AUTHENTICATION_AUTH)
     @ApiResponses(value = { 
         @ApiResponse(responseCode = "200", description = "Authentication success"),
@@ -113,4 +112,27 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JWT token", e);
         }
     }
+    
+    /**
+     * REST Controller for JWT refreshing. 
+     * 
+     * @param request
+     * @return new JWT with ne expiration time
+     * @throws JwtTokenReadException
+     */
+    @Operation(description = "Refreshed/Renews the current used JWT without the need of re-authentication. "
+            + "This must be done before expiration time of the token is reached.",
+            security = { @SecurityRequirement(name = "bearer-key") })
+    @GetMapping(value = ControllerPath.RENEW_JWT)
+    @ApiResponses(value = { 
+            @ApiResponse(responseCode = "200", description = "The new JWT"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated",
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "423", description = "JWT is locked and/or maximum renew amount is reached")})
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public JwtDto renew(@Nonnull HttpServletRequest request) throws JwtTokenReadException {
+        return authService.refreshJwt(request);
+    }
+    
 }
+

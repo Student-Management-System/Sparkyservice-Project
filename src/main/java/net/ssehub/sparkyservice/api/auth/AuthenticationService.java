@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
+import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.Identity;
@@ -150,5 +151,19 @@ public class AuthenticationService {
            .map(SparkyUser.class::cast)
            .orElseThrow(() -> new RuntimeException("Spring authentication didn't provide a "
                    + "valid authentication object after authentication."));
+   }
+   
+   /**
+    * Refreshed a JWT. This must be done before the expiration time is reached. Only succeed when the maximum refresh
+    * amount of the token is not reached.
+    * 
+    * @param request
+    * @return A new refreshed token
+    */
+   public JwtDto refreshJwt(HttpServletRequest request) {
+       var auth = converter.convert(request); 
+       var jwt = (JwtToken) auth.getCredentials();
+       jwtService.refresh(jwt); //TODO
+       return null;
    }
 }

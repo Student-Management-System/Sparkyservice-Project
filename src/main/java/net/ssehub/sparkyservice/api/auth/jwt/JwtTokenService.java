@@ -3,7 +3,6 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 import static net.ssehub.sparkyservice.api.user.UserRealm.RECOVERY;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Provides methods for dealing with concrete JWT tokens through {@link JwtCache} only.
@@ -88,11 +86,12 @@ public class JwtTokenService {
         JwtToken tokenObj;
         UUID jit = UUID.randomUUID();
         log.trace("Created JWT token with jit {}", jit.toString());
-        tokenObj = new JwtToken(jit, createJwtExpirationDate(user), user.getUsername(), user.getRole());
+        var expDate = notNull(user.getRole().getAuthExpirationDuration().get());
+        tokenObj = new JwtToken(jit, expDate , user.getUsername(), user.getRole());
+        tokenObj.setRemainingRefreshes(user.getRole().getAuthRefreshes());
         if (user.getIdentity().realm() != RECOVERY) {
             JwtCache.getInstance().storeAndSave(tokenObj);
         }
-        tokenObj.setRemainingRefreshes(0 /*TODO*/);
         return JwtUtils.encode(tokenObj, jwtConf);
     }
     
@@ -100,25 +99,21 @@ public class JwtTokenService {
      * Todo.
      * @param token
      */
-    public void refresh(JwtToken token) {
+    public String refresh(JwtToken token) {
+        if (isJitNonLocked(token.getJti())) {
+            if (token.getRemainingRefreshes() >= 1) {
+            }
+        }
         // TODO implement a refresh system? 
+        return null;
     }
 
     /**
      * Todo.
      * @param jwtString
      */
-    public void refresh(String jwtString) {
-        // TODO implement a refresh system ? 
-    }
-
-    /**
-     * Jwt conf which is used in this service class.
-     * 
-     * @return jwt settings
-     */
-    public JwtSettings getJwtConf() {
-        return this.jwtConf;
+    public String refresh(String jwtString) {
+        return null;
     }
 
     /**
@@ -130,21 +125,5 @@ public class JwtTokenService {
     public boolean isJitNonLocked(UUID jit) {
         Optional<JwtToken> token = JwtCache.getInstance().getCachedToken(jit);
         return !token.map(JwtToken::isLocked).orElse(false);
-    }
-    
-    /**
-     * Returns a date where a JWT token of user should expire. 
-     * 
-     * @param user
-     * @return Date where the validity of a JWT token should end for the given user
-     */
-    @Nonnull
-    public static LocalDateTime createJwtExpirationDate(SparkyUser user) {
-        if (user.getRole() == UserRole.SERVICE) {
-            return notNull(LocalDateTime.now().plusYears(10));
-        } else {
-            return notNull(LocalDateTime.now().plusDays(1));
-        }
-
     }
 }

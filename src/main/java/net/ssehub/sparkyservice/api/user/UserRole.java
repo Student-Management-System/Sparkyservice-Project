@@ -1,15 +1,18 @@
 package net.ssehub.sparkyservice.api.user;
 
-import static net.ssehub.sparkyservice.api.util.NullHelpers.*;
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.springframework.security.core.GrantedAuthority;
 
+import net.ssehub.sparkyservice.api.auth.AuthSpecifications;
 import net.ssehub.sparkyservice.api.user.modification.AdminUserModificationImpl;
 import net.ssehub.sparkyservice.api.user.modification.DefaultUserModificationImpl;
 import net.ssehub.sparkyservice.api.user.modification.UserModificationService;
@@ -22,12 +25,12 @@ import net.ssehub.sparkyservice.api.util.NonNullByDefault;
  * @author marcel
  */
 @NonNullByDefault
-public enum UserRole implements GrantedAuthority {
+public enum UserRole implements GrantedAuthority, AuthSpecifications {
     
     /**
      * Default user group. All authenticated user will probably hold this role if they have no other. 
      */
-    DEFAULT(FullName.DEFAULT) {
+    DEFAULT(FullName.DEFAULT, 8, 16) {
         @Override
         public UserModificationService getPermissionTool() {
             return new DefaultUserModificationImpl();
@@ -37,7 +40,7 @@ public enum UserRole implements GrantedAuthority {
     /**
      * Full permission to all services provided by this project.
      */
-    ADMIN(FullName.ADMIN) {
+    ADMIN(FullName.ADMIN, 8, 16) {
         @Override
         public UserModificationService getPermissionTool() {
             return new AdminUserModificationImpl(new DefaultUserModificationImpl());
@@ -47,25 +50,43 @@ public enum UserRole implements GrantedAuthority {
     /**
      * Permission to access all routed paths in order to reach protected micro services. 
      */
-    SERVICE(FullName.SERVICE) {
+    SERVICE(FullName.SERVICE, 0, 8766 /* 1 Year */) {
         @Override
         public UserModificationService getPermissionTool() {
             return new DefaultUserModificationImpl();
         }
     };
 
-    private @Nonnull final String authority;
+    private final String authority;
+    private final int allowedRefreshes;
+    private final long authenticationDurationTimeHours;
+    
 
     /**
      * Initialize the authority value while creating a new enum instance. This authority can be used for creating 
      * enums which are identified by the provided string later via {@link #getEnum(String)}.
+     * Also this constructor adds role specific settings for authentication.
      * 
      * @param authority
+     * @param refreshed
+     * @param authDuration
      */
-    UserRole(@Nonnull String authority) {
+    private UserRole(@Nonnull String authority, int refreshes, long authDuration) {
         this.authority = authority;
+        this.allowedRefreshes = refreshes;
+        this.authenticationDurationTimeHours = authDuration;
     }
 
+    @Override
+    public Supplier<LocalDateTime> getAuthExpirationDuration() {
+        return () -> LocalDateTime.now().plusHours(this.authenticationDurationTimeHours);
+    }
+
+    @Override
+    public int getAuthRefreshes() {
+        return this.allowedRefreshes;
+    }
+    
     /**
      * {@inheritDoc}
      */
@@ -109,7 +130,7 @@ public enum UserRole implements GrantedAuthority {
      *
      * @author Marcel
      */
-    public class FullName {
+    public static class FullName {
         public static final String ADMIN = "ROLE_ADMIN";
         public static final String DEFAULT = "ROLE_DEFAULT";
         public static final String SERVICE = "ROLE_SERVICE";

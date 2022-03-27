@@ -23,5 +23,6 @@ public final class ControllerPath {
     public static final String AUTHENTICATION_AUTH = GLOBAL_PREFIX + "/login";
     public static final String AUTHENTICATION_CHECK = GLOBAL_PREFIX + "/whoAmI";
     public static final String AUTHENTICATION_VERIFY = GLOBAL_PREFIX + "/verify";
+    public static final String RENEW_JWT = GLOBAL_PREFIX + "/renew";
        
 }
