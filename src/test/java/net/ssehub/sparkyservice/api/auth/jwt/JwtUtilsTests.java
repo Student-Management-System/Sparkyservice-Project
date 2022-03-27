@@ -4,6 +4,7 @@ import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
@@ -63,7 +65,19 @@ public class JwtUtilsTests {
     @DisplayName("Test successful encoding and decoding")
     public void testEncodeTest() {
         String jwtString = JwtUtils.encode(testToken, confValues);
-        assertDoesNotThrow(() -> JwtUtils.decodeAndExtract(jwtString, confValues.getSecret()));
+        assertDoesNotThrow(() -> JwtUtils.decodeAndExtract(jwtString, confValues));
+    }
+
+    @Test
+    @DisplayName("Test that wrong target audience throws exception")
+    public void negativeAudienceTest() {
+        var otherAudienceConf = new JwtSettings();
+        ReflectionTestUtils.setField(otherAudienceConf, "secret", confValues.getSecret());
+        ReflectionTestUtils.setField(otherAudienceConf, "type", confValues.getType());
+        ReflectionTestUtils.setField(otherAudienceConf, "issuer", confValues.getIssuer());
+        ReflectionTestUtils.setField(otherAudienceConf, "audience", "SOMETHINGELSE");
+        String jwtString = JwtUtils.encode(testToken, confValues);
+        assertThrows(IncorrectClaimException.class,() -> JwtUtils.decodeAndExtract(jwtString, otherAudienceConf));
     }
 
     /**
@@ -72,7 +86,7 @@ public class JwtUtilsTests {
     @Test
     public void testEncodingValuesTest() {
         String jwtString = JwtUtils.encode(testToken, confValues);
-        JwtToken token = JwtUtils.decodeAndExtract(jwtString, confValues.getSecret());
+        JwtToken token = JwtUtils.decodeAndExtract(jwtString, confValues);
         assertAll(
             () -> assertNotNull(token.getExpirationDate()),
             () -> assertNotNull(token.getRemainingRefreshes()),

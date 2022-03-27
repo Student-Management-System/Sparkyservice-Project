@@ -43,9 +43,12 @@ class JwtUtils {
      * @return Object with fields from the decoded JWT token.
      */
     @Nonnull
-    public static JwtToken decodeAndExtract(String token, String jwtSecret) {
-        var signingKey = jwtSecret.getBytes();
-        Jws<Claims> parsedToken = Jwts.parser().setSigningKey(signingKey).parseClaimsJws(token.replace("Bearer ", ""));
+    public static JwtToken decodeAndExtract(String token, JwtSettings jwtConf) {
+        var signingKey = jwtConf.getSecret().getBytes();
+        Jws<Claims> parsedToken = Jwts.parser()
+                .setSigningKey(signingKey)
+                .requireAudience(jwtConf.getAudience())
+                .parseClaimsJws(token.replace("Bearer ", ""));
         String username = parsedToken.getBody().getSubject();
         var rolList = (List<?>) parsedToken.getBody().get("rol");
         List<UserRole> authorities = rolList.stream()
@@ -78,6 +81,7 @@ class JwtUtils {
     public static String encode(JwtToken tokenObj, JwtSettings jwtConf) {
         byte[] signingKey = jwtConf.getSecret().getBytes();
         Date expiration = toUtilDate(tokenObj.getExpirationDate());
+        Date iat = toUtilDate(LocalDateTime.now());
         return notNull(
             Jwts.builder()
                 .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
@@ -85,6 +89,7 @@ class JwtUtils {
                 .setIssuer(jwtConf.getIssuer())
                 .setAudience(jwtConf.getAudience())
                 .setSubject(tokenObj.getSubject())
+                .setIssuedAt(iat)
                 .setExpiration(expiration)
                 .claim("rol", tokenObj.getTokenPermissionRoles())
                 .setId(tokenObj.getJti().toString())

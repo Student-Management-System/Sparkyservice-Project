@@ -135,7 +135,7 @@ public class JwtAuthReader {
             if (jwtString == null) {
                 throw new IllegalArgumentException("Decode of null token not possible");
             } else {
-                JwtToken tokenObj = JwtUtils.decodeAndExtract(jwtString, jwtConf.getSecret());
+                JwtToken tokenObj = JwtUtils.decodeAndExtract(jwtString, jwtConf);
                 if (jwtService.isJitNonLocked(tokenObj.getJti())) {
                     return tokenObj;
                 } else {
