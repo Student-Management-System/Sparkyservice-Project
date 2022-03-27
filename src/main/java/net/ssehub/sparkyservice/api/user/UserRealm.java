@@ -36,5 +36,5 @@ public enum UserRealm {
      * 
      * @return Abstract Factory for creating users
      */
-    public abstract SparkyUserFactory<SparkyUser> getUserFactory();
+    public abstract SparkyUserFactory<? extends SparkyUser> getUserFactory();
 }

@@ -25,7 +25,6 @@ import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
 import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * Provides additional methods to get information from a single JWT token.
@@ -91,7 +90,7 @@ public class JwtAuthReader {
         var authDto = new AuthenticationInfoDto();
         authDto.user = user;
         authDto.jwt.key = jwtConf.getPrefix();
-        authDto.jwt.expiration = DateUtil.toString(tokenObj.getExpirationDate());
+        authDto.jwt.expiration = tokenObj.getExpirationDate();
         authDto.jwt.token = jwt;
         return authDto;
     }
@@ -114,7 +113,7 @@ public class JwtAuthReader {
             throws JwtTokenReadException {
         JwtToken tokenObj = readJwtToken(jwtString);
         var tokenDto = new JwtDto();
-        tokenDto.expiration = DateUtil.toString(tokenObj.getExpirationDate());
+        tokenDto.expiration = tokenObj.getExpirationDate();
         tokenDto.token = jwtString;
         tokenDto.key = jwtConf.getPrefix();
         return new UsernamePasswordAuthenticationToken(

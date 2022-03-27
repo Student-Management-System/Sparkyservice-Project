@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -20,7 +20,6 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * Provides unit tests for {@link JwtUtils}.
@@ -38,7 +37,7 @@ public class JwtUtilsTests {
      */
     @BeforeEach
     public void setupTestToken() {
-        var expDate = DateUtil.toUtilDate(LocalDate.now().plusDays(10));
+        var expDate = notNull(LocalDateTime.now().plusDays(10));
         var id = new Identity("user", UserRealm.LOCAL);
         testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, id.asUsername(), UserRole.ADMIN);
     }

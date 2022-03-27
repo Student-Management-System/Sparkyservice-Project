@@ -2,8 +2,13 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,7 +57,8 @@ class JwtUtils {
         var jti = UUID.fromString(jtiString);
         
         if (jti != null && expiration != null && authorities != null && username != null) {
-            var tokenObj = new JwtToken(jti, expiration, username, authorities);
+            var expDate = toLocalDateTime(expiration);
+            var tokenObj = new JwtToken(jti, expDate, username, authorities);
             tokenObj.setTokenPermissionRoles(authorities);
             return tokenObj;
         } else {
@@ -71,6 +77,7 @@ class JwtUtils {
     @Nonnull
     public static String encode(JwtToken tokenObj, JwtSettings jwtConf) {
         byte[] signingKey = jwtConf.getSecret().getBytes();
+        Date expiration = toUtilDate(tokenObj.getExpirationDate());
         return notNull(
             Jwts.builder()
                 .signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
@@ -78,10 +85,37 @@ class JwtUtils {
                 .setIssuer(jwtConf.getIssuer())
                 .setAudience(jwtConf.getAudience())
                 .setSubject(tokenObj.getSubject())
-                .setExpiration(tokenObj.getExpirationDate())
+                .setExpiration(expiration)
                 .claim("rol", tokenObj.getTokenPermissionRoles())
                 .setId(tokenObj.getJti().toString())
                 .compact()
+        );
+    }
+    
+    /**
+     * Method transforms a LocalDate to {@link Date}.
+     * 
+     * @param date - Date which is requested to be in the java.util.Date format
+     * @return Same date as the provided LocalDate
+     */
+    private @Nonnull static java.util.Date toUtilDate(LocalDateTime date) {
+        Instant instant = date.atZone(ZoneId.systemDefault()).toInstant();
+        return notNull(Date.from(instant));
+    }
+
+    /**
+     * Converts date.
+     * 
+     * @param date - Date which will be transformed to an LocalDate.
+     * @return util.Date with values from the given one
+     */
+    private @Nonnull static LocalDateTime toLocalDateTime(java.util.Date date) {
+        return notNull(
+            Optional.of(date)
+                .map(java.util.Date::toInstant)
+                .map(instant -> instant.atZone(ZoneId.systemDefault()))
+                .map(ZonedDateTime::toLocalDateTime)
+                .get()
         );
     }
 }

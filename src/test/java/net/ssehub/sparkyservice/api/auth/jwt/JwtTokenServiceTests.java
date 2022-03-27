@@ -1,12 +1,12 @@
 package net.ssehub.sparkyservice.api.auth.jwt;
 
+import static java.time.LocalDateTime.now;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -92,8 +92,7 @@ public class JwtTokenServiceTests {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void isTokenNonLockedTest(boolean isLocked) {
-        var tokenObj = new JwtToken(notNull(UUID.randomUUID()), 
-                new Date(System.currentTimeMillis()), testUser.getUsername(), UserRole.ADMIN);
+        var tokenObj = new JwtToken(notNull(UUID.randomUUID()), notNull(now()), testUser.getUsername(), UserRole.ADMIN);
         tokenObj.setLocked(isLocked);
         jwtStorageService.commit(tokenObj);
         JwtCache.getInstance().refreshFromStorage();
@@ -103,8 +102,7 @@ public class JwtTokenServiceTests {
     @Test
     @DisplayName("Token is not logged when not in database test")
     public void isTokenNonLoggedNonExistingTest() { 
-        var tokenObj = new JwtToken(notNull(UUID.randomUUID()), 
-                new Date(System.currentTimeMillis()), testUser.getUsername(), UserRole.ADMIN);
+        var tokenObj = new JwtToken(notNull(UUID.randomUUID()), notNull(now()), testUser.getUsername(), UserRole.ADMIN);
         assertTrue(jwtTokenService.isJitNonLocked(tokenObj.getJti()));
     }
     

@@ -2,9 +2,9 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -24,7 +24,7 @@ public class JwtToken {
     private int remainingRefreshes;
     private boolean locked;
     @Nullable
-    private Date expirationDate;
+    private LocalDateTime expirationDate;
     @Nonnull
     private String subject;
     @Nonnull
@@ -32,12 +32,12 @@ public class JwtToken {
     @Nonnull
     private UUID jti;
 
-    public JwtToken(final UUID jti, final Date expirationDate, final String subject,
+    public JwtToken(final UUID jti, final LocalDateTime expirationDate, final String subject,
             UserRole permission) {
         this(jti, expirationDate, subject, notNull(Arrays.asList(permission)));
     }
 
-    public JwtToken(final UUID jit, final Date expirationDate, final String subject, 
+    public JwtToken(final UUID jit, final LocalDateTime expirationDate, final String subject, 
             Collection<UserRole> permissionRoles) {
         super();
         this.expirationDate = expirationDate;
@@ -100,11 +100,11 @@ public class JwtToken {
     }
 
     @Nullable
-    public java.util.Date getExpirationDate() {
+    public LocalDateTime getExpirationDate() {
         return expirationDate;
     }
 
-    public void setExpirationDate(java.util.Date expirationDate) {
+    public void setExpirationDate(LocalDateTime expirationDate) {
         this.expirationDate = expirationDate;
     }
 

@@ -3,14 +3,10 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 import static net.ssehub.sparkyservice.api.user.UserRealm.RECOVERY;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,7 +21,6 @@ import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.util.DateUtil;
 
 /**
  * Provides methods for dealing with concrete JWT tokens through {@link JwtCache} only.
@@ -36,9 +31,6 @@ import net.ssehub.sparkyservice.api.util.DateUtil;
 @ParametersAreNonnullByDefault
 public class JwtTokenService {
     
-    // TODO change
-    public static final int TOKEN_EXPIRE_TIME_MS = 86_400_000; // 24 hours
-
     @Nonnull
     private final JwtSettings jwtConf;
 
@@ -96,13 +88,8 @@ public class JwtTokenService {
         JwtToken tokenObj;
         UUID jit = UUID.randomUUID();
         log.trace("Created JWT token with jit {}", jit.toString());
-        if (user.getIdentity().realm() == RECOVERY) {
-            var expTime = LocalDateTime.now().plusHours(1);
-            Date out = notNull(Date.from(expTime.atZone(ZoneId.systemDefault()).toInstant()));
-            tokenObj = new JwtToken(jit, out, user.getUsername(), user.getRole());
-        } else {
-            Date expDate = createJwtExpirationDate(user);
-            tokenObj = new JwtToken(jit, expDate, user.getUsername(), user.getRole());
+        tokenObj = new JwtToken(jit, createJwtExpirationDate(user), user.getUsername(), user.getRole());
+        if (user.getIdentity().realm() != RECOVERY) {
             JwtCache.getInstance().storeAndSave(tokenObj);
         }
         tokenObj.setRemainingRefreshes(0 /*TODO*/);
@@ -152,19 +139,12 @@ public class JwtTokenService {
      * @return Date where the validity of a JWT token should end for the given user
      */
     @Nonnull
-    public static java.util.Date createJwtExpirationDate(SparkyUser user) {
-        @Nonnull java.util.Date expirationDate;
-        @Nonnull Supplier<LocalDate> defaultServiceExpirationDate = () -> LocalDate.now().plusYears(10);
-
+    public static LocalDateTime createJwtExpirationDate(SparkyUser user) {
         if (user.getRole() == UserRole.SERVICE) {
-            expirationDate = notNull(
-                user.getExpireDate()
-                    .map(DateUtil::toUtilDate)
-                    .orElse(DateUtil.toUtilDate(defaultServiceExpirationDate.get()))
-            );
+            return notNull(LocalDateTime.now().plusYears(10));
         } else {
-            expirationDate = new java.util.Date(System.currentTimeMillis() + TOKEN_EXPIRE_TIME_MS);
+            return notNull(LocalDateTime.now().plusDays(1));
         }
-        return expirationDate;
+
     }
 }

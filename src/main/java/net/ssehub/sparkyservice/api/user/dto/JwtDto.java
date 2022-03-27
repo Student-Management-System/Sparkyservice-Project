@@ -1,6 +1,7 @@
 package net.ssehub.sparkyservice.api.user.dto;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * Token identification DTO. 
@@ -12,7 +13,7 @@ public class JwtDto implements Serializable {
     private static final long serialVersionUID = 6425173137954338569L;
     public String key;
     public String token;
-    public String expiration;
+    public LocalDateTime expiration;
 
     @Override
     public int hashCode() {
