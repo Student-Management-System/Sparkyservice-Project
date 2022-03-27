@@ -8,25 +8,25 @@ package net.ssehub.sparkyservice.api.user;
 public enum UserRealm {
     LOCAL {
         @Override
-        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public SparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new LocalUserFactory();
         }
     },
     UNIHI {
         @Override
-        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public SparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new LdapUserFactory();
         }
     },
     RECOVERY {
         @Override
-        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public SparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new MemoryUserFactory();
         }
     },
     UNKNOWN {
         @Override
-        public AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory() {
+        public SparkyUserFactory<? extends SparkyUser> getUserFactory() {
             throw new UnsupportedOperationException();
         }
     };
@@ -36,5 +36,5 @@ public enum UserRealm {
      * 
      * @return Abstract Factory for creating users
      */
-    public abstract AbstractSparkyUserFactory<? extends SparkyUser> getUserFactory();
+    public abstract SparkyUserFactory<SparkyUser> getUserFactory();
 }

@@ -16,7 +16,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @author marcel
  */
 @ParametersAreNonnullByDefault
-public final class LdapUserFactory implements AbstractSparkyUserFactory<LdapUser> {
+public final class LdapUserFactory implements SparkyUserFactory<LdapUser> {
 
     @Override
     @Nonnull

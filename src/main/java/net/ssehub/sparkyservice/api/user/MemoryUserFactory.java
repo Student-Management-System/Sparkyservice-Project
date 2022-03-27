@@ -14,7 +14,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * 
  * @author marcel
  */
-public class MemoryUserFactory implements AbstractSparkyUserFactory<MemoryUser> {
+public class MemoryUserFactory implements SparkyUserFactory<MemoryUser> {
 
     @Override
     @Nonnull

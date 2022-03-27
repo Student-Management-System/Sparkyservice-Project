@@ -14,7 +14,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * 
  * @author marcel
  */
-public class LocalUserFactory implements AbstractSparkyUserFactory<LocalUserDetails> {
+public class LocalUserFactory implements SparkyUserFactory<LocalUserDetails> {
 
     @Override
     @Nonnull

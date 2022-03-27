@@ -25,8 +25,8 @@ public class LocalUserTests {
      */
     @ParameterizedTest
     @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void equalityTest(Class<AbstractSparkyUserFactory<?>> factoryClass) throws Exception {
-        AbstractSparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    public void equalityTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
+        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
@@ -37,8 +37,8 @@ public class LocalUserTests {
 
     @ParameterizedTest
     @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void unEqualityTest(Class<AbstractSparkyUserFactory<?>> factoryClass) throws Exception {
-        AbstractSparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    public void unEqualityTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
+        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
@@ -56,8 +56,8 @@ public class LocalUserTests {
      */
     @ParameterizedTest
     @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void hashCodeTest(Class<AbstractSparkyUserFactory<?>> factoryClass) throws Exception {
-        AbstractSparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    public void hashCodeTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
+        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);

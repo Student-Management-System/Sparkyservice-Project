@@ -16,7 +16,7 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto;
  * @param <T> Desired User implementation which the factory is
  */
 @ParametersAreNonnullByDefault
-public interface AbstractSparkyUserFactory<T extends SparkyUser> {
+public interface SparkyUserFactory<T extends SparkyUser> {
 
     /**
      * Creates a new user with the minimum set of needed values.
