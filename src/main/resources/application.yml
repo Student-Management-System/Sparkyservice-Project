@@ -18,6 +18,10 @@ jwt:
 spring:
    application:
       name: Sparkyservice
+   flyway:
+      locations: classpath:db/migration/postgres/
+      baseline-on-migrate: true
+      baseline-version: 1
    
 ---
 spring:
