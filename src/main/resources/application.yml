@@ -14,7 +14,7 @@ ribbon:
 jwt:
    prefix: Bearer
    type: JWT
-   audience: Sparkyservice APPS
+   audience: sparkyservice
 spring:
    application:
       name: Sparkyservice
@@ -30,7 +30,7 @@ spring:
          connection:
             pool_size: 7
 jwt:
-   issuer: Sparkyservice API
+   issuer: sparkyservice-api
 logging:
    level:
       com:

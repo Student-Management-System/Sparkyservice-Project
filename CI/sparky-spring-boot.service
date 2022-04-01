@@ -1,9 +1,9 @@
 [Unit]
-Description=Sparky Service
+Description=SparkyService
 
 [Service]
 WorkingDirectory=/home/elscha/Sparky
-ExecStart=/usr/bin/java -cp sparkyservice-spring-boot.jar:application-release.properties org.springframework.boot.loader.JarLauncher
+ExecStart=/usr/bin/java -jar -Dspring.profiles.active=postgres,demo sparkyservice-spring-boot.jar
 Type=simple
 Restart=on-failure
 RestartSec=10
