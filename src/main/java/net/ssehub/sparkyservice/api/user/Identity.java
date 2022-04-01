@@ -34,7 +34,7 @@ public class Identity {
         if (nickname.isBlank()) {
             throw new IllegalArgumentException("Empty nickname is not allowed");
         }
-        this.nickname = nickname;
+        this.nickname = notNull(nickname.toLowerCase().trim());
         this.realm = realm;
     }
 
@@ -64,7 +64,7 @@ public class Identity {
         String nickname = notNull(content[0]);
         UserRealm realm;
         try {
-            realm = UserRealm.valueOf(content[1]);
+            realm = UserRealm.valueOf(content[1].toUpperCase());
         } catch (IllegalArgumentException e) {
             realm = UserRealm.UNKNOWN;
         }
@@ -112,7 +112,7 @@ public class Identity {
      */
     @Nonnull
     public String nickname() {
-        return notNull(nickname.toLowerCase().trim());
+        return nickname;
     }
 
     
@@ -134,5 +134,10 @@ public class Identity {
     @Nonnull
     public String asUsername() {
         return nickname() + SEPERATOR + realm();
+    }
+
+    @Override
+    public String toString() {
+        return asUsername();
     }
 }
