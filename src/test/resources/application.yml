@@ -8,3 +8,7 @@ loggin:
 zuul:
     ignored-headers: Access-Control-Allow-Credentials, Access-Control-Allow-Origin
     sensitive-headers: Cookie,Set-Cookie
+
+spring:
+   flyway:
+      enabled: false

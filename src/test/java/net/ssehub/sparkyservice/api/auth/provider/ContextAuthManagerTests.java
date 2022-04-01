@@ -15,7 +15,7 @@ import net.ssehub.sparkyservice.api.user.UserRealm;
 public class ContextAuthManagerTests {
 
     @ParameterizedTest
-    @EnumSource(value = UserRealm.class, names = { "LOCAL", "RECOVERY", "UNIHI" })
+    @EnumSource(value = UserRealm.class, names = { "ESB", "RECOVERY", "UNIHI" })
     public void testRemoveRealmFromUsername(@Nonnull UserRealm realm) {
         var ident = new Identity("test", realm);
         var attemptAuthentication = new UsernamePasswordAuthenticationToken(ident.asUsername(), "password");
