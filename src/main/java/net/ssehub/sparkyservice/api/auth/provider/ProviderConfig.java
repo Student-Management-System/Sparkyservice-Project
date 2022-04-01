@@ -91,6 +91,7 @@ public class ProviderConfig {
     private PasswordEncoder pwEncoder;
     
     @Bean
+    @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
     public LdapContextSource contextSource() {
         var ldapSource= new DefaultSpringSecurityContextSource(ldapUrl + "/" + ldapBaseDn);
         if (!ldapUser.isBlank() && !ldapPassword.isBlank()) {
@@ -109,6 +110,7 @@ public class ProviderConfig {
     }
 
     @Bean
+    @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
     public BindAuthenticator authenticator(BaseLdapPathContextSource contextSource) {
         String searchBase = "";
         FilterBasedLdapUserSearch search =
