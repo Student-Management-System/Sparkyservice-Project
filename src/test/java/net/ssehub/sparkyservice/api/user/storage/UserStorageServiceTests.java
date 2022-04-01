@@ -49,7 +49,7 @@ public class UserStorageServiceTests {
     
     private static final String USER_NAME = "test213";
     private static final String USER_PW = "abcdefh";
-    private static final @Nonnull UserRealm USER_REALM = UserRealm.LOCAL;
+    private static final @Nonnull UserRealm USER_REALM = UserRealm.ESB;
     private static final Identity IDENT = new Identity(USER_NAME, USER_REALM);
 
     private Optional<List<User>> jpaUserList;

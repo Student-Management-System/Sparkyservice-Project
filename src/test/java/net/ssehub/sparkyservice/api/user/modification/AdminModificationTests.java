@@ -145,7 +145,7 @@ public class AdminModificationTests {
     public void userAsDtoTest() throws Exception {
         var testDto = createExampleDto();
         testDto.role = UserRole.ADMIN;
-        var testUserFromDto = UserRealm.LOCAL.getUserFactory().create(testDto);
+        var testUserFromDto = UserRealm.ESB.getUserFactory().create(testDto);
         var userDto = modificationService.asDto(testUserFromDto);
         assertTrue(userDto.equals(testDto));
     }

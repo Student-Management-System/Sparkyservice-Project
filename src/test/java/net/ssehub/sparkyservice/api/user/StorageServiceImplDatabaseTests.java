@@ -153,7 +153,7 @@ public class StorageServiceImplDatabaseTests {
     public void addUserValuesTest() {
         LocalUserDetails newUser = storageService.addUser("name");
         assertAll(
-            () -> assertEquals(newUser.getIdentity().realm(), UserRealm.LOCAL, "SparkyUser is in the wrong realm"),
+            () -> assertEquals(newUser.getIdentity().realm(), UserRealm.ESB, "SparkyUser is in the wrong realm"),
             () -> assertEquals(newUser.getIdentity().nickname(), "name", "SparkyUser with wrong name was created")
         );
     }

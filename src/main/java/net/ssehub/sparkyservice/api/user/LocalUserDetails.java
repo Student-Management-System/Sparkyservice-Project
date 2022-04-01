@@ -32,10 +32,10 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
 
     @Nonnull
-    public static final UserRealm DEFAULT_REALM = UserRealm.LOCAL;
+    public static final UserRealm DEFAULT_REALM = UserRealm.ESB;
     
     @Nonnull
-    public static final UserRealm ASSOCIATED_REALM = UserRealm.LOCAL;
+    public static final UserRealm ASSOCIATED_REALM = UserRealm.ESB;
     public static final String DEFAULT_ALGO = BCryptPasswordEncoder.class.getSimpleName().toLowerCase();
     private static final long serialVersionUID = 1L;
 

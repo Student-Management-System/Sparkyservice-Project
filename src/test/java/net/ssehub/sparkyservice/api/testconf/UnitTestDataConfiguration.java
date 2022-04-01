@@ -30,7 +30,7 @@ public class UnitTestDataConfiguration {
     public static final String USER_EMAIL = "info@test";
     public static final String PAYLOAD = "testPayload";
     public static final String NICK_NAME = "user";
-    public static final String USER_NAME = new Identity(NICK_NAME, UserRealm.LOCAL).asUsername();
+    public static final String USER_NAME = new Identity(NICK_NAME, UserRealm.ESB).asUsername();
     public static final LocalDate EXP_DATE = LocalDate.now().plusDays(2);
 
     /**

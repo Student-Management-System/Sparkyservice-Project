@@ -40,7 +40,7 @@ public class JwtUtilsTests {
     @BeforeEach
     public void setupTestToken() {
         var expDate = notNull(LocalDateTime.now().plusDays(10));
-        var id = new Identity("user", UserRealm.LOCAL);
+        var id = new Identity("user", UserRealm.ESB);
         testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, id.asUsername(), UserRole.ADMIN);
     }
 

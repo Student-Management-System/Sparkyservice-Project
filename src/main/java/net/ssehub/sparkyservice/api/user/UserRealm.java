@@ -6,7 +6,7 @@ package net.ssehub.sparkyservice.api.user;
  * @author marcel
  */
 public enum UserRealm {
-    LOCAL {
+    ESB {
         @Override
         public SparkyUserFactory<? extends SparkyUser> getUserFactory() {
             return new LocalUserFactory();

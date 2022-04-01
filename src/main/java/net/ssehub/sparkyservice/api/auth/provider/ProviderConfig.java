@@ -134,7 +134,7 @@ public class ProviderConfig {
         var prov = new DaoAuthenticationProvider();
         prov.setUserDetailsService(localDetailsMapper);
         prov.setPasswordEncoder(pwEncoder);
-        return new SingleSparkyProviderConfig(UserRealm.LOCAL, prov, 2);
+        return new SingleSparkyProviderConfig(UserRealm.ESB, prov, 2);
     }
 
     @Bean("adLdapAuthProvider")

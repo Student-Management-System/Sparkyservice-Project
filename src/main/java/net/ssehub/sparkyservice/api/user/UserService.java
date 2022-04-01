@@ -77,17 +77,17 @@ public class UserService {
     }
 
     /**
-     * Creates a new user with the desired username in the {@link UserRealm#LOCAL}. The username must be unique in the 
+     * Creates a new user with the desired nickname in the {@link UserRealm#ESB}. The nickname must be unique in the 
      * realm otherwise an exception is thrown.
      * 
-     * @param username
+     * @param nickname
      * @return The information about the created user
      * @throws UserEditException
      */
-    public UserDto createLocalUser(@Nonnull String username) throws UserEditException {
+    public UserDto createLocalUser(@Nonnull String nickname) throws UserEditException {
         try {
-            LocalUserDetails newUser = storageService.addUser(username);
-            log.debug("Created new user: {}", username);
+            LocalUserDetails newUser = storageService.addUser(nickname);
+            log.debug("Created new user: {}", nickname);
             return UserRole.ADMIN.getPermissionTool().asDto(newUser);
         } catch (DuplicateEntryException e) {
             log.debug("No user added: Duplicate entry");
