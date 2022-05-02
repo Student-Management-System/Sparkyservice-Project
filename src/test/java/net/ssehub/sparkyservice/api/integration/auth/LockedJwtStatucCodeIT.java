@@ -32,14 +32,16 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
+import net.ssehub.sparkyservice.api.testconf.DummyRealm;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
- * Provides tests for JWTs locking and refreshing mechanisms. 
+ * Provides tests for JWTs locking and refreshing mechanisms.
  * 
  * @author marcel
  */
@@ -47,39 +49,43 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@TestPropertySource(locations = {"classpath:test-routing.properties"})
+@TestPropertySource(locations = { "classpath:test-routing.properties" })
+@SuppressWarnings("null")
 //checkstyle: stop exception type check
 public class LockedJwtStatucCodeIT {
 
     // "service@local" must be allowed in test-routing.properties for PROTECTED_PATH
-    private static final String USERNAME = "service"; 
+    private static final String USERNAME = "service";
     private static final String PROTECTED_PATH = "/testroutesecure2";
-    @Nonnull
-    private static final SparkyUser TEST_USER = LocalUserDetails.newLocalUser(USERNAME, "test", UserRole.SERVICE);
-    
-    @Autowired private JwtSettings jwtConf; 
-    @Autowired private JwtTokenService jwtService; 
-    @Autowired private MockMvc mvc;
+
+    @Autowired
+    private LocalRealm localRealm;
+    @Autowired
+    private JwtSettings jwtConf;
+    @Autowired
+    private JwtTokenService jwtService;
+    @Autowired
+    private MockMvc mvc;
     private String jwtString;
-    
+
+    private SparkyUser testUser;
+
     @MockBean
     private UserStorageService userStorageService;
-    
+
     /*
-     * Hotfix:
-     * Not used in this test class. When running tests in this class when other integrations tests run before, 
+     * Hotfix: Not used in this test class. When running tests in this class when other integrations tests run before,
      * spring have problems with autowiren the configuration properties.
      */
     @Autowired
     private ZuulRoutes zuulRoutes;
-    
+
     @BeforeEach
     public void setupJwtCache() {
         JwtCache.initNewCache();
         assertNotNull(zuulRoutes.getRoutes());
-        var user = LocalUserDetails.newLocalUser(USERNAME, "test", UserRole.SERVICE);
-        
-        this.jwtString = jwtService.createFor(user);
+        testUser = LocalUserDetails.newLocalUser(USERNAME, localRealm, "test", UserRole.SERVICE);
+        this.jwtString = jwtService.createFor(testUser);
         Set<JwtToken> lockedToken = JwtCache.getInstance().getCachedTokens();
         lockedToken.forEach(t -> t.setLocked(true));
         JwtCache.initNewCache(lockedToken, null);
@@ -98,28 +104,27 @@ public class LockedJwtStatucCodeIT {
         this.mvc
             .perform(
                 get(PROTECTED_PATH)
-                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
-                   .accept(MediaType.ALL))
+                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
+                    .accept(MediaType.ALL))
             .andExpect(status().isUnauthorized());
     }
 
-
     /**
-     * Tries to authorize a protected route with a valid account and a non locked token (other tokens may be locked 
-     * from the current account).
+     * Tries to authorize a protected route with a valid account and a non locked token (other tokens may be locked from
+     * the current account).
      * 
      * @throws Exception
      */
     @IntegrationTest
     @DisplayName("Test request is proxied with NON locked JWT")
     public void routingNonLockedJwtTest() throws Exception {
-        String newJwtToken = jwtService.createFor(TEST_USER);
+        String newJwtToken = jwtService.createFor(testUser);
         String fullTokenHeader = jwtConf.getPrefix() + " " + newJwtToken;
         this.mvc
             .perform(
                 get(PROTECTED_PATH)
-                   .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
-                   .accept(MediaType.ALL))
+                    .header(ZuulAuthorizationFilter.PROXY_AUTH_HEADER, fullTokenHeader)
+                    .accept(MediaType.ALL))
             .andExpect(status().is2xxSuccessful());
     }
 
@@ -132,12 +137,12 @@ public class LockedJwtStatucCodeIT {
     @DisplayName("Test if user can't authorize with locked JWT")
     public void authorizeLockedTest() throws Exception {
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtString;
-        Mockito.when(userStorageService.findUser(TEST_USER.getIdentity())).thenReturn(TEST_USER);
+        Mockito.when(userStorageService.findUser(testUser.getIdentity())).thenReturn(testUser);
         this.mvc
             .perform(
                 get(ControllerPath.AUTHENTICATION_CHECK)
-                   .header(jwtConf.getHeader(), fullTokenHeader)
-                   .accept(MediaType.ALL))
+                    .header(jwtConf.getHeader(), fullTokenHeader)
+                    .accept(MediaType.ALL))
             .andExpect(status().isUnauthorized());
     }
 }

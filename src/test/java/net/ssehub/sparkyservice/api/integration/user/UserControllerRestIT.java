@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,6 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.testconf.TestUserConfiguration;
+import net.ssehub.sparkyservice.api.user.LdapRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserController;
 import net.ssehub.sparkyservice.api.user.UserController.UsernameDto;
@@ -65,6 +65,9 @@ public class UserControllerRestIT {
     
     @Autowired
     private ObjectMapper mapper;
+    
+    @Autowired
+    private LdapRealm realm;
 
     private MockMvc mvc;
 
@@ -75,7 +78,7 @@ public class UserControllerRestIT {
      * @return a Testuser which is in storage
      */
     private static SparkyUser createTestUserInStorage(UserStorageService service) {
-        var user = UserRealm.UNIHI.getUserFactory().create("testuser", null, UserRole.DEFAULT, true);
+        var user = new LdapRealm().userFactory().create("testuser", null, UserRole.DEFAULT, true);
         service.commit(user);
         assumeTrue(service.isUserInStorage(user));
         return user;
@@ -129,11 +132,10 @@ public class UserControllerRestIT {
             .accept(MediaType.APPLICATION_JSON))
             .andReturn();
         assumeTrue(result.getResponse().getStatus() != 403, "Admin is not authorized, can't add a new user");
-        
         assertAll(
             () -> assertEquals(201, result.getResponse().getStatus(), "Wrong response status: "
                     + "Expected CREATED as response for adding a new user"),
-            () -> assertNotNull(userService.findUser(1), "Status was OK, but no user was saved to database")
+            () -> assertEquals(2, userService.findAllUsers().size(), "Status was OK, but no user was saved to database")
         );
     }
 
@@ -165,12 +167,12 @@ public class UserControllerRestIT {
     @DisplayName("Test if user with insufficant permission can't delete user")
     @WithMockUser(username = "admin", roles = "DEFAULT")
     public void securityNonAdminDeleteTest() throws Exception {
-        var user = UserRealm.UNIHI.getUserFactory().create("testuser", null, UserRole.DEFAULT, true);
+        var user = realm.userFactory().create("testuser", null, UserRole.DEFAULT, true);
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
         this.mvc
-        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.UNIHI, "testuser")
+        .perform(delete(ControllerPath.USERS_DELETE, realm.identifierName(), "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.TEXT_PLAIN))
             .andExpect(status().isForbidden()); 
@@ -186,10 +188,10 @@ public class UserControllerRestIT {
     @IntegrationTest
     public void securityGuestDeleteTest() throws Exception {
         this.mvc
-        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.UNIHI, "testuser")
+        .perform(delete(ControllerPath.USERS_DELETE, realm.identifierName(), "testuser")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.TEXT_PLAIN))
-            .andExpect(status().isUnauthorized()); 
+            .andExpect(status().isUnauthorized()).andDo(MockMvcResultHandlers.print()); 
     }
 
     /**
@@ -203,9 +205,10 @@ public class UserControllerRestIT {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionAdminDeleteTest() throws Exception {
         var user = createTestUserInStorage(userService);
+        var username = user.getIdentity().asUsername();
         
         this.mvc
-        .perform(delete(ControllerPath.USERS_DELETE, UserRealm.UNIHI, "testuser")
+        .perform(delete(ControllerPath.USERS_DELETE, username)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
@@ -224,9 +227,10 @@ public class UserControllerRestIT {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetSingleUserTest() throws Exception {
         var user = createTestUserInStorage(userService);
+        var username = user.getIdentity().asUsername();
         
         MvcResult result = this.mvc
-                .perform(get(ControllerPath.USERS_GET_SINGLE, "unused", user.getIdentity().asUsername()) //TODO remove second path variable
+                .perform(get(ControllerPath.USERS_GET_SINGLE, username)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(MockMvcResultHandlers.print())
@@ -254,7 +258,7 @@ public class UserControllerRestIT {
     @IntegrationTest
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void functionGetAllTest() throws Exception {
-        var factory = UserRealm.UNIHI.getUserFactory();
+        var factory = realm.userFactory();
         var user1 = factory.create("testuser", null, UserRole.DEFAULT, true);
         var user2 = factory.create("testuser2", null, UserRole.DEFAULT, true);
         userService.commit(user1);
@@ -270,7 +274,7 @@ public class UserControllerRestIT {
         
         String dtoArrayString = result.getResponse().getContentAsString();
         var dtoArray = mapper.readValue(dtoArrayString, UserDto[].class);
-        assertEquals(2, dtoArray.length);
+        assertEquals(3, dtoArray.length); // one is the memory user
     }
     
     @IntegrationTest

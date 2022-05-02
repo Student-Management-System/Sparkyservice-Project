@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,32 +16,34 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
-import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.util.MiscUtil;
 
 /**
- * Business logic for user database actions. 
+ * Business logic for user database actions.
  * 
  * @author Marcel
  */
 @Service
-public class UserStorageImpl implements UserStorageService {
+public class UserDatabaseStorageService implements UserStorageService {
+    
+    private final Logger log = LoggerFactory.getLogger(UserDatabaseStorageService.class);
 
-    @Autowired
-    private UserRepository repository;
+    @Nonnull
+    private final UserRepository repository;
 
-    private final Logger log = LoggerFactory.getLogger(UserStorageImpl.class);
+    public UserDatabaseStorageService(@Nonnull UserRepository repository) {
+        super();
+        this.repository = repository;
+    }
 
     /**
-     * Finds user by a provided strategy. 
+     * Finds user by a provided strategy.
      * 
      * @author marcel
      */
@@ -55,12 +58,12 @@ public class UserStorageImpl implements UserStorageService {
         public UserFinder(SparkyUser user) {
             this.user = user;
         }
-        
+
         /**
-         * Checks if a user is present with the provided search actions with error handling. 
+         * Checks if a user is present with the provided search actions with error handling.
          * 
          * @param userSearchAction - Methods which is used for searching a user; when one fails, the next one is used
-         *                           The method can throw a {@link UserNotFoundException}
+         *                         The method can throw a {@link UserNotFoundException}
          * @return <code>true</code> When the user was found by any provided action
          */
         @SafeVarargs
@@ -86,7 +89,7 @@ public class UserStorageImpl implements UserStorageService {
             } catch (UserNotFoundException e) {
                 found = false;
             }
-            return !found; //if not found, drop action and try next one
+            return !found; // if not found, drop action and try next one
         }
     }
 
@@ -97,7 +100,7 @@ public class UserStorageImpl implements UserStorageService {
      * @return SparkyUser representation of given JPA object
      */
     public @Nonnull static SparkyUser transformUser(@Nonnull User user) {
-        return user.getRealm().getUserFactory().create(user);
+        return Identity.of(user).realm().userFactory().create(user);
     }
 
     /**
@@ -107,7 +110,7 @@ public class UserStorageImpl implements UserStorageService {
     public <T extends SparkyUser> void commit(@Nonnull T user) {
         try {
             User jpa = user.getJpa();
-            log.debug("Try to store user {}@{} into database", jpa.getNickname(), jpa.getRealm());
+            log.debug("Try to store user {}@{} into database", jpa.getNickname(), jpa.getRealmIdentifier());
             repository.save(jpa);
             log.debug("...stored");
         } catch (NoTransactionUnitException e) {
@@ -116,31 +119,17 @@ public class UserStorageImpl implements UserStorageService {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public @Nonnull LocalUserDetails addUser(@Nonnull String username) {
-        final var newUser = LocalUserDetails.newLocalUser(username, "", UserRole.DEFAULT);
-        if (isUserInStorage(newUser) ) {
-            throw new DuplicateEntryException(newUser);
-        }
-        commit(newUser);
-        return newUser;
-    }
-
-    /**
      * {@inheritDoc}.
      */
     @Override
     public @Nonnull List<SparkyUser> findUsers(@Nullable String username) {
         return notNull(
-            UserStorageImpl.validateUsername(username)
+            UserDatabaseStorageService.validateUsername(username)
                 .flatMap(repository::findByuserName)
                 .orElseGet(ArrayList::new)
                 .stream()
-                .map(UserStorageImpl::transformUser)
-                .collect(Collectors.toList())
-            );
+                .map(UserDatabaseStorageService::transformUser)
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -151,23 +140,24 @@ public class UserStorageImpl implements UserStorageService {
      * @return Specific user
      * @throws UserNotFoundException
      */
-    private @Nonnull SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm) 
-            throws UserNotFoundException {
-        return notNull(UserStorageImpl.validateUsername(username)
-            .flatMap(name -> repository.findByuserNameAndRealm(name, realm))
-            .map(UserStorageImpl::transformUser)
-            .orElseThrow(
-                () -> new UserNotFoundException(username + "@" + realm + " not found in storage")));
-    } 
+    private @Nonnull SparkyUser findUserByNameAndRealm(@Nullable String username, @Nullable UserRealm realm)
+        throws UserNotFoundException {
+        Supplier<RuntimeException> throwSupp = () -> new UserNotFoundException(
+            username + "@" + realm + " not found in storage");
+        if (realm == null) {
+            throw throwSupp.get();
+        }
+        return notNull(UserDatabaseStorageService.validateUsername(username)
+            .flatMap(name -> repository.findByuserNameAndRealm(name, realm.identifierName()))
+            .map(UserDatabaseStorageService::transformUser)
+            .orElseThrow(throwSupp));
+    }
 
-    /**
-     * {@inheritDoc}.
-     */
-    @Override
-    public @Nonnull SparkyUser findUser(int id) throws UserNotFoundException {
+    @Nonnull
+    public SparkyUser findUser(int id) throws UserNotFoundException {
         Optional<User> user = repository.findById(id);
-        var localUser = user.map(UserStorageImpl::transformUser)
-                .orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
+        var localUser = user.map(UserDatabaseStorageService::transformUser)
+            .orElseThrow(() -> new UserNotFoundException("Id was not found in database"));
         return notNull(localUser);
     }
 
@@ -179,11 +169,10 @@ public class UserStorageImpl implements UserStorageService {
         boolean found = false;
         try {
             if (user != null) {
-                found =  filter.checkForUser(
-                    u -> this.findUser(u.getJpa().getId()), 
-                    u -> this.findUser(u.getUsername())
-                );
-            } 
+                found = filter.checkForUser(
+                    u -> this.findUser(u.getJpa().getId()),
+                    u -> this.findUser(u.getIdentity()));
+            }
         } catch (NoTransactionUnitException e) {
             found = false;
         }
@@ -196,26 +185,22 @@ public class UserStorageImpl implements UserStorageService {
     }
 
     @Override
-    public void deleteUser(@Nullable SparkyUser user) {
-        Optional.ofNullable(user)
-            .map(u -> u.getJpa())
-            .ifPresentOrElse(repository::delete, () -> log.info("Can't delete null user"));
-    }
-
-    @Override
-    public void deleteUser(@Nullable String username, @Nullable UserRealm realm) {
+    public void deleteUser(Identity ident) {
         SparkyUser user;
         try {
-            user = findUserByNameAndRealm(username, realm);
-            deleteUser(user);
+            user = findUserByNameAndRealm(ident.nickname(), ident.realm());
+            Optional.ofNullable(user)
+                .map(u -> u.getJpa())
+                .ifPresentOrElse(repository::delete, () -> log.info("Can't delete null user"));
         } catch (UserNotFoundException e) {
-            log.info("Can't delete user with name: " + username + "|" + realm + " it was not found in database");
+            log.info("Can't delete user {}. Reason: not found in database", ident.asUsername());
         }
     }
 
     @Override
     public List<SparkyUser> findAllUsersInRealm(@Nullable UserRealm realm) {
-        return fromIterableToUserList(repository.findByRealm(realm));
+        var r = realm != null ? realm.identifierName() : "";
+        return fromIterableToUserList(repository.findByRealm(r));
     }
 
     /**
@@ -226,14 +211,15 @@ public class UserStorageImpl implements UserStorageService {
      */
     public static @Nonnull List<SparkyUser> fromIterableToUserList(Iterable<User> list) {
         if (list == null) {
-            @SuppressWarnings("unchecked") Iterable<User> emptyList = (Iterable<User>) Collections.emptyIterator();
+            @SuppressWarnings("unchecked")
+            Iterable<User> emptyList = (Iterable<User>) Collections.emptyIterator();
             list = emptyList;
         }
         return notNull(
-            MiscUtil.toList(notNull(list)).stream().map(UserStorageImpl::transformUser).collect(Collectors.toList())
-        );
+            MiscUtil.toList(notNull(list)).stream().map(UserDatabaseStorageService::transformUser)
+                .collect(Collectors.toList()));
     }
-    
+
     /**
      * Validates a username.
      * 
@@ -261,5 +247,5 @@ public class UserStorageImpl implements UserStorageService {
         }
         return findUserByNameAndRealm(ident.nickname(), ident.realm());
     }
-    
+
 }

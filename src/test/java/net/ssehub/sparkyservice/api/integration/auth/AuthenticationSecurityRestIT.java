@@ -48,8 +48,10 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.user.LdapRealm;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
-import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -70,6 +72,13 @@ public class AuthenticationSecurityRestIT {
 
     @Autowired
     private UserStorageService userService; 
+    @Autowired
+    private LocalRealm localRealm;
+    @Autowired
+    private MemoryRealm memoryRealm;
+    @Autowired(required = false)
+    private LdapRealm ldapRealm;
+
 
     @Autowired
     private WebApplicationContext context;
@@ -182,7 +191,7 @@ public class AuthenticationSecurityRestIT {
     @IntegrationTest
     @DirtiesContext
     public void authenticationExpireTest() throws Exception {
-        var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("testuser", localRealm, "password", UserRole.DEFAULT);
         user.setExpireDate(LocalDate.now().minusDays(1)); // user is expired
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
@@ -197,6 +206,7 @@ public class AuthenticationSecurityRestIT {
      * 
      * @throws Exception
      */
+    @SuppressWarnings("null")
     @IntegrationTest
     @Disabled("No test AD server available")
     public void storeUserAfterLdapAuthTest() throws Exception {
@@ -204,8 +214,8 @@ public class AuthenticationSecurityRestIT {
         var result = mvcPeformLogin(username, "");
         assumeTrue(result.getResponse().getStatus() == 200, "Authentication was not successful - maybe there is "
                     + "another problem.");
-        assertNotNull(userService.findUser(new Identity(username, UserRealm.UNIHI)), 
-                "User was not stored into " + UserRealm.UNIHI + " realm.");
+        assertNotNull(userService.findUser(new Identity(username, ldapRealm)), 
+                "User was not stored into " + ldapRealm.identifierName() + " realm.");
     }
     
     /**
@@ -247,7 +257,7 @@ public class AuthenticationSecurityRestIT {
     @IntegrationTest
     @DirtiesContext
     public void jwtAuthLocalUserTest() throws Exception {
-        var user = LocalUserDetails.newLocalUser("testuser", "password", UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("testuser", localRealm, "password", UserRole.DEFAULT);
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
         
@@ -303,7 +313,7 @@ public class AuthenticationSecurityRestIT {
     public void authSpecifiedRealmTest() throws Exception {
         assumeTrue(Boolean.parseBoolean(inMemoryEnabled), "Test can't be done wihtout memory credentials");
         @SuppressWarnings("null")
-        var ident = new Identity(inMemoryUser, UserRealm.RECOVERY);
+        var ident = new Identity(inMemoryUser, memoryRealm);
         var resultCode = mvcPeformLogin(ident.asUsername(), inMemoryPassword).getResponse().getStatus();
         assertEquals(OK.value(), resultCode);
     }

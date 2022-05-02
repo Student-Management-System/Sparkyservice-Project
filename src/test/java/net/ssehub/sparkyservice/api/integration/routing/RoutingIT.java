@@ -32,6 +32,7 @@ import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.conf.ControllerPath;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
@@ -64,6 +65,9 @@ public class RoutingIT {
     @Autowired
     private MockMvc mvc;
     private static ClientAndServer mockServer;
+    
+    @Autowired
+    private LocalRealm realm;
 
     @BeforeAll
     public static void startServer() {
@@ -154,7 +158,7 @@ public class RoutingIT {
      */
     @IntegrationTest
     public void authorizedProtectedRouteTest() throws Exception {
-        var user = LocalUserDetails.newLocalUser("user", "", UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("user", realm, "", UserRole.DEFAULT);
         String jwtToken = jwtService.createFor(user);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
@@ -172,7 +176,7 @@ public class RoutingIT {
      */
     @IntegrationTest
     public void authenticatedProtectedRouteTest() throws Exception {
-        var user = LocalUserDetails.newLocalUser("anyUser", "", UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("anyUser", realm, "", UserRole.DEFAULT);
         String jwtToken = jwtService.createFor(user);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
@@ -192,8 +196,8 @@ public class RoutingIT {
     @IntegrationTest
     @DisplayName("Mutli user ACL on protected route test")
     public void authorizedListProtectedRouteTest() throws Exception {
-        var user1 = LocalUserDetails.newLocalUser("user1", "", UserRole.DEFAULT);
-        var user2 = LocalUserDetails.newLocalUser("user2", "", UserRole.DEFAULT);
+        var user1 = LocalUserDetails.newLocalUser("user1", realm, "", UserRole.DEFAULT);
+        var user2 = LocalUserDetails.newLocalUser("user2", realm, "", UserRole.DEFAULT);
         String jwtToken = jwtService.createFor(user1);
         String fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc
@@ -213,7 +217,7 @@ public class RoutingIT {
             .andExpect(status().is2xxSuccessful());
 
         // Negative test to check if this mechanism still work even with a list.
-        var user3 = LocalUserDetails.newLocalUser("user3", "", UserRole.DEFAULT);
+        var user3 = LocalUserDetails.newLocalUser("user3", realm, "", UserRole.DEFAULT);
         jwtToken = jwtService.createFor(user3);
         fullTokenHeader = jwtConf.getPrefix() + " " + jwtToken;
         this.mvc

@@ -10,8 +10,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import net.ssehub.sparkyservice.api.testconf.DummyRealm;
+
 public class LocalUserPasswordEncodingTests {
-      
+    
+    private static final UserRealm REALM = new DummyRealm("dummy");
+
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public  static String[] data() {
@@ -31,7 +35,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void constructorPasswordHashTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("testname", REALM, passwordToCheck, UserRole.DEFAULT);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match, "Encoded password does not match with bcrypted password");
     }
@@ -39,7 +43,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void manualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("testname", REALM, passwordToCheck, UserRole.DEFAULT);
         user.encodeAndSetPassword(passwordToCheck);
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         assertTrue(match);
@@ -48,7 +52,7 @@ public class LocalUserPasswordEncodingTests {
     @ParameterizedTest
     @MethodSource("data")
     public void negativeManualPasswordHashMethodTest(@Nonnull String passwordToCheck) {
-        var user = LocalUserDetails.newLocalUser("testname", passwordToCheck, UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser("testname", REALM, passwordToCheck, UserRole.DEFAULT);
         user.encodeAndSetPassword(passwordToCheck + "1");
         boolean match = encoder.matches(passwordToCheck, user.getPassword());
         if (passwordToCheck.length() > 71) {// bcrypt max 

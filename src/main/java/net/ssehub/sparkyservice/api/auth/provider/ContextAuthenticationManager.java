@@ -17,8 +17,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
-import net.ssehub.sparkyservice.api.auth.provider.ProviderConfig.SingleSparkyProviderConfig;
 import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.user.IllegalIdentityFormat;
+import net.ssehub.sparkyservice.api.user.NoSuchRealmException;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 
@@ -63,16 +64,16 @@ public class ContextAuthenticationManager {
             try {
                 var ident = Identity.of(username);
                 return new UsernamePasswordAuthenticationToken(ident.nickname(), auth.getCredentials());
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalIdentityFormat | NoSuchRealmException e) {
                 return auth;
             }
         }
         
     }
     
-    private List<SingleSparkyProviderConfig> sortedProviderConfigs;
+    private List<UserRealm> sortedProviderConfigs;
     
-    public ContextAuthenticationManager(List<SingleSparkyProviderConfig> provider) {
+    public ContextAuthenticationManager(List<UserRealm> provider) {
         super();
         this.sortedProviderConfigs = provider.stream().sorted(this::providerSortStrategy).collect(Collectors.toList());
     }
@@ -89,7 +90,7 @@ public class ContextAuthenticationManager {
     
     public AuthenticationManager globalManager() {
         var sortedProvider = sortedProviderConfigs.stream()
-                .map(SingleSparkyProviderConfig::getProvider)
+                .map(UserRealm::authenticationProvider)
                 .collect(Collectors.toList());
         return auth -> new MultiProviderAuthManager(sortedProvider).authenticate(auth);
     }
@@ -98,8 +99,8 @@ public class ContextAuthenticationManager {
     public AuthenticationManagerResolver<UserRealm> realmContextResolver() {
         return realm -> {
             var foundProviders = sortedProviderConfigs.stream()
-                    .filter(po -> po.supports(realm))
-                    .map(SingleSparkyProviderConfig::getProvider)
+                    .filter(realm::equals)
+                    .map(UserRealm::authenticationProvider)
                     .collect(Collectors.toList());
             return new MultiProviderAuthManager(foundProviders);
         };
@@ -108,12 +109,12 @@ public class ContextAuthenticationManager {
     private AuthenticationManager userManager(String username) {
         try {
             return realmContextResolver().resolve(Identity.of(username).realm());
-        } catch (IllegalArgumentException e) {
+        } catch (NoSuchRealmException | IllegalIdentityFormat e) {
             return globalManager();
         }
     }
     
-    private int providerSortStrategy(SingleSparkyProviderConfig first, SingleSparkyProviderConfig second) {
-        return first.getWeight() - second.getWeight();
+    private int providerSortStrategy(UserRealm first, UserRealm second) {
+        return first.authenticationPriorityWeight() - second.authenticationPriorityWeight();
     }
 }

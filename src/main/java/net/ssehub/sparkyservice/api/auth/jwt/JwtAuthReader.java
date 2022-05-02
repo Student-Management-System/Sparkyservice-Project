@@ -16,14 +16,11 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import net.ssehub.sparkyservice.api.auth.AuthenticationInfoDto;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.user.Identity;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
 import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -161,26 +158,9 @@ public class JwtAuthReader {
         }
     }
     
-    private SparkyUser userFrom(JwtToken token, UserStorageService service) {
-        var password = new Password("", "UNKWN");
+    private static SparkyUser userFrom(JwtToken token, UserStorageService service) {
         var ident = Identity.of(token.getSubject());
-        SparkyUser user;
-        try {
-            user = service.findUser(ident);
-        } catch (UserNotFoundException e) {
-            if (ident.realm() == UserRealm.RECOVERY) {
-                var perms = token.getTokenPermissionRoles().toArray(UserRole[]::new);
-                if (perms.length != 1) {
-                    throw new UnsupportedOperationException("Currently only one"
-                            + " permission role per token is supported");
-                }
-                user = UserRealm.RECOVERY.getUserFactory()
-                    .create(token.getSubject(), password, perms[0], !token.isLocked());
-            } else {
-                throw e;
-            }
-        }
-        return user;
+        return service.findUser(ident);
     }
 
 }

@@ -19,7 +19,7 @@ public class TestUserConfiguration {
     public UserDetailsService defaultDetailsService() {
         return new TestUserDetailsService(UserRole.DEFAULT);
     }
-    
+
     @Bean(name = "adminUserService")
     public UserDetailsService adminDetailsService() {
         return new TestUserDetailsService(UserRole.ADMIN);
@@ -37,8 +37,9 @@ public class TestUserConfiguration {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            var basicUser = LocalUserDetails.newLocalUser(NullHelpers.notNull(username), "abcdefgh", 
-                    NullHelpers.notNull(role));
+            var basicUser = LocalUserDetails.newLocalUser(NullHelpers.notNull(username), new DummyRealm("dummy"),
+                "abcdefgh",
+                NullHelpers.notNull(role));
             service.commit(basicUser);
             return basicUser;
         }

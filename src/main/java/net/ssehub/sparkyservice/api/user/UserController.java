@@ -51,7 +51,8 @@ import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 public class UserController {
 
     /**
-     * Gives the username of a user especially for new users.
+     * Gives the username of a user especially for new users. This is necessary for spring to enforce a correct
+     * JSON body. 
      * 
      * @author marcel
      */
@@ -142,11 +143,13 @@ public class UserController {
      * @return DTO array with information of all users in a specific realm
      */
     @Operation(summary = "Gets all users from a single realm", security = { @SecurityRequirement(name = "bearer-key") })
-    @GetMapping(ControllerPath.USERS_PREFIX + "/{realm}")
+    @GetMapping(ControllerPath.USERS_PREFIX + "/r/{realm}")
     @Secured(UserRole.FullName.ADMIN)
-    public UserDto[] getAllUsersFromRealm(@PathVariable("realm") UserRealm realm) {
-        var list = storageService.findAllUsersInRealm(realm);
-        return UserService.userListToDtoList(list);
+    public UserDto[] getAllUsersFromRealm(@PathVariable("realm") String realm) {
+        return RealmRegistry.realmFrom(realm)
+            .map(storageService::findAllUsersInRealm)
+            .map(UserService::userListToDtoList)
+            .orElseThrow(IllegalArgumentException::new);
     }
 
     /**
@@ -186,9 +189,8 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "User is not authenticated "),
         @ApiResponse(responseCode = "404", description = "The desired user was not found") 
     })
-    // TODO change path variable
-    public void deleteUser(@PathVariable("realm") UserRealm realm, @PathVariable("username") String username) {
-        storageService.deleteUser(username, realm);
+    public void deleteUser(@PathVariable("username") String username) {
+        storageService.deleteUser(Identity.of(username));
     }
 
     /**

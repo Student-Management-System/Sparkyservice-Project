@@ -29,8 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
-import net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration;
-import net.ssehub.sparkyservice.api.user.LdapUserFactory;
+import net.ssehub.sparkyservice.api.testconf.TestSetupMethods;
+import net.ssehub.sparkyservice.api.user.LdapRealm;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -42,7 +43,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  */
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
-@ContextConfiguration(classes = {UnitTestDataConfiguration.class, JwtTestStorageBeanConf.class})
+@ContextConfiguration(classes = {JwtTestStorageBeanConf.class})
 @DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 @ExtendWith(SpringExtension.class)
 public class JwtTokenServiceTests {
@@ -63,7 +64,9 @@ public class JwtTokenServiceTests {
     private final SparkyUser testUser;
 
     public JwtTokenServiceTests() {
-        testUser = new LdapUserFactory().create("testUser", null, UserRole.ADMIN, true);
+        var ldapRealm = new LdapRealm();
+        TestSetupMethods.testRealmSetup(ldapRealm, new LocalRealm());
+        testUser = ldapRealm.userFactory().create("testUser", null, UserRole.ADMIN, true);
     }
 
     @SuppressWarnings("null")

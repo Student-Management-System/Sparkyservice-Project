@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
+import net.ssehub.sparkyservice.api.testconf.TestSetupMethods;
 
 /**
  * Test class for {@link AccessControlListInterpreter}.
@@ -38,6 +39,7 @@ public class AccessControlListInterpreterTests {
         routes.put("other" + ".url", "https://google.com");
         zuulRoutes = new ZuulRoutes();
         zuulRoutes.setRoutes(routes);
+        TestSetupMethods.allTestRealmSetup();
     }
 
     /**

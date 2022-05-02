@@ -1,6 +1,6 @@
 package net.ssehub.sparkyservice.api.user.modification;
 
-import static net.ssehub.sparkyservice.api.testconf.UnitTestDataConfiguration.createExampleDto;
+import static net.ssehub.sparkyservice.api.testconf.TestSetupMethods.createExampleDto;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
@@ -62,7 +63,7 @@ public class DefaultModificationTests {
      */
     @Test
     public void userAsDtoTest() throws Exception {
-        LocalUserDetails user = LocalUserDetails.newLocalUser("test", "test", UserRole.DEFAULT);
+        LocalUserDetails user = LocalUserDetails.newLocalUser("test", new LocalRealm(), "test", UserRole.DEFAULT);
         user.getSettings().setEmailAddress("test@test");
         user.getSettings().setPayload("test");
         user.setExpireDate(LocalDate.now());

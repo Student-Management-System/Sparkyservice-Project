@@ -9,7 +9,6 @@ import org.springframework.security.access.annotation.Secured;
 
 import net.ssehub.sparkyservice.api.jpa.user.User;
 import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.LocalUserDetails;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
@@ -30,28 +29,6 @@ public interface UserStorageService {
      *             Is saved in a persistence way (must hold username and realm)
      */
     <T extends SparkyUser> void commit(@Nonnull T user);
-
-    /**
-     * Creates a new entry in the storage for the given user.
-     * 
-     * @param username
-     * @return The created and saved user
-     */
-    @Secured(UserRole.FullName.ADMIN)
-    @Nonnull
-    LocalUserDetails addUser(@Nonnull String username);
-
-    /**
-     * Searches a data storage for an explicit user identified by unique id.
-     * 
-     * @param id
-     *           unique identifier
-     * @return StoredUser with the id
-     * @throws UserNotFoundException
-     *                               If no user with the given id is found in data storage
-     */
-    @Nonnull
-    SparkyUser findUser(int id) throws UserNotFoundException;
 
     /**
      * Searches a data storage for all users with a given username.
@@ -89,20 +66,13 @@ public interface UserStorageService {
     boolean isUserInStorage(@Nullable SparkyUser user);
 
     /**
-     * Deletes the given user.
-     * 
-     * @param user
-     */
-    void deleteUser(SparkyUser user);
-
-    /**
      * Deletes a user specific user identified by his realm and username.
      * 
      * @param username
      * @param realm
      */
     @Secured(UserRole.FullName.ADMIN)
-    void deleteUser(String username, UserRealm realm);
+    void deleteUser(Identity user);
 
     /**
      * Find all users in a given realm (without pagination). Only admins are allowed to do this.
@@ -122,6 +92,6 @@ public interface UserStorageService {
      */
     @Nonnull
     default SparkyUser refresh(SparkyUser user) throws UserNotFoundException {
-        return this.findUser(user.getUsername());
+        return this.findUser(user.getIdentity());
     }
 }

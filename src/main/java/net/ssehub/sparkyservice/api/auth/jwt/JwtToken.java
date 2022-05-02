@@ -64,7 +64,7 @@ public class JwtToken {
 
     public JwtToken(final JpaJwtToken jpaTokenObj) {
         super();
-        this.subject = new Identity(jpaTokenObj.getUser().getNickname(), jpaTokenObj.getUser().getRealm()).asUsername();
+        this.subject = Identity.of(jpaTokenObj.getUser()).asUsername();
         this.remainingRefreshes = jpaTokenObj.getRemainingRefreshes();
         this.locked = jpaTokenObj.isLocked();
         this.jti = notNull(

@@ -12,8 +12,8 @@ import javax.persistence.Table;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import net.ssehub.sparkyservice.api.jpa.UnkownRealm;
 import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
@@ -49,7 +49,7 @@ public class JpaJwtToken {
     private JpaJwtToken() {
         jti = "UNKWN";
         locked = true;
-        user = new User("UNKWN", UserRealm.UNKNOWN, false, UserRole.DEFAULT);
+        user = new User("UNKWN", new UnkownRealm(), false, UserRole.DEFAULT);
     }
 
 
@@ -101,7 +101,7 @@ public class JpaJwtToken {
         this.locked = locked;
     }
 
-
+    @Nonnull
     public User getUser() {
         return user;
     }

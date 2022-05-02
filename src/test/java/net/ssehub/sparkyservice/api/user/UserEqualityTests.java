@@ -15,36 +15,36 @@ import net.ssehub.sparkyservice.api.jpa.user.Password;
  * @author marcel
  */
 //checkstyle: stop exception type check
-public class LocalUserTests {
+public class UserEqualityTests {
 
     /**
      * Test if two different user objects are equal when they have the same fields. (Test for custom equal method)
      * 
      * @param factoryClass - The current Factory Class to test with
-     * @throws Exception 
+     * @throws Exception
      */
     @ParameterizedTest
-    @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void equalityTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
-        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    @ValueSource(classes = { LdapRealm.class, LocalRealm.class, MemoryRealm.class })
+    public void equalityTest(Class<? extends UserRealm> realm) throws Exception {
+        SparkyUserFactory<?> factory = realm.getDeclaredConstructor().newInstance().userFactory();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
         var user2 = factory.create("test", pw2, UserRole.ADMIN, false);
-        
+
         assertTrue(user1.equals(user2));
     }
 
     @ParameterizedTest
-    @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void unEqualityTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
-        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    @ValueSource(classes = { LdapRealm.class, LocalRealm.class, MemoryRealm.class })
+    public void unEqualityTest(Class<? extends UserRealm> realm) throws Exception {
+        SparkyUserFactory<?> factory = realm.getDeclaredConstructor().newInstance().userFactory();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
         var user2 = factory.create("test", pw2, UserRole.ADMIN, false);
         user2.setFullname("other");
-        
+
         assertFalse(user1.equals(user2));
     }
 
@@ -52,17 +52,17 @@ public class LocalUserTests {
      * Tests if the hash code is the same when two different objects have the same fields.
      * 
      * @param factoryClass - The current Factory Class to test with
-     * @throws Exception 
+     * @throws Exception
      */
     @ParameterizedTest
-    @ValueSource(classes = {LocalUserFactory.class, LdapUserFactory.class, MemoryUserFactory.class})
-    public void hashCodeTest(Class<SparkyUserFactory<?>> factoryClass) throws Exception {
-        SparkyUserFactory<?> factory = factoryClass.getDeclaredConstructor().newInstance();
+    @ValueSource(classes = { LdapRealm.class, LocalRealm.class, MemoryRealm.class })
+    public void hashCodeTest(Class<? extends UserRealm> realm) throws Exception {
+        SparkyUserFactory<?> factory = realm.getDeclaredConstructor().newInstance().userFactory();
         var pw1 = new Password("hallo", "plain");
         var pw2 = new Password(pw1);
         var user1 = factory.create("test", pw1, UserRole.ADMIN, false);
         var user2 = factory.create("test", pw2, UserRole.ADMIN, false);
-        
+
         assertEquals(user1.hashCode(), user2.hashCode());
     }
 }

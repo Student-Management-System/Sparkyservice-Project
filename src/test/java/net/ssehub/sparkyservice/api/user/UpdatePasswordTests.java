@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import javax.annotation.Nonnull;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import net.ssehub.sparkyservice.api.jpa.user.Password;
+import net.ssehub.sparkyservice.api.testconf.DummyRealm;
 import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;;
 
 /**
@@ -18,13 +21,16 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;;
  * @author marcel
  */
 public class UpdatePasswordTests {
+    
+    @Nonnull
+    private static final UserRealm DREALM = new DummyRealm("dummy");
 
     /**
      * Test if password updates for Memory users being ignored.
      */
     @Test
     public void memoryUserPasswordTest() {
-        var user = new MemoryUser("test", new Password("test", "plain"), UserRole.ADMIN);
+        var user = new MemoryUser("test", DREALM, new Password("test", "plain"), UserRole.ADMIN);
         var pwDto = new ChangePasswordDto();
         pwDto.newPassword = "yes";
         pwDto.oldPassword = "test";
@@ -38,7 +44,7 @@ public class UpdatePasswordTests {
      */
     @Test
     public void ldapUserPasswordTest() {
-        var user = new LdapUser("test", UserRole.ADMIN, true);
+        var user = new LdapUser("test", DREALM, UserRole.ADMIN, true);
         var pwDto = new ChangePasswordDto();
         user.updatePassword(pwDto, UserRole.ADMIN);
 
@@ -55,7 +61,7 @@ public class UpdatePasswordTests {
         @SuppressWarnings("null") var pw = new Password(
             encoder.encode("test"), BCryptPasswordEncoder.class.getSimpleName()
         );
-        var user = new LocalUserDetails("test", pw, false, UserRole.ADMIN);
+        var user = new LocalUserDetails("test", DREALM, pw, false, UserRole.ADMIN);
         var pwDto = new ChangePasswordDto();
         pwDto.newPassword = "yes";
         pwDto.oldPassword = "test";

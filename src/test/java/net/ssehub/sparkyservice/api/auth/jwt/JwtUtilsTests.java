@@ -19,8 +19,8 @@ import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.testconf.DummyRealm;
 import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
@@ -40,7 +40,7 @@ public class JwtUtilsTests {
     @BeforeEach
     public void setupTestToken() {
         var expDate = notNull(LocalDateTime.now().plusDays(10));
-        var id = new Identity("user", UserRealm.ESB);
+        var id = new Identity("user", new DummyRealm("dummy"));
         testToken = new JwtToken(notNull(UUID.randomUUID()), expDate, id.asUsername(), UserRole.ADMIN);
     }
 

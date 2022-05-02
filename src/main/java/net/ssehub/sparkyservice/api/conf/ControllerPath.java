@@ -16,7 +16,7 @@ public final class ControllerPath {
     public static final String USERS_PREFIX = GLOBAL_PREFIX + "/users";
     public static final String USERS_PATCH = USERS_PREFIX;
     public static final String USERS_PUT = USERS_PREFIX;
-    public static final String USERS_DELETE = USERS_PREFIX + "/{realm}/{username}";
+    public static final String USERS_DELETE = USERS_PREFIX + "/{username}";
     public static final String USERS_GET_SINGLE = USERS_DELETE;
     public static final String USERS_GET_ALL = USERS_PREFIX;
 

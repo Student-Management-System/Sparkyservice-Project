@@ -2,6 +2,7 @@ package net.ssehub.sparkyservice.api.auth.ldap;
 
 import java.util.Collection;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.ldap.core.DirContextAdapter;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
@@ -9,8 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
 import org.springframework.stereotype.Service;
 
+import net.ssehub.sparkyservice.api.user.LdapRealm;
 import net.ssehub.sparkyservice.api.user.LdapUser;
-import net.ssehub.sparkyservice.api.user.LdapUserFactory;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
@@ -20,6 +21,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  * @author marcel
  */
 @Service
+@ConditionalOnBean(LdapRealm.class)
 public final class LdapContextMapper implements UserDetailsContextMapper {
 
     /**
@@ -28,15 +30,18 @@ public final class LdapContextMapper implements UserDetailsContextMapper {
      */
     public static final String DISPLAY_NAME_OID = "2.16.840.1.113730.3.1.241";
     
-    private UserStorageService storageService;
+    private final UserStorageService storageService;
+    
+    private final LdapRealm realm;
     
     /**
      * Maps user information from an LDAP login to a correct {@link UserDetails} which is an {@link LdapUser}.
      * 
      * @param storageService - The used storage service used to store information after login
      */
-    public LdapContextMapper(UserStorageService storageService) {
+    public LdapContextMapper(UserStorageService storageService, LdapRealm realm) {
         this.storageService = storageService;
+        this.realm = realm;
     }
 
 
@@ -48,7 +53,7 @@ public final class LdapContextMapper implements UserDetailsContextMapper {
          * The following line specifies the default role all new users will have. This does not affect already existing
          * ones.
          */
-        var ldapUser = new LdapUserFactory().create(username, null, UserRole.DEFAULT, true);
+        var ldapUser = realm.userFactory().create(username, null, UserRole.DEFAULT, true);
         if (ctx != null) {
             var ldapInfoExtractor = new LdapInformationReader(ctx);
             ldapUser.setExpireDate(ldapInfoExtractor.getExpirationDate());

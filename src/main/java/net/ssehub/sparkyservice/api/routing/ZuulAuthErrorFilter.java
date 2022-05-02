@@ -1,5 +1,6 @@
 package net.ssehub.sparkyservice.api.routing;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -13,6 +14,7 @@ import com.netflix.zuul.exception.ZuulException;
 
 import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
 import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
+import net.ssehub.sparkyservice.api.user.NoSuchRealmException;
 
 /**
  * Exception handling error-Filter for Zuul. Handles authentication and
@@ -52,6 +54,9 @@ public class ZuulAuthErrorFilter extends ZuulFilter {
                 var ex = (AuthorizationException) causeException;
                 String msg = ex.getCauseUser().asUsername() + " is not whitelist for this ressource";
                 context.setThrowable(new ZuulException(msg, FORBIDDEN.value(), FORBIDDEN.getReasonPhrase()));
+            } else if (causeException instanceof NoSuchRealmException) {
+                String msg = "Invalid username";
+                context.setThrowable(new ZuulException(msg, BAD_REQUEST.value(), msg));
             } else {
                 context.setThrowable(new ZuulException(causeException.getMessage(), 
                         INTERNAL_SERVER_ERROR.value(), 

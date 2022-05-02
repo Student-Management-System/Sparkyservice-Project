@@ -1,6 +1,5 @@
 package net.ssehub.sparkyservice.api.auth.jwt;
 
-import static net.ssehub.sparkyservice.api.user.UserRealm.RECOVERY;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 
 import java.util.Optional;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
 
 /**
@@ -89,9 +89,9 @@ public class JwtTokenService {
         var expDate = notNull(user.getRole().getAuthExpirationDuration().get());
         tokenObj = new JwtToken(jit, expDate , user.getUsername(), user.getRole());
         tokenObj.setRemainingRefreshes(user.getRole().getAuthRefreshes());
-        if (user.getIdentity().realm() != RECOVERY) {
+        if (!user.getIdentity().realm().identifierName().equals(MemoryRealm.IDENTIFIER_NAME)) {
             JwtCache.getInstance().storeAndSave(tokenObj);
-        }
+        } // TODO change this to another infrastructure
         return JwtUtils.encode(tokenObj, jwtConf);
     }
     

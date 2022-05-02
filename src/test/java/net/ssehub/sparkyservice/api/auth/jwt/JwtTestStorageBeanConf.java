@@ -3,12 +3,16 @@ package net.ssehub.sparkyservice.api.auth.jwt;
 import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import javax.annotation.Nonnull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
+import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
+import net.ssehub.sparkyservice.api.user.storage.UserDatabaseStorageService;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 
 /**
@@ -25,13 +29,15 @@ public class JwtTestStorageBeanConf extends JwtTestBeanConf {
     @Autowired 
     private JwtRepository repo;
 
-    @Autowired 
-    private UserStorageService userStorageServ;
-    
     @Bean
-    public JwtStorageService storageService() {
+    public JwtStorageService storageService(UserStorageService userStorageServ) {
         assertNotNull(repo);
         assertNotNull(userStorageServ);
         return new JwtStorageService(notNull(repo), notNull(userStorageServ));
+    }
+    
+    @Bean
+    public UserStorageService userService(@Nonnull TestingUserRepository repo) {
+        return new UserDatabaseStorageService(repo);
     }
 }

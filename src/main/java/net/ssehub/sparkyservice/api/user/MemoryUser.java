@@ -14,14 +14,13 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
 
 /**
- * User implementation of a Memory user. Those user only "live" in the process memory and can't create 
- * JPA objects for database operations. 
+ * User implementation of a Memory user. Those user only "live" in the process memory and can't create JPA objects for
+ * database operations.
  *
  * @author marcel
  */
 public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
 
-    public static final UserRealm ASSOCIATED_REALM = UserRealm.RECOVERY;
     private static final long serialVersionUID = 2606418064897651578L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -35,8 +34,9 @@ public class MemoryUser extends AbstractSparkyUser implements SparkyUser {
      * @param password
      * @param role
      */
-    public MemoryUser(@Nonnull String nickname, @Nullable Password password, @Nonnull UserRole role) {
-        super(new Identity(nickname, UserRealm.RECOVERY), role);
+    public MemoryUser(@Nonnull String nickname, @Nonnull UserRealm realm, @Nullable Password password,
+        @Nonnull UserRole role) {
+        super(new Identity(nickname, realm), role);
         this.password = password;
     }
 

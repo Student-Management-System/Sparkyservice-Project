@@ -1,7 +1,10 @@
 package net.ssehub.sparkyservice.api.conf;
 
+import static net.ssehub.sparkyservice.api.util.NullHelpers.notNull;
+
 import java.time.format.DateTimeFormatter;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import javax.sql.DataSource;
 import javax.validation.Validator;
 
@@ -10,7 +13,8 @@ import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilde
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -18,9 +22,11 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
+import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.routing.ZuulAuthorizationFilter;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageImpl;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
+import net.ssehub.sparkyservice.api.user.MemoryUser;
+import net.ssehub.sparkyservice.api.user.UserRole;
 
 /**
  * Default configuration class for spring.
@@ -28,6 +34,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  * @author marcel
  */
 @Configuration
+@ParametersAreNonnullByDefault
 public class SpringConfig {
 
     public static final String LOCKED_JWT_BEAN = "lockedJwtToken";
@@ -46,7 +53,7 @@ public class SpringConfig {
     private String url;
     @Value("${spring.datasource.driverClassName}")
     private String driver;
-    
+
     /**
      * Configures the default spring datasource. It is used to read custom configuration keys from the context.
      */
@@ -82,20 +89,9 @@ public class SpringConfig {
     }
 
     /**
-     * Defines the IUserService bean.
-     * 
-     * @return Using {@link UserStorageImpl}
-     */
-    @Bean
-    @Primary
-    public UserStorageService iUserService() {
-        return new UserStorageImpl();
-    }
-    
-    /**
-     * Creates a jackson mapper for consitent usage of the same json date pattern. Move this to the application 
-     * properties as soon the used spring version supports it: 
-     * See <a href="https://www.baeldung.com/spring-boot-formatting-json-dates">this</a>. 
+     * Creates a jackson mapper for consitent usage of the same json date pattern. Move this to the application
+     * properties as soon the used spring version supports it: See
+     * <a href="https://www.baeldung.com/spring-boot-formatting-json-dates">this</a>.
      * 
      * @return
      */
@@ -110,5 +106,23 @@ public class SpringConfig {
             builder.serializers(new LocalDateTimeSerializer(formatterDateTime));
             builder.deserializers(new LocalDateTimeDeserializer(formatterDateTime));
         };
+    }
+
+    /**
+     * Defines the PasswordEncoder bean.
+     * 
+     * @return Using BCryptPasswordEncoder
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+
+    @Bean
+    public MemoryUser memoryUsers(@Value("${recovery.password:}") String password,
+            @Value("${recovery.user:user}") String user, MemoryRealm realm, PasswordEncoder encoder) {
+        var p = new Password(notNull(encoder.encode(password)));
+        return new MemoryUser(user, realm, p, UserRole.ADMIN);
     }
 }

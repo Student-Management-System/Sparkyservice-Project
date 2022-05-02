@@ -3,6 +3,8 @@ package net.ssehub.sparkyservice.api.user.modification;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
+import net.ssehub.sparkyservice.api.user.LocalRealm;
+
 /**
  * Because we want to use <code>@Autowired</code> in unit tests, we need to
  * extend the test class with {@link SpringExtension}. But we're not in a
@@ -27,5 +29,10 @@ public class ModificationTestConf {
     @Bean
     public DefaultUserModificationImpl defaultModificationService() {
         return new DefaultUserModificationImpl();
+    }
+    
+    @Bean
+    public LocalRealm localRealm() {
+        return new LocalRealm();
     }
 }

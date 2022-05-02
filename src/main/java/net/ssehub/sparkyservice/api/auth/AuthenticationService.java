@@ -26,8 +26,8 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.dto.JwtDto;
@@ -64,7 +64,9 @@ public class AuthenticationService {
         var jwt = (JwtDto) auth.getCredentials();
         var dto = new AuthenticationInfoDto();
         dto.jwt = jwt;
-        if (Identity.of(auth.getName()).realm() == UserRealm.RECOVERY) {
+        // TODO: change the persistent structure so that this won't be necessary
+        var realm = Identity.of(auth.getName()).realm(); 
+        if (realm.identifierName().equals(MemoryRealm.IDENTIFIER_NAME)) {
             dto.user = userFromAuthenticationOnly(auth).ownDto();
         } else {
             dto.user = userStorage.findUser(auth.getName()).ownDto();            
@@ -78,7 +80,7 @@ public class AuthenticationService {
                 .map(GrantedAuthority::getAuthority)
                 .map(UserRole::getEnum).findFirst()
                 .orElse(UserRole.DEFAULT);
-        return ident.realm().getUserFactory().create(ident.nickname(),null, role, true);
+        return ident.realm().userFactory().create(ident.nickname(), null, role, true);
     }
 
     /**

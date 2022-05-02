@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import net.ssehub.sparkyservice.api.jpa.UnkownRealm;
 import net.ssehub.sparkyservice.api.jpa.user.Password;
 import net.ssehub.sparkyservice.api.jpa.user.PersonalSettings;
 import net.ssehub.sparkyservice.api.jpa.user.User;
@@ -31,11 +32,6 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
 @ParametersAreNonnullByDefault
 public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
 
-    @Nonnull
-    public static final UserRealm DEFAULT_REALM = UserRealm.ESB;
-    
-    @Nonnull
-    public static final UserRealm ASSOCIATED_REALM = UserRealm.ESB;
     public static final String DEFAULT_ALGO = BCryptPasswordEncoder.class.getSimpleName().toLowerCase();
     private static final long serialVersionUID = 1L;
 
@@ -48,7 +44,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      */
     @Deprecated
     LocalUserDetails() {
-        this("user", null, false, UserRole.DEFAULT);
+        this("user", new UnkownRealm(), null, false, UserRole.DEFAULT);
     }
 
     /**
@@ -91,8 +87,8 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      * @param isActive
      * @param role
      */
-    LocalUserDetails(String nickname, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
-        this(new Identity(nickname, ASSOCIATED_REALM), passwordEntity, isActive, role);
+    LocalUserDetails(String nickname, UserRealm realm, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
+        this(new Identity(nickname, realm), passwordEntity, isActive, role);
         this.passwordEntity = passwordEntity;
         log.trace("New LocalUserDetails created: {}", getUsername());
     }
@@ -109,7 +105,7 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
     private LocalUserDetails(Identity ident, @Nullable Password passwordEntity, boolean isActive, UserRole role) {
         super(ident, role);
         setEnabled(isActive);
-        if (ident.realm() != ASSOCIATED_REALM) {
+        if (ident.realm().identifierName().equals(LocalRealm.IDENTIFIER_NAME)) {
             log.debug("Preserving the identity of one user {}", ident.asUsername());
         }
     }
@@ -126,8 +122,10 @@ public class LocalUserDetails extends AbstractSparkyUser implements SparkyUser {
      *                    - The users permission role
      * @return An instance of SparkyUser in the local realm.
      */
-    public static @Nonnull LocalUserDetails newLocalUser(String nickname, String rawPassword, UserRole role) {
-        var newUser = new LocalUserDetails(nickname, null, true, role);
+    @Deprecated
+    // TODO make alternative
+    public static @Nonnull LocalUserDetails newLocalUser(String nickname, UserRealm realm, String rawPassword, UserRole role) {
+        var newUser = new LocalUserDetails(nickname, realm, null, true, role);
         newUser.encodeAndSetPassword(rawPassword);
         newUser.setExpireDate(LocalDate.now().plusMonths(6));
         return newUser;

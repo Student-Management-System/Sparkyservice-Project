@@ -60,8 +60,7 @@ public class User {
 
     @Nonnull
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    protected UserRealm realm;
+    protected String realm;
 
     @Nonnull
     @Column(nullable = false)
@@ -86,7 +85,7 @@ public class User {
     private User() {
         role = UserRole.DEFAULT;
         userName = "";
-        realm = UserRealm.UNKNOWN;
+        realm = "UNOWN";
         profileConfiguration = new PersonalSettings();
     }
 
@@ -100,7 +99,7 @@ public class User {
      */
     public User(String userName,  UserRealm realm, boolean isActive, UserRole role) {
         this.userName = userName;
-        this.realm = realm;
+        this.realm = realm.identifierName();
         this.isActive = isActive;
         this.role = role;
         this.profileConfiguration = new PersonalSettings();
@@ -289,7 +288,7 @@ public class User {
      * 
      * @return Authentication realm of the user
      */
-    public @Nonnull UserRealm getRealm() {
+    public @Nonnull String getRealmIdentifier() {
         return realm;
     }
 
@@ -299,7 +298,7 @@ public class User {
      * @param realm
      */
     public void setRealm(UserRealm realm) {
-        this.realm = realm;
+        this.realm = realm.identifierName();
     }
 
     /**

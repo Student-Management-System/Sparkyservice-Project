@@ -8,6 +8,7 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,10 @@ public class UserService {
 
     @Autowired
     private UserStorageService storageService;
+    
+    @Autowired
+    @Qualifier("defaultRealm")
+    private UserRealm realm;
 
     /**
      * Modify values of a user specified by a DTO. User can only edit himself or needs to be an admin in order to modify
@@ -68,7 +73,7 @@ public class UserService {
                 .filter(a -> a.getAuthority().equals(UserRole.ADMIN.getAuthority()))
                 .findAny()
                 .isPresent();
-        if (!isAdmin && !username.equals(auth.getName())) {
+        if (!isAdmin && !username.equalsIgnoreCase(auth.getName())) {
             log.info("The user \" {} \" tried to access not allowed user data", username);
             throw new AccessDeniedException("Modifying this user is not allowed.");
         }
@@ -86,13 +91,22 @@ public class UserService {
      */
     public UserDto createLocalUser(@Nonnull String nickname) throws UserEditException {
         try {
-            LocalUserDetails newUser = storageService.addUser(nickname);
+            LocalUserDetails newUser = createInDatabase(nickname);
             log.debug("Created new user: {}", nickname);
             return UserRole.ADMIN.getPermissionTool().asDto(newUser);
         } catch (DuplicateEntryException e) {
             log.debug("No user added: Duplicate entry");
             throw (e);
         }
+    }
+    
+    public LocalUserDetails createInDatabase(String nickname) {
+        final var newUser = LocalUserDetails.newLocalUser(nickname, realm, "", UserRole.DEFAULT);
+        if (storageService.isUserInStorage(newUser)) {
+            throw new DuplicateEntryException(newUser);
+        }
+        storageService.commit(newUser);
+        return newUser;
     }
 
     /**

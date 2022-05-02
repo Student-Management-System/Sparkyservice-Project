@@ -19,7 +19,6 @@ import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
  */
 public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUserDetails {
 
-    public @Nonnull static final UserRealm ASSOCIATED_REALM = UserRealm.UNIHI;
     private static final long serialVersionUID = -2155556837850826196L;
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -33,8 +32,8 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      * @param isEnabled
      * @see #create(String, UserRole, boolean)
      */
-    LdapUser(@Nonnull String nickname, @Nonnull UserRole role, boolean isEnabled) {
-        super(new Identity(nickname, ASSOCIATED_REALM), role);
+    LdapUser(@Nonnull String nickname, @Nonnull UserRealm realm, @Nonnull UserRole role, boolean isEnabled) {
+        super(new Identity(nickname, realm), role);
         setEnabled(isEnabled);
     }
     
@@ -48,7 +47,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     private LdapUser(@Nonnull Identity ident, @Nonnull UserRole role, boolean isEnabled) {
         super(ident, role);
         setEnabled(isEnabled);
-        if (ident.realm() != ASSOCIATED_REALM) {
+        if (ident.realm().identifierName() != "LDAP") {
             log.debug("Preserving the identity of one user {}", ident.asUsername());
         }
     }
@@ -75,8 +74,8 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
      * @param jpaUser
      * @see #create(String, UserRole, boolean)
      */
-    LdapUser(User jpaUser) {
-        this(new Identity(jpaUser.getNickname(), jpaUser.getRealm()), jpaUser.getRole(), jpaUser.isActive());
+    LdapUser(@Nonnull User jpaUser) {
+        this(Identity.of(jpaUser), jpaUser.getRole(), jpaUser.isActive());
         this.setExpireDate(jpaUser.getExpirationDate());
         this.setSettings(jpaUser.getProfileConfiguration());
         this.setFullname(jpaUser.getFullName());
@@ -112,7 +111,7 @@ public class LdapUser extends AbstractSparkyUser implements SparkyUser, LdapUser
     @Override
     @Nonnull
     public User getJpa() {
-        var jpaUser = new User(ident.nickname(), UserRealm.UNIHI, isEnabled(), getRole());
+        var jpaUser = new User(ident.nickname(), ident.realm(), isEnabled(), getRole());
         jpaUser.setProfileConfiguration(new PersonalSettings(getSettings()));
         jpaUser.setExpirationDate(getExpireDate());
         jpaUser.setId(super.databaseId);

@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -33,9 +32,11 @@ import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.testconf.IntegrationTest;
 import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.user.LdapRealm;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
 import net.ssehub.sparkyservice.api.user.LocalUserDetails;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
 import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRealm;
 import net.ssehub.sparkyservice.api.user.UserRole;
 import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
 import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
@@ -47,6 +48,15 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
 @ActiveProfiles("test")
 public class AuthenticationServiceIT {
 
+    @Autowired
+    private LocalRealm localRealm;
+    
+    @Autowired
+    private MemoryRealm memoryRealm;
+
+    @Autowired(required = false)
+    private LdapRealm ldapRealm;
+    
     @Autowired
     private AuthenticationService authService;
 
@@ -64,10 +74,10 @@ public class AuthenticationServiceIT {
     @SuppressWarnings("null")
     public void authDuplicatesCorrectRealm() throws Exception {
         // create duplicate nicknames in different realms
-        var user = LocalUserDetails.newLocalUser(inMemoryUser, inMemoryPassword, UserRole.DEFAULT);
+        var user = LocalUserDetails.newLocalUser(inMemoryUser, localRealm, inMemoryPassword, UserRole.DEFAULT);
         userService.commit(user);
         assumeTrue(userService.isUserInStorage(user));
-        var localUserIdent = new Identity(inMemoryUser, LocalUserDetails.DEFAULT_REALM);
+        var localUserIdent = new Identity(inMemoryUser, localRealm);
         var creds = new CredentialsDto();
         creds.username = localUserIdent.asUsername();
         creds.password = inMemoryPassword;
@@ -96,7 +106,7 @@ public class AuthenticationServiceIT {
     @SuppressWarnings("null")
     public void memoryUserAuthenticationRealmTest() {
         var creds = new CredentialsDto();
-        creds.username = new Identity(inMemoryUser, UserRealm.RECOVERY).asUsername();
+        creds.username = new Identity(inMemoryUser, memoryRealm).asUsername();
         creds.password = inMemoryPassword;
         var resultAuth = authService.authenticate(creds);
         assertTrue(resultAuth.isAuthenticated());
@@ -104,10 +114,11 @@ public class AuthenticationServiceIT {
     
     @IntegrationTest
     @DisplayName("Test if ldap user login is possible")
-    @Disabled("Disabled for CI/CD because of the firewall settings") // TODO
+    //@Disabled("Disabled for CI/CD because of the firewall settings") // TODO
     public void loginLdapTest() {
         // default credentials from: https://www.forumsys.com/2014/02/22/online-ldap-test-server/
-        var ident = new Identity("gauss", UserRealm.UNIHI);
+        @SuppressWarnings("null")
+        var ident = new Identity("gauss", ldapRealm);
         var creds = new CredentialsDto(ident.asUsername(), "password"); 
         assertDoesNotThrow(() -> authService.authenticate(creds));
     }
@@ -149,7 +160,7 @@ public class AuthenticationServiceIT {
     @DisplayName("Test if login with locked jwt are denied")
     public void lockedJwtDeniedTest() {
         JwtCache.initNewCache();
-        var user = LocalUserDetails.newLocalUser("testuser", "test", UserRole.SERVICE);
+        var user = LocalUserDetails.newLocalUser("testuser", localRealm, "test", UserRole.SERVICE);
         String jwtString = jwtTokenService.createFor(user);
         Set<JwtToken> lockedToken = JwtCache.getInstance().getCachedTokens();
         lockedToken.forEach(t -> t.setLocked(true));

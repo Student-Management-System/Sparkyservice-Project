@@ -1,52 +1,35 @@
 package net.ssehub.sparkyservice.api.auth.provider;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.ldap.core.support.BaseLdapPathContextSource;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.authentication.BindAuthenticator;
 import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
-import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
 
 import net.ssehub.sparkyservice.api.auth.ldap.LdapContextMapper;
-import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.user.LocalRealm;
+import net.ssehub.sparkyservice.api.user.MemoryRealm;
 
+@Lazy
 @Configuration
+@ParametersAreNonnullByDefault
 public class ProviderConfig {
-    
-    public class SingleSparkyProviderConfig {
-        private final UserRealm supportedRealm;
-        private final AuthenticationProvider provider;
-        private final int weight;
-        
-        public SingleSparkyProviderConfig(UserRealm supportedRealm, AuthenticationProvider provider, int priorityWeight) {
-            this.weight = priorityWeight; // TODO test for this
-            this.supportedRealm = supportedRealm;
-            this.provider = provider;
-        }
-        
-        public boolean supports(UserRealm realm) {
-            return realm == supportedRealm;
-        }
-
-        public int getWeight() {
-            return weight;
-        }
-
-        public AuthenticationProvider getProvider() {
-            return provider;
-        }
-    }
+    public static final String LDAP_PROVIDER_BEANNAME = "ldapAuthProvider";
     
     @Value("${ldap.url:}")
     private String ldapUrl;
@@ -72,21 +55,6 @@ public class ProviderConfig {
     @Value("${recovery.enabled:false}")
     private boolean inMemoryEnabled;
 
-    @Value("${recovery.password:}")
-    private String inMemoryPassword;
-
-    @Value("${recovery.user:user}")
-    private String inMemoryUser;
-    
-    @Autowired
-    private LdapContextMapper ldapContextMapper;
-    
-    @Autowired
-    private MemoryDetailsService memoryDetailsService;
-
-    @Autowired
-    private LocalDbDetailsMapper localDetailsMapper;
-    
     @Autowired
     private PasswordEncoder pwEncoder;
     
@@ -101,53 +69,50 @@ public class ProviderConfig {
         return ldapSource;
     }
     
-    @Bean("ldapAuthProvider")
+    @Bean(LDAP_PROVIDER_BEANNAME)
     @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
-    public SingleSparkyProviderConfig authenticationProvider(LdapAuthenticator authenticator) {
-        var prov = new LdapAuthenticationProvider(authenticator);
-        prov.setUserDetailsContextMapper(ldapContextMapper);
-        return new SingleSparkyProviderConfig(UserRealm.UNIHI, prov, 3);
-    }
-
-    @Bean
-    @ConditionalOnExpression("${ldap.enabled:false} and !${ldap.ad:false}")
-    public BindAuthenticator authenticator(BaseLdapPathContextSource contextSource) {
+    public AuthenticationProvider authenticationProvider(LdapContextMapper mapper, BaseLdapPathContextSource contextSource) {
         String searchBase = "";
         FilterBasedLdapUserSearch search =
             new FilterBasedLdapUserSearch(searchBase, ldapUserDnPattern, contextSource);
         BindAuthenticator authenticator = new BindAuthenticator(contextSource);
         authenticator.setUserSearch(search);
-        return authenticator;
+        
+        var prov = new LdapAuthenticationProvider(authenticator);
+        prov.setUserDetailsContextMapper(mapper);
+        return prov;
     }
-
-    @ConditionalOnProperty(value = "recovery.enabled", havingValue = "true")
-    @Bean("memoryAuthProvider")
-    public SingleSparkyProviderConfig memoryAuthProvider() {
-        var prov = new DaoAuthenticationProvider(); 
-        prov.setUserDetailsService(memoryDetailsService);
-        prov.setPasswordEncoder(pwEncoder);
-        return new SingleSparkyProviderConfig(UserRealm.RECOVERY, prov, 3);
-    }
-
-    @Bean("localDbAuthProvider")
-    public SingleSparkyProviderConfig localDbAuthProvider() {
-        var prov = new DaoAuthenticationProvider();
-        prov.setUserDetailsService(localDetailsMapper);
-        prov.setPasswordEncoder(pwEncoder);
-        return new SingleSparkyProviderConfig(UserRealm.ESB, prov, 2);
-    }
-
-    @Bean("adLdapAuthProvider")
+    
+    @Bean(LDAP_PROVIDER_BEANNAME)
     @ConditionalOnProperty(value = "ldap.ad", havingValue = "true")
-    public SingleSparkyProviderConfig adLdapAuthProvider() {
+    public AuthenticationProvider adLdapAuthProvider(LdapContextMapper mapper) {
         ActiveDirectoryLdapAuthenticationProvider adProvider = new ActiveDirectoryLdapAuthenticationProvider(ldapBaseDn,
                 ldapUrl);
         adProvider.setConvertSubErrorCodesToExceptions(true);
         adProvider.setUseAuthenticationRequestCredentials(true);
-        adProvider.setUserDetailsContextMapper(ldapContextMapper);
+        adProvider.setUserDetailsContextMapper(mapper);
         if (ldapUserDnPattern != null && ldapUserDnPattern.trim().length() > 0) {
             adProvider.setSearchFilter(ldapUserDnPattern);
         }
-        return new SingleSparkyProviderConfig(UserRealm.UNIHI, adProvider, 1);
+        return adProvider;
+    }
+
+    @ConditionalOnProperty(value = "recovery.enabled", havingValue = "true")
+    @Bean("memoryAuthProvider")
+    public AuthenticationProvider memoryAuthProvider(StorageDetailsService detailsService, MemoryRealm realm) {
+        var prov = new DaoAuthenticationProvider(); 
+        UserDetailsService memoryService = nickname -> detailsService.loadUser(nickname, realm);
+        prov.setUserDetailsService(memoryService);
+        prov.setPasswordEncoder(pwEncoder);
+        return prov;
+    }
+
+    @Bean("localDbAuthProvider")
+    public AuthenticationProvider localDbAuthProvider(StorageDetailsService detailsService, LocalRealm realm) {
+        var prov = new DaoAuthenticationProvider();
+        UserDetailsService dbService = nickname -> detailsService.loadUser(nickname, realm);
+        prov.setUserDetailsService(dbService);
+        prov.setPasswordEncoder(pwEncoder);
+        return prov;
     }
 }
