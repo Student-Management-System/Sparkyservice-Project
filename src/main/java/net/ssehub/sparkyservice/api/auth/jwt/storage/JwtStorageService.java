@@ -15,12 +15,12 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
-import net.ssehub.sparkyservice.api.jpa.token.JpaJwtToken;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.storage.NoTransactionUnitException;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.persistence.NoTransactionUnitException;
+import net.ssehub.sparkyservice.api.persistence.UserNotFoundException;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
+import net.ssehub.sparkyservice.api.persistence.jpa.token.JpaJwtToken;
 import net.ssehub.sparkyservice.api.util.MiscUtil;
 
 /**

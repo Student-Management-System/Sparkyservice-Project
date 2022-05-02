@@ -5,15 +5,16 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.LdapRealm;
-import net.ssehub.sparkyservice.api.user.LocalRealm;
-import net.ssehub.sparkyservice.api.user.MemoryRealm;
-import net.ssehub.sparkyservice.api.user.RealmRegistry;
-import net.ssehub.sparkyservice.api.user.UserRealm;
-import net.ssehub.sparkyservice.api.user.dto.SettingsDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto.ChangePasswordDto;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.auth.identity.RealmRegistry;
+import net.ssehub.sparkyservice.api.auth.identity.UserRealm;
+import net.ssehub.sparkyservice.api.auth.ldap.LdapRealm;
+import net.ssehub.sparkyservice.api.auth.local.LocalFactoryFacade;
+import net.ssehub.sparkyservice.api.auth.local.LocalRealm;
+import net.ssehub.sparkyservice.api.auth.memory.MemoryRealm;
+import net.ssehub.sparkyservice.api.useraccess.dto.SettingsDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.UserDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.UserDto.ChangePasswordDto;
 import net.ssehub.sparkyservice.api.util.NullHelpers;
 
 /**
@@ -30,7 +31,7 @@ public class TestSetupMethods {
     public static final String USER_EMAIL = "info@test";
     public static final String PAYLOAD = "testPayload";
     public static final String NICK_NAME = "user";
-    public static final Identity IDENT = new Identity(NICK_NAME, new DummyRealm("Dummy"));
+    public static final Identity IDENT = new Identity(NICK_NAME, new DummyRealm("Dummy", a -> new LocalFactoryFacade(a)));
     public static final String USER_NAME = IDENT.asUsername();
     public static final LocalDate EXP_DATE = LocalDate.now().plusDays(2);
 

@@ -19,19 +19,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthReader;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtToken;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenService;
-import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.MemoryRealm;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
-import net.ssehub.sparkyservice.api.user.dto.JwtDto;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.auth.memory.MemoryRealm;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
+import net.ssehub.sparkyservice.api.useraccess.dto.CredentialsDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.JwtDto;
 
 /**
  * Service for managing authentication infromation from users.

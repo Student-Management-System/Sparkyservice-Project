@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.JwtSettings;
 
 
 @TestConfiguration

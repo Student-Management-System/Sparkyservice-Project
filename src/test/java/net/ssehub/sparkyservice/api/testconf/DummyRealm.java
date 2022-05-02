@@ -1,5 +1,7 @@
 package net.ssehub.sparkyservice.api.testconf;
 
+import java.util.function.Function;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -8,9 +10,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
-import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.SparkyUserFactory;
-import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUserFactory;
+import net.ssehub.sparkyservice.api.auth.identity.UserRealm;
 
 public class DummyRealm implements UserRealm {
     
@@ -32,15 +34,15 @@ public class DummyRealm implements UserRealm {
     private final String identifier;
     
     @Nullable
-    private final SparkyUserFactory<SparkyUser> factory;
+    private final Function<UserRealm, SparkyUserFactory<?>> factorySupply;
     
     public DummyRealm(@Nonnull String identifier) {
         this(identifier, null);
     }
     
-    public DummyRealm(@Nonnull String identifier, @Nullable SparkyUserFactory<SparkyUser> factory) {
+    public DummyRealm(@Nonnull String identifier, @Nullable  Function<UserRealm, SparkyUserFactory<?>> factory) {
         this.identifier = identifier;
-        this.factory = factory;
+        this.factorySupply = factory;
     }
 
     @Override
@@ -55,14 +57,15 @@ public class DummyRealm implements UserRealm {
         return identifierName();
     }
 
+    @SuppressWarnings("null")
     @Override
     @Nonnull
     public SparkyUserFactory<? extends SparkyUser> userFactory() {
-        var f = factory;
-        if (f == null) {
-            throw new UnsupportedOperationException("No factory for dummy realm provided");
+        var function = factorySupply;
+        if (function == null) {
+            throw new UnsupportedOperationException("No factory for this dummy realm");
         }
-        return f;
+        return function.apply(this);
     }
 
     @Override

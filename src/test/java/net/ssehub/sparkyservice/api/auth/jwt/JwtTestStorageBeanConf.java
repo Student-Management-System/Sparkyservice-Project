@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Bean;
 
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtRepository;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
-import net.ssehub.sparkyservice.api.user.storage.TestingUserRepository;
-import net.ssehub.sparkyservice.api.user.storage.UserDatabaseStorageService;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.persistence.TestingUserRepository;
+import net.ssehub.sparkyservice.api.persistence.UserDatabaseStorageService;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
 
 /**
  * Provides JWT bean definition for JWT services. 

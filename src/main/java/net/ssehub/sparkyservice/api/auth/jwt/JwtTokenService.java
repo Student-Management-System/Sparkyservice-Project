@@ -15,10 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.MemoryRealm;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
+import net.ssehub.sparkyservice.api.auth.memory.MemoryRealm;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.JwtSettings;
 
 /**
  * Provides methods for dealing with concrete JWT tokens through {@link JwtCache} only.

@@ -19,8 +19,8 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.UserRole;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
 
 /**
  * Helper class for working with JWT Tokens during Authentication seperated in an extra class for testing purposes.

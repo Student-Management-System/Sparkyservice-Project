@@ -11,12 +11,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.ssehub.sparkyservice.api.jpa.token.JpaJwtToken;
-import net.ssehub.sparkyservice.api.jpa.user.User;
-import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.persistence.UserNotFoundException;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
+import net.ssehub.sparkyservice.api.persistence.jpa.token.JpaJwtToken;
+import net.ssehub.sparkyservice.api.persistence.jpa.user.User;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
 
 @ParametersAreNonnullByDefault
 public class JwtToken {

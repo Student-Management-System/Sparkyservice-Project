@@ -10,10 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
 import org.springframework.stereotype.Service;
 
-import net.ssehub.sparkyservice.api.user.LdapRealm;
-import net.ssehub.sparkyservice.api.user.LdapUser;
-import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
 
 /**
  * {@link UserDetails} mapper. It creates a {@link LdapUser} object from a successful LDAP login.
@@ -22,7 +20,7 @@ import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
  */
 @Service
 @ConditionalOnBean(LdapRealm.class)
-public final class LdapContextMapper implements UserDetailsContextMapper {
+final class LdapContextMapper implements UserDetailsContextMapper {
 
     /**
      * OID List.

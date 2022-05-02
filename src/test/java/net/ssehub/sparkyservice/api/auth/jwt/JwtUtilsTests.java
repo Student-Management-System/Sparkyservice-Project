@@ -18,10 +18,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import io.jsonwebtoken.IncorrectClaimException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.JwtSettings;
 import net.ssehub.sparkyservice.api.testconf.DummyRealm;
-import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.UserRole;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
 
 /**
  * Provides unit tests for {@link JwtUtils}.

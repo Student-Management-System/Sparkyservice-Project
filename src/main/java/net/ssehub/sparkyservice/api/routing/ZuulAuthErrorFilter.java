@@ -12,9 +12,9 @@ import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import com.netflix.zuul.exception.ZuulException;
 
-import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
-import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
-import net.ssehub.sparkyservice.api.user.NoSuchRealmException;
+import net.ssehub.sparkyservice.api.auth.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.AuthorizationException;
+import net.ssehub.sparkyservice.api.auth.identity.NoSuchRealmException;
 
 /**
  * Exception handling error-Filter for Zuul. Handles authentication and

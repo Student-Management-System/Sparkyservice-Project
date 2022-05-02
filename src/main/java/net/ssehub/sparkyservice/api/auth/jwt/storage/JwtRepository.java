@@ -6,8 +6,8 @@ import java.util.Set;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import net.ssehub.sparkyservice.api.jpa.token.JpaJwtToken;
-import net.ssehub.sparkyservice.api.jpa.user.User;
+import net.ssehub.sparkyservice.api.persistence.jpa.token.JpaJwtToken;
+import net.ssehub.sparkyservice.api.persistence.jpa.user.User;
 
 @Repository
 public interface JwtRepository extends CrudRepository<JpaJwtToken, String> {

@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
  * 
  * @author marcel
  */
-@EntityScan("net.ssehub.sparkyservice.api.jpa")
+@EntityScan("net.ssehub.sparkyservice.api.persistence.jpa")
 @SpringBootApplication
 @EnableZuulProxy
 public class SparkyServiceApplication {

@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import net.ssehub.sparkyservice.api.auth.exception.AuthenticationException;
-import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
+import net.ssehub.sparkyservice.api.auth.AuthenticationException;
+import net.ssehub.sparkyservice.api.auth.AuthorizationException;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
 import net.ssehub.sparkyservice.api.util.ErrorDtoBuilder;
 

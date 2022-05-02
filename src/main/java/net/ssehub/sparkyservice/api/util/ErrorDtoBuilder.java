@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.ErrorDto;
 
 /**
  * Class with builder pattern for uniform errors. 

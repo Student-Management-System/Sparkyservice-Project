@@ -23,11 +23,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtTokenReadException;
-import net.ssehub.sparkyservice.api.conf.ControllerPath;
-import net.ssehub.sparkyservice.api.user.dto.CredentialsDto;
-import net.ssehub.sparkyservice.api.user.dto.ErrorDto;
-import net.ssehub.sparkyservice.api.user.dto.JwtDto;
-import net.ssehub.sparkyservice.api.user.storage.UserNotFoundException;
+import net.ssehub.sparkyservice.api.config.ControllerPath;
+import net.ssehub.sparkyservice.api.persistence.UserNotFoundException;
+import net.ssehub.sparkyservice.api.useraccess.dto.CredentialsDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.ErrorDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.JwtDto;
 
 /**
  * Provides controller methods for authentication mechanisms.

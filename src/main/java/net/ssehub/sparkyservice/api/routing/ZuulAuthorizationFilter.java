@@ -14,10 +14,10 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 
-import net.ssehub.sparkyservice.api.auth.exception.AuthorizationException;
+import net.ssehub.sparkyservice.api.auth.AuthorizationException;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
 import net.ssehub.sparkyservice.api.auth.jwt.JwtAuthConverter;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
-import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.ZuulRoutes;
 
 /**
  * Performant Authorization Filter for zuul routes without CRUD-operations. 

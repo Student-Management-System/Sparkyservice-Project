@@ -12,8 +12,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.data.util.Lazy;
 
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.ZuulRoutes;
-import net.ssehub.sparkyservice.api.user.Identity;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.ZuulRoutes;
 
 /**
  * Interpreter for {@link ZuulRoutes}.

@@ -15,13 +15,13 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import net.ssehub.sparkyservice.api.auth.AuthenticationInfoDto;
-import net.ssehub.sparkyservice.api.conf.ConfigurationValues.JwtSettings;
-import net.ssehub.sparkyservice.api.user.Identity;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.dto.JwtDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.auth.identity.Identity;
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
+import net.ssehub.sparkyservice.api.config.ConfigurationValues.JwtSettings;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
+import net.ssehub.sparkyservice.api.useraccess.dto.JwtDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.UserDto;
 
 /**
  * Provides additional methods to get information from a single JWT token.

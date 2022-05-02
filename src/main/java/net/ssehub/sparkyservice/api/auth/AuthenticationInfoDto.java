@@ -1,7 +1,7 @@
 package net.ssehub.sparkyservice.api.auth;
 
-import net.ssehub.sparkyservice.api.user.dto.JwtDto;
-import net.ssehub.sparkyservice.api.user.dto.UserDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.JwtDto;
+import net.ssehub.sparkyservice.api.useraccess.dto.UserDto;
 
 /**
  * DTO for authentication information.

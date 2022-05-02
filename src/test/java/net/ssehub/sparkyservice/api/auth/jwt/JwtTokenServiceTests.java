@@ -27,14 +27,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import net.ssehub.sparkyservice.api.auth.identity.SparkyUser;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtCache;
 import net.ssehub.sparkyservice.api.auth.jwt.storage.JwtStorageService;
+import net.ssehub.sparkyservice.api.auth.ldap.LdapRealm;
+import net.ssehub.sparkyservice.api.auth.local.LocalRealm;
+import net.ssehub.sparkyservice.api.persistence.UserStorageService;
 import net.ssehub.sparkyservice.api.testconf.TestSetupMethods;
-import net.ssehub.sparkyservice.api.user.LdapRealm;
-import net.ssehub.sparkyservice.api.user.LocalRealm;
-import net.ssehub.sparkyservice.api.user.SparkyUser;
-import net.ssehub.sparkyservice.api.user.UserRole;
-import net.ssehub.sparkyservice.api.user.storage.UserStorageService;
+import net.ssehub.sparkyservice.api.useraccess.UserRole;
 
 /**
  * Provides unit tests for {@link JwtTokenService}.

@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
-import net.ssehub.sparkyservice.api.user.LdapRealm;
-import net.ssehub.sparkyservice.api.user.LocalRealm;
-import net.ssehub.sparkyservice.api.user.MemoryRealm;
-import net.ssehub.sparkyservice.api.user.RealmRegistry;
-import net.ssehub.sparkyservice.api.user.UserRealm;
+import net.ssehub.sparkyservice.api.auth.identity.RealmRegistry;
+import net.ssehub.sparkyservice.api.auth.identity.UserRealm;
+import net.ssehub.sparkyservice.api.auth.ldap.LdapRealm;
+import net.ssehub.sparkyservice.api.auth.local.LocalRealm;
+import net.ssehub.sparkyservice.api.auth.memory.MemoryRealm;
 
 @TestConfiguration
 public class RealmBeanConfiguration {
